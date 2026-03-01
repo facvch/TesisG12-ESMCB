@@ -19,6 +19,31 @@ namespace Infrastructure.Repositories.Sql
         public DbSet<Propietario> Propietarios { get; set; }
         public DbSet<Paciente> Pacientes { get; set; }
 
+        // Entidades de historial clínico y vacunaciones
+        public DbSet<Vacuna> Vacunas { get; set; }
+        public DbSet<RegistroVacunacion> RegistrosVacunacion { get; set; }
+        public DbSet<Tratamiento> Tratamientos { get; set; }
+        public DbSet<HistorialClinico> HistorialesClinico { get; set; }
+
+        // Entidades de gestión de turnos
+        public DbSet<Servicio> Servicios { get; set; }
+        public DbSet<Veterinario> Veterinarios { get; set; }
+        public DbSet<Turno> Turnos { get; set; }
+
+        // Entidades de gestión de stock
+        public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Marca> Marcas { get; set; }
+        public DbSet<Proveedor> Proveedores { get; set; }
+        public DbSet<Deposito> Depositos { get; set; }
+        public DbSet<Producto> Productos { get; set; }
+        public DbSet<MovimientoStock> MovimientosStock { get; set; }
+
+        // Entidades de ventas y facturación
+        public DbSet<MetodoPago> MetodosPago { get; set; }
+        public DbSet<Venta> Ventas { get; set; }
+        public DbSet<DetalleVenta> DetallesVenta { get; set; }
+        public DbSet<Factura> Facturas { get; set; }
+
         public StoreDbContext(DbContextOptions<StoreDbContext> options) : base(options)
         {
         }
@@ -103,7 +128,302 @@ namespace Infrastructure.Repositories.Sql
                     .HasForeignKey(p => p.PropietarioId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // Configuración de Vacuna
+            modelBuilder.Entity<Vacuna>(entity =>
+            {
+                entity.ToTable("Vacunas");
+                entity.HasKey(v => v.Id);
+                entity.Property(v => v.Id).ValueGeneratedOnAdd();
+                entity.Property(v => v.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(v => v.Descripcion).HasMaxLength(500);
+                entity.Property(v => v.Laboratorio).HasMaxLength(100);
+            });
+
+            // Configuración de RegistroVacunacion
+            modelBuilder.Entity<RegistroVacunacion>(entity =>
+            {
+                entity.ToTable("RegistrosVacunacion");
+                entity.HasKey(r => r.Id);
+                entity.Property(r => r.Veterinario).IsRequired().HasMaxLength(100);
+                entity.Property(r => r.NroLote).HasMaxLength(50);
+                entity.Property(r => r.Observaciones).HasMaxLength(500);
+
+                entity.HasOne(r => r.Paciente)
+                    .WithMany()
+                    .HasForeignKey(r => r.PacienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.Vacuna)
+                    .WithMany(v => v.Registros)
+                    .HasForeignKey(r => r.VacunaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(r => r.PacienteId);
+                entity.HasIndex(r => r.VacunaId);
+            });
+
+            // Configuración de Tratamiento
+            modelBuilder.Entity<Tratamiento>(entity =>
+            {
+                entity.ToTable("Tratamientos");
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Diagnostico).IsRequired().HasMaxLength(500);
+                entity.Property(t => t.Descripcion).IsRequired().HasMaxLength(1000);
+                entity.Property(t => t.Medicacion).HasMaxLength(500);
+                entity.Property(t => t.Veterinario).IsRequired().HasMaxLength(100);
+                entity.Property(t => t.Observaciones).HasMaxLength(1000);
+
+                entity.HasOne(t => t.Paciente)
+                    .WithMany()
+                    .HasForeignKey(t => t.PacienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(t => t.PacienteId);
+            });
+
+            // Configuración de HistorialClinico
+            modelBuilder.Entity<HistorialClinico>(entity =>
+            {
+                entity.ToTable("HistorialesClinico");
+                entity.HasKey(h => h.Id);
+                entity.Property(h => h.Motivo).IsRequired().HasMaxLength(200);
+                entity.Property(h => h.Sintomas).HasMaxLength(1000);
+                entity.Property(h => h.Diagnostico).HasMaxLength(500);
+                entity.Property(h => h.Indicaciones).HasMaxLength(1000);
+                entity.Property(h => h.Veterinario).IsRequired().HasMaxLength(100);
+                entity.Property(h => h.Observaciones).HasMaxLength(1000);
+                entity.Property(h => h.Peso).HasColumnType("decimal(10,2)");
+                entity.Property(h => h.Temperatura).HasColumnType("decimal(4,1)");
+
+                entity.HasOne(h => h.Paciente)
+                    .WithMany()
+                    .HasForeignKey(h => h.PacienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(h => h.PacienteId);
+            });
+
+            // Configuración de Servicio
+            modelBuilder.Entity<Servicio>(entity =>
+            {
+                entity.ToTable("Servicios");
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Id).ValueGeneratedOnAdd();
+                entity.Property(s => s.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(s => s.Descripcion).HasMaxLength(500);
+                entity.Property(s => s.Precio).HasColumnType("decimal(10,2)");
+            });
+
+            // Configuración de Veterinario
+            modelBuilder.Entity<Veterinario>(entity =>
+            {
+                entity.ToTable("Veterinarios");
+                entity.HasKey(v => v.Id);
+                entity.Property(v => v.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(v => v.Apellido).IsRequired().HasMaxLength(50);
+                entity.Property(v => v.Matricula).IsRequired().HasMaxLength(20);
+                entity.Property(v => v.Telefono).IsRequired().HasMaxLength(20);
+                entity.Property(v => v.Email).HasMaxLength(100);
+                entity.Property(v => v.Especialidad).HasMaxLength(100);
+
+                entity.HasIndex(v => v.Matricula).IsUnique();
+            });
+
+            // Configuración de Turno
+            modelBuilder.Entity<Turno>(entity =>
+            {
+                entity.ToTable("Turnos");
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Motivo).HasMaxLength(200);
+                entity.Property(t => t.Observaciones).HasMaxLength(500);
+
+                entity.HasOne(t => t.Paciente)
+                    .WithMany()
+                    .HasForeignKey(t => t.PacienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Veterinario)
+                    .WithMany(v => v.Turnos)
+                    .HasForeignKey(t => t.VeterinarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Servicio)
+                    .WithMany()
+                    .HasForeignKey(t => t.ServicioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(t => t.PacienteId);
+                entity.HasIndex(t => t.VeterinarioId);
+                entity.HasIndex(t => t.FechaHora);
+            });
+
+            // Configuración de Categoria
+            modelBuilder.Entity<Categoria>(entity =>
+            {
+                entity.ToTable("Categorias");
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Id).ValueGeneratedOnAdd();
+                entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(c => c.Descripcion).HasMaxLength(300);
+            });
+
+            // Configuración de Marca
+            modelBuilder.Entity<Marca>(entity =>
+            {
+                entity.ToTable("Marcas");
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.Id).ValueGeneratedOnAdd();
+                entity.Property(m => m.Nombre).IsRequired().HasMaxLength(100);
+            });
+
+            // Configuración de Proveedor
+            modelBuilder.Entity<Proveedor>(entity =>
+            {
+                entity.ToTable("Proveedores");
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.RazonSocial).IsRequired().HasMaxLength(150);
+                entity.Property(p => p.CUIT).IsRequired().HasMaxLength(13);
+                entity.Property(p => p.Telefono).IsRequired().HasMaxLength(20);
+                entity.Property(p => p.Email).HasMaxLength(100);
+                entity.Property(p => p.Direccion).HasMaxLength(200);
+                entity.Property(p => p.Contacto).HasMaxLength(100);
+                entity.HasIndex(p => p.CUIT).IsUnique();
+            });
+
+            // Configuración de Deposito
+            modelBuilder.Entity<Deposito>(entity =>
+            {
+                entity.ToTable("Depositos");
+                entity.HasKey(d => d.Id);
+                entity.Property(d => d.Id).ValueGeneratedOnAdd();
+                entity.Property(d => d.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(d => d.Ubicacion).HasMaxLength(200);
+            });
+
+            // Configuración de Producto
+            modelBuilder.Entity<Producto>(entity =>
+            {
+                entity.ToTable("Productos");
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Nombre).IsRequired().HasMaxLength(150);
+                entity.Property(p => p.Descripcion).HasMaxLength(500);
+                entity.Property(p => p.CodigoBarras).HasMaxLength(50);
+                entity.Property(p => p.PrecioCompra).HasColumnType("decimal(10,2)");
+                entity.Property(p => p.PrecioVenta).HasColumnType("decimal(10,2)");
+
+                entity.HasOne(p => p.Categoria)
+                    .WithMany()
+                    .HasForeignKey(p => p.CategoriaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.Marca)
+                    .WithMany()
+                    .HasForeignKey(p => p.MarcaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.Proveedor)
+                    .WithMany()
+                    .HasForeignKey(p => p.ProveedorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.Deposito)
+                    .WithMany()
+                    .HasForeignKey(p => p.DepositoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(p => p.CategoriaId);
+                entity.HasIndex(p => p.CodigoBarras);
+            });
+
+            // Configuración de MovimientoStock
+            modelBuilder.Entity<MovimientoStock>(entity =>
+            {
+                entity.ToTable("MovimientosStock");
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.Motivo).HasMaxLength(200);
+                entity.Property(m => m.Referencia).HasMaxLength(50);
+
+                entity.HasOne(m => m.Producto)
+                    .WithMany()
+                    .HasForeignKey(m => m.ProductoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(m => m.ProductoId);
+                entity.HasIndex(m => m.Fecha);
+            });
+
+            // Configuración de MetodoPago
+            modelBuilder.Entity<MetodoPago>(entity =>
+            {
+                entity.ToTable("MetodosPago");
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.Id).ValueGeneratedOnAdd();
+                entity.Property(m => m.Nombre).IsRequired().HasMaxLength(50);
+            });
+
+            // Configuración de Venta
+            modelBuilder.Entity<Venta>(entity =>
+            {
+                entity.ToTable("Ventas");
+                entity.HasKey(v => v.Id);
+                entity.Property(v => v.Total).HasColumnType("decimal(10,2)");
+                entity.Property(v => v.Observaciones).HasMaxLength(500);
+
+                entity.HasOne(v => v.Propietario)
+                    .WithMany()
+                    .HasForeignKey(v => v.PropietarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(v => v.MetodoPago)
+                    .WithMany()
+                    .HasForeignKey(v => v.MetodoPagoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(v => v.PropietarioId);
+                entity.HasIndex(v => v.Fecha);
+            });
+
+            // Configuración de DetalleVenta
+            modelBuilder.Entity<DetalleVenta>(entity =>
+            {
+                entity.ToTable("DetallesVenta");
+                entity.HasKey(d => d.Id);
+                entity.Property(d => d.Descripcion).IsRequired().HasMaxLength(200);
+                entity.Property(d => d.PrecioUnitario).HasColumnType("decimal(10,2)");
+
+                entity.HasOne<Venta>()
+                    .WithMany(v => v.Detalles)
+                    .HasForeignKey(d => d.VentaId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Producto)
+                    .WithMany()
+                    .HasForeignKey(d => d.ProductoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(d => d.VentaId);
+            });
+
+            // Configuración de Factura
+            modelBuilder.Entity<Factura>(entity =>
+            {
+                entity.ToTable("Facturas");
+                entity.HasKey(f => f.Id);
+                entity.Property(f => f.Numero).IsRequired().HasMaxLength(20);
+                entity.Property(f => f.TipoFactura).IsRequired().HasMaxLength(1);
+                entity.Property(f => f.SubTotal).HasColumnType("decimal(10,2)");
+                entity.Property(f => f.IVA).HasColumnType("decimal(10,2)");
+                entity.Property(f => f.Total).HasColumnType("decimal(10,2)");
+
+                entity.HasOne(f => f.Venta)
+                    .WithMany()
+                    .HasForeignKey(f => f.VentaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(f => f.Numero).IsUnique();
+                entity.HasIndex(f => f.VentaId);
+            });
         }
     }
 }
-

@@ -74,6 +74,31 @@ namespace Infrastructure.Factories
             services.AddTransient<IRazaRepository, Repositories.Sql.RazaRepository>();
             services.AddTransient<IPropietarioRepository, Repositories.Sql.PropietarioRepository>();
             services.AddTransient<IPacienteRepository, Repositories.Sql.PacienteRepository>();
+
+            // Phase 4 - Historial Clínico y Vacunaciones
+            services.AddTransient<IVacunaRepository, Repositories.Sql.VacunaRepository>();
+            services.AddTransient<IRegistroVacunacionRepository, Repositories.Sql.RegistroVacunacionRepository>();
+            services.AddTransient<ITratamientoRepository, Repositories.Sql.TratamientoRepository>();
+            services.AddTransient<IHistorialClinicoRepository, Repositories.Sql.HistorialClinicoRepository>();
+
+            // Phase 5 - Gestión de Turnos
+            services.AddTransient<IServicioRepository, Repositories.Sql.ServicioRepository>();
+            services.AddTransient<IVeterinarioRepository, Repositories.Sql.VeterinarioRepository>();
+            services.AddTransient<ITurnoRepository, Repositories.Sql.TurnoRepository>();
+
+            // Phase 6 - Gestión de Stock
+            services.AddTransient<ICategoriaRepository, Repositories.Sql.CategoriaRepository>();
+            services.AddTransient<IMarcaRepository, Repositories.Sql.MarcaRepository>();
+            services.AddTransient<IProveedorRepository, Repositories.Sql.ProveedorRepository>();
+            services.AddTransient<IDepositoRepository, Repositories.Sql.DepositoRepository>();
+            services.AddTransient<IProductoRepository, Repositories.Sql.ProductoRepository>();
+            services.AddTransient<IMovimientoStockRepository, Repositories.Sql.MovimientoStockRepository>();
+
+            // Phase 7 - Ventas y Facturación
+            services.AddTransient<IMetodoPagoRepository, Repositories.Sql.MetodoPagoRepository>();
+            services.AddTransient<IVentaRepository, Repositories.Sql.VentaRepository>();
+            services.AddTransient<IDetalleVentaRepository, Repositories.Sql.DetalleVentaRepository>();
+            services.AddTransient<IFacturaRepository, Repositories.Sql.FacturaRepository>();
         }
 
         private static IServiceCollection AddMongoDbRepositories(this IServiceCollection services, IConfiguration configuration)
