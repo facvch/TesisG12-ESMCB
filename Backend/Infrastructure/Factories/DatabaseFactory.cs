@@ -99,6 +99,17 @@ namespace Infrastructure.Factories
             services.AddTransient<IVentaRepository, Repositories.Sql.VentaRepository>();
             services.AddTransient<IDetalleVentaRepository, Repositories.Sql.DetalleVentaRepository>();
             services.AddTransient<IFacturaRepository, Repositories.Sql.FacturaRepository>();
+
+            // Phase 9 - Autenticación
+            services.AddTransient<IRolRepository, Repositories.Sql.RolRepository>();
+            services.AddTransient<IUsuarioRepository, Repositories.Sql.UsuarioRepository>();
+
+            // Phase 10 - Auditoría y Notificaciones
+            services.AddTransient<IAuditLogRepository, Repositories.Sql.AuditLogRepository>();
+            services.AddTransient<INotificacionRepository, Repositories.Sql.NotificacionRepository>();
+
+            // Phase 12 - Configuración del Sistema
+            services.AddTransient<IConfiguracionSistemaRepository, Repositories.Sql.ConfiguracionSistemaRepository>();
         }
 
         private static IServiceCollection AddMongoDbRepositories(this IServiceCollection services, IConfiguration configuration)

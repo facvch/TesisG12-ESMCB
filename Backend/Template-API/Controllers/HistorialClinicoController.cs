@@ -99,6 +99,19 @@ namespace Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Elimina una entrada del historial clínico
+        /// </summary>
+        [HttpDelete("api/v1/[Controller]/{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
+            var entity = await _historialRepository.FindOneAsync(id);
+            if (entity == null) return NotFound($"No se encontró la entrada con Id {id}");
+            _historialRepository.Remove(id);
+            return NoContent();
+        }
+
         private static HistorialClinicoDto MapToDto(Domain.Entities.HistorialClinico h) => new()
         {
             Id = h.Id,

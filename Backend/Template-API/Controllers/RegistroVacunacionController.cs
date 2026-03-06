@@ -120,6 +120,19 @@ namespace Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Elimina un registro de vacunación
+        /// </summary>
+        [HttpDelete("api/v1/[Controller]/{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
+            var entity = await _registroRepository.FindOneAsync(id);
+            if (entity == null) return NotFound($"No se encontró el registro con Id {id}");
+            _registroRepository.Remove(id);
+            return NoContent();
+        }
+
         private static RegistroVacunacionDto MapToDto(Domain.Entities.RegistroVacunacion r) => new()
         {
             Id = r.Id,

@@ -44,6 +44,17 @@ namespace Infrastructure.Repositories.Sql
         public DbSet<DetalleVenta> DetallesVenta { get; set; }
         public DbSet<Factura> Facturas { get; set; }
 
+        // Entidades de autenticación
+        public DbSet<Rol> Roles { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
+
+        // Entidades de auditoría y notificaciones
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Notificacion> Notificaciones { get; set; }
+
+        // Entidades de configuración
+        public DbSet<ConfiguracionSistema> Configuraciones { get; set; }
+
         public StoreDbContext(DbContextOptions<StoreDbContext> options) : base(options)
         {
         }
@@ -423,6 +434,77 @@ namespace Infrastructure.Repositories.Sql
 
                 entity.HasIndex(f => f.Numero).IsUnique();
                 entity.HasIndex(f => f.VentaId);
+            });
+
+            // Configuración de Rol
+            modelBuilder.Entity<Rol>(entity =>
+            {
+                entity.ToTable("Roles");
+                entity.HasKey(r => r.Id);
+                entity.Property(r => r.Id).ValueGeneratedOnAdd();
+                entity.Property(r => r.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(r => r.Descripcion).HasMaxLength(200);
+                entity.HasIndex(r => r.Nombre).IsUnique();
+            });
+
+            // Configuración de Usuario
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("Usuarios");
+                entity.HasKey(u => u.Id);
+                entity.Property(u => u.NombreUsuario).IsRequired().HasMaxLength(50);
+                entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
+                entity.Property(u => u.NombreCompleto).IsRequired().HasMaxLength(150);
+                entity.Property(u => u.PasswordHash).IsRequired();
+                entity.Property(u => u.PasswordSalt).IsRequired();
+
+                entity.HasOne(u => u.Rol)
+                    .WithMany()
+                    .HasForeignKey(u => u.RolId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(u => u.NombreUsuario).IsUnique();
+                entity.HasIndex(u => u.Email).IsUnique();
+            });
+
+            // Configuración de AuditLog
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.ToTable("AuditLogs");
+                entity.HasKey(a => a.Id);
+                entity.Property(a => a.Accion).IsRequired().HasMaxLength(10);
+                entity.Property(a => a.Entidad).IsRequired().HasMaxLength(100);
+                entity.Property(a => a.Descripcion).HasMaxLength(500);
+                entity.Property(a => a.NombreUsuario).HasMaxLength(50);
+                entity.Property(a => a.IpOrigen).HasMaxLength(45);
+                entity.HasIndex(a => a.Fecha);
+                entity.HasIndex(a => a.UsuarioId);
+                entity.HasIndex(a => a.Entidad);
+            });
+
+            // Configuración de Notificacion
+            modelBuilder.Entity<Notificacion>(entity =>
+            {
+                entity.ToTable("Notificaciones");
+                entity.HasKey(n => n.Id);
+                entity.Property(n => n.Titulo).IsRequired().HasMaxLength(150);
+                entity.Property(n => n.Mensaje).IsRequired().HasMaxLength(500);
+                entity.HasIndex(n => n.FechaCreacion);
+                entity.HasIndex(n => n.Leida);
+                entity.HasIndex(n => n.Tipo);
+            });
+
+            // Configuración de ConfiguracionSistema
+            modelBuilder.Entity<ConfiguracionSistema>(entity =>
+            {
+                entity.ToTable("Configuraciones");
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Clave).IsRequired().HasMaxLength(100);
+                entity.Property(c => c.Valor).IsRequired();
+                entity.Property(c => c.Descripcion).HasMaxLength(300);
+                entity.Property(c => c.Grupo).IsRequired().HasMaxLength(50);
+                entity.HasIndex(c => c.Clave).IsUnique();
+                entity.HasIndex(c => c.Grupo);
             });
         }
     }

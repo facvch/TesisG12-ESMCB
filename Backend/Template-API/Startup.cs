@@ -4,7 +4,10 @@ using AutoMapper;
 using Core.Application;
 using Filters;
 using Infrastructure.Registrations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace API
 {
@@ -22,9 +25,60 @@ namespace API
             services.AddEndpointsApiExplorer();
             services.AddApplicationServices();
             services.AddInfrastructureServices(Configuration);
+
+            // JWT Authentication
+            var jwtKey = Configuration["Jwt:Key"] ?? "VeterinariaSecretKeyMuyLargaParaDesarrollo2024!@#$";
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = Configuration["Jwt:Issuer"] ?? "VeterinariaAPI",
+                    ValidAudience = Configuration["Jwt:Audience"] ?? "VeterinariaApp",
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+                    NameClaimType = System.Security.Claims.ClaimTypes.Name
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine($"JWT Auth Failed: {context.Exception.Message}");
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Hybrid Architecture Project", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Veterinaria API", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Token. Formato: Bearer {token}",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
             });
             services.AddMvc().AddMvcOptions(options =>
             {
@@ -58,6 +112,7 @@ namespace API
             app.UseCors("AllowSpecificOrigin");
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<API.Middleware.AuditMiddleware>();
             //UseEventBus(app);
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }

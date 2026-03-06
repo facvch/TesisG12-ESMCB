@@ -19,6 +19,14 @@ namespace Controllers
             return Ok(new QueryResult<MetodoPagoDto>(dtos, dtos.Count, 1, 10));
         }
 
+        [HttpGet("api/v1/[Controller]/{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var e = await _repo.FindOneAsync(id);
+            if (e == null) return NotFound();
+            return Ok(new MetodoPagoDto { Id = e.Id, Nombre = e.Nombre, Activo = e.Activo });
+        }
+
         [HttpPost("api/v1/[Controller]")]
         public async Task<IActionResult> Create([FromBody] CreateMetodoPagoRequest r)
         {
@@ -26,6 +34,16 @@ namespace Controllers
             if (!entity.IsValid) return BadRequest(entity.GetErrors().Select(e => e.ErrorMessage));
             var id = await _repo.AddAsync(entity);
             return Created($"api/v1/MetodoPago/{id}", new { Id = id });
+        }
+
+        [HttpPut("api/v1/[Controller]")]
+        public async Task<IActionResult> Update([FromBody] UpdateMetodoPagoRequest r)
+        {
+            var e = await _repo.FindOneAsync(r.Id);
+            if (e == null) return NotFound();
+            e.Actualizar(r.Nombre);
+            _repo.Update(r.Id, e);
+            return NoContent();
         }
 
         [HttpDelete("api/v1/[Controller]/{id}")]
@@ -39,6 +57,7 @@ namespace Controllers
     }
 
     public class CreateMetodoPagoRequest { public string Nombre { get; set; } }
+    public class UpdateMetodoPagoRequest { public int Id { get; set; } public string Nombre { get; set; } }
 
     /// <summary>
     /// Controller para gestionar Ventas con descuento automático de stock

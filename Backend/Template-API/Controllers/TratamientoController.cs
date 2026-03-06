@@ -124,6 +124,19 @@ namespace Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Elimina un tratamiento
+        /// </summary>
+        [HttpDelete("api/v1/[Controller]/{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
+            var entity = await _tratamientoRepository.FindOneAsync(id);
+            if (entity == null) return NotFound($"No se encontró el tratamiento con Id {id}");
+            _tratamientoRepository.Remove(id);
+            return NoContent();
+        }
+
         private static TratamientoDto MapToDto(Domain.Entities.Tratamiento t) => new()
         {
             Id = t.Id,
