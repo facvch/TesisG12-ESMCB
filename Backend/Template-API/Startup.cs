@@ -107,6 +107,7 @@ namespace API
 
             CustomMapper.Instance = app.ApplicationServices.GetRequiredService<IMapper>();
 
+            app.UseMiddleware<Middleware.GlobalExceptionMiddleware>();
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors("AllowSpecificOrigin");
