@@ -1,0 +1,132 @@
+@page "/inventario/marcas/nuevo"
+@page "/inventario/marcas/editar/{Id:int}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject CatalogoInventarioService CatalogoService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar Marca" : "Nueva Marca")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Edición de Marca" : "Alta de Marca")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 700px;">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando datos...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="marcaForm">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre de la Marca (*)</label>
+                    <InputText @bind-Value="model.Nombre" class="form-control bg-dark text-light border-secondary" placeholder="Ej. Royal Canin, ProPlan" />
+                    <ValidationMessage For="@(() => model.Nombre)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción Opcional</label>
+                    <InputTextArea @bind-Value="model.Descripcion" class="form-control bg-dark text-light border-secondary" rows="3" />
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="row">
+                    <div class="col-12 mt-2">
+                        <div class="form-check form-switch">
+                            <InputCheckbox @bind-Value="model.Activo" class="form-check-input" id="activoSw" />
+                            <label class="form-check-label" for="activoSw" style="color: var(--text-secondary);">Marca Activa (Visible)</label>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando...</span> } else { <span>Confirmar Datos</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private MarcaDto model = new() { Activo = true };
+    private bool isEdit => Id.HasValue;
+    private bool isLoading = true;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            if (isEdit)
+            {
+                var response = await CatalogoService.GetMarcaByIdAsync(Id!.Value);
+                if (response != null) model = response;
+                else errorMessage = "No se encontró el catálogo solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error al cargar la información.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            bool result;
+            if (isEdit) 
+                result = await CatalogoService.UpdateMarcaAsync(Id!.Value, model);
+            else 
+                result = await CatalogoService.CreateMarcaAsync(model);
+
+            if (result) Navigation.NavigateTo("/inventario/marcas");
+            else errorMessage = "Error en la creación o actualización.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Excepción crítica al guardar.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/inventario/marcas");
+}

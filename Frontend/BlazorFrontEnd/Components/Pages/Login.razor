@@ -1,0 +1,103 @@
+@page "/login"
+@rendermode InteractiveServer
+@layout BlazorFrontEnd.Components.Layout.EmptyLayout
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@using BlazorFrontEnd.Auth
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@inject AuthService AuthService
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject TokenStorageService TokenStorage
+
+<PageTitle>Login - Gestión Veterinaria</PageTitle>
+
+<div style="height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background: url('https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=1968&auto=format&fit=crop') no-repeat center center; background-size: cover; position: relative;">
+    
+    <!-- Dark Overlay -->
+    <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(11, 15, 25, 0.7); backdrop-filter: blur(5px);"></div>
+
+    <div class="glass-card" style="width: 100%; max-width: 400px; position: relative; z-index: 10;">
+        <div class="text-center" style="margin-bottom: var(--sp-lg);">
+            <div style="width:60px; height:60px; background:var(--accent-primary); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size: 24px; margin-bottom: 15px;">
+                V
+            </div>
+            <h2 style="font-weight: 700;">Bienvenido</h2>
+            <p class="text-secondary">Ingresa tus credenciales para continuar</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: var(--text-primary); padding: 10px; border-radius: var(--radius-sm); margin-bottom: 15px; text-align: center;">
+                @errorMessage
+            </div>
+        }
+
+        <EditForm Model="loginRequest" OnValidSubmit="HandleLogin" FormName="loginForm">
+            <DataAnnotationsValidator />
+            
+            <div style="margin-bottom: var(--sp-md);">
+                <label style="color: var(--text-secondary); margin-bottom: 5px; display: block; font-size: 0.875rem;">Usuario</label>
+                <InputText @bind-Value="loginRequest.NombreUsuario" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; padding: 12px; border-radius: var(--radius-sm);" placeholder="Ej. admin" />
+            </div>
+
+            <div style="margin-bottom: var(--sp-lg);">
+                <label style="color: var(--text-secondary); margin-bottom: 5px; display: block; font-size: 0.875rem;">Contraseña</label>
+                <InputText @bind-Value="loginRequest.Password" type="password" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white; padding: 12px; border-radius: var(--radius-sm);" placeholder="••••••••" />
+            </div>
+
+            <button type="submit" class="btn-primary-glass" style="width: 100%; padding: 12px; font-size: 1rem;" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span>Cargando...</span>
+                }
+                else
+                {
+                    <span>Ingresar</span>
+                }
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginRequest loginRequest = new();
+    private bool isLoading;
+    private string errorMessage = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var response = await AuthService.LoginAsync(loginRequest);
+
+            if (response != null && !string.IsNullOrEmpty(response.Token))
+            {
+                await LocalStorage.SetItemAsync("authToken", response.Token);
+                TokenStorage.SetToken(response.Token);
+                ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthentication(response.Token);
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Usuario o contraseña incorrectos.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error atrapado en UI: {ex.Message}");
+            errorMessage = $"Error de conexión con el servidor. Revisá la consola para más detalles.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

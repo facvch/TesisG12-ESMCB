@@ -1,0 +1,116 @@
+@page "/historial-clinico/nuevo-tratamiento/{PacienteId}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject TratamientoService TratamientoService
+@inject PacienteService PacienteService
+@inject PersonalService PersonalService
+@inject NavigationManager Navigation
+
+<PageTitle>Iniciar Tratamiento - Historial Clínico</PageTitle>
+
+<div class="glass-card" style="max-width: 800px; margin: auto; margin-top:20px;">
+    <h4>Iniciar Plan de Tratamiento (@pacienteNombre)</h4>
+    <hr class="border-secondary" />
+
+    <EditForm Model="model" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator />
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label>Fecha de Inicio (*)</label>
+                <InputDate @bind-Value="model.Fecha" class="form-control bg-dark text-light border-secondary" />
+            </div>
+            <div class="col-md-6">
+                <label>Veterinario a Cargo (*)</label>
+                <InputSelect @bind-Value="model.Veterinario" class="form-select bg-dark text-light border-secondary">
+                    <option value="">Seleccione Médico...</option>
+                    @foreach (var v in vets)
+                    {
+                        <option value="@v.NombreCompleto">@v.NombreCompleto</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => model.Veterinario)" class="text-danger" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label>Diagnóstico (Patología a tratar) (*)</label>
+            <InputText @bind-Value="model.Diagnostico" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Otitis Externa Bilateral" />
+            <ValidationMessage For="@(() => model.Diagnostico)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label>Descripción clínica del Tratamiento</label>
+            <InputTextArea @bind-Value="model.Descripcion" class="form-control bg-dark text-light border-secondary" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label>Medicación Recetada / Dosis de choque y mantenimiento</label>
+            <InputTextArea @bind-Value="model.Medicacion" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="Ej: Amoxicilina 500mg cada 12hs por 7 días..." />
+        </div>
+
+        <div class="mb-3 form-check" style="margin-top: 20px;">
+            <InputCheckbox @bind-Value="model.Finalizado" class="form-check-input bg-dark border-secondary" id="chkFinalizado" />
+            <label class="form-check-label text-light" for="chkFinalizado">Marcar como Finalizado / Alta médica</label>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger p-2 mt-2">@errorMessage</div>
+        }
+
+        <div class="d-flex justify-content-end mt-4 gap-2">
+            <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+            <button type="submit" class="btn-primary-glass" disabled="@isSaving">Guardar Tratamiento</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string PacienteId { get; set; } = string.Empty;
+
+    private TratamientoDto model = new() { Fecha = DateTime.Today };
+    private string pacienteNombre = "Cargando...";
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    private List<VeterinarioDto> vets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        model.PacienteId = PacienteId;
+        var p = await PacienteService.GetByIdAsync(PacienteId);
+        if(p != null) {
+            pacienteNombre = p.Nombre;
+            model.PacienteNombre = p.Nombre;
+        }
+
+        var vRes = await PersonalService.GetVeterinariosActivosAsync();
+        if(vRes != null) vets = vRes;
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        
+        if (string.IsNullOrEmpty(model.Diagnostico))
+        {
+            errorMessage = "El campo Diagnóstico es requerido.";
+            isSaving = false;
+            return;
+        }
+
+        if(await TratamientoService.CreateAsync(model))
+        {
+            GoBack();
+        }
+        else
+        {
+            errorMessage = "Error al intentar guardar el tratamiento.";
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo($"/historial-clinico/paciente/{PacienteId}");
+}

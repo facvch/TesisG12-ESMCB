@@ -1,0 +1,242 @@
+@page "/inventario/productos/nuevo"
+@page "/inventario/productos/editar/{Id}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject ProductoService ProductoService
+@inject CatalogoInventarioService CatalogoService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar Producto" : "Nuevo Producto")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Editar Producto" : "Nuevo Producto")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 900px;">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando información y catálogos...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="productoForm">
+            <DataAnnotationsValidator />
+
+            @* ── Fila 1: Nombre + Código de Barras ── *@
+            <div class="row">
+                <div class="col-md-8" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre del Producto (*)</label>
+                    <InputText @bind-Value="model.Nombre" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Nombre)" class="text-danger" />
+                </div>
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Código de Barras (*)</label>
+                    <InputText @bind-Value="model.CodigoBarras" class="form-control bg-dark text-light border-secondary" placeholder="Ej: 7790001234" />
+                    <ValidationMessage For="@(() => model.CodigoBarras)" class="text-danger" />
+                </div>
+            </div>
+
+            @* ── Fila 2: Categoría + Marca ── *@
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Categoría (*)</label>
+                    <InputSelect @bind-Value="model.CategoriaId" class="form-select bg-dark text-light border-secondary">
+                        <option value="0">-- Seleccione Categoría --</option>
+                        @foreach (var c in categorias)
+                        {
+                            <option value="@c.Id">@c.Nombre</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.CategoriaId)" class="text-danger" />
+                </div>
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Marca</label>
+                    <InputSelect @bind-Value="model.MarcaId" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Sin Marca --</option>
+                        @foreach (var m in marcas)
+                        {
+                            <option value="@m.Id">@m.Nombre</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            @* ── Fila 3: Proveedor + Depósito ── *@
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Proveedor</label>
+                    <InputSelect @bind-Value="model.ProveedorId" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Sin Proveedor --</option>
+                        @foreach (var p in proveedores)
+                        {
+                            <option value="@p.Id">@p.RazonSocial</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Depósito</label>
+                    <InputSelect @bind-Value="model.DepositoId" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Sin Depósito --</option>
+                        @foreach (var d in depositos)
+                        {
+                            <option value="@d.Id">@d.Nombre</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            @* ── Fila 4: Precios ── *@
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Precio de Compra (*)</label>
+                    <InputNumber @bind-Value="model.PrecioCompra" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.PrecioCompra)" class="text-danger" />
+                </div>
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Precio de Venta (*)</label>
+                    <InputNumber @bind-Value="model.PrecioVenta" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.PrecioVenta)" class="text-danger" />
+                </div>
+            </div>
+
+            @* ── Fila 5: Stock (solo en Alta) ── *@
+            @if (!isEdit)
+            {
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Inicial</label>
+                        <InputNumber @bind-Value="model.StockActual" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Mínimo (alerta)</label>
+                        <InputNumber @bind-Value="model.StockMinimo" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Mínimo (alerta)</label>
+                        <InputNumber @bind-Value="model.StockMinimo" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Actual</label>
+                        <p class="form-control bg-dark text-light border-secondary" style="line-height: 2.2;">@model.StockActual <small class="text-secondary">(use el botón "Stock" de la grilla para modificar)</small></p>
+                    </div>
+                </div>
+            }
+
+            @* ── Fila 6: Descripción ── *@
+            <div class="row" style="margin-bottom: var(--sp-sm);">
+                <div class="col-12">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                    <InputTextArea @bind-Value="model.Descripcion" class="form-control bg-dark text-light border-secondary" rows="3" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando...</span> } else { <span>Guardar Producto</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private ProductoDto model = new() { Activo = true };
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+    private bool isLoading = true;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    // Catálogos para Dropdowns
+    private List<CategoriaDto> categorias = new();
+    private List<MarcaDto> marcas = new();
+    private List<ProveedorDto> proveedores = new();
+    private List<DepositoDto> depositos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            // Cargar dropdowns en paralelo
+            var catTask = CatalogoService.GetCategoriasAsync();
+            var marTask = CatalogoService.GetMarcasAsync();
+            var proTask = CatalogoService.GetProveedoresAsync();
+            var depTask = CatalogoService.GetDepositosAsync();
+
+            await Task.WhenAll(catTask, marTask, proTask, depTask);
+
+            categorias = catTask.Result ?? new();
+            marcas = marTask.Result ?? new();
+            proveedores = proTask.Result ?? new();
+            depositos = depTask.Result ?? new();
+
+            if (isEdit)
+            {
+                var response = await ProductoService.GetByIdAsync(Id!);
+                if (response != null)
+                    model = response;
+                else
+                    errorMessage = "No se encontró el producto solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error al cargar los catálogos o el producto.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            bool result;
+            if (isEdit)
+                result = await ProductoService.UpdateAsync(Id!, model);
+            else
+                result = await ProductoService.CreateAsync(model);
+
+            if (result)
+                Navigation.NavigateTo("/inventario/productos");
+            else
+                errorMessage = "Error al guardar. Revise que todos los campos obligatorios estén completos.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Excepción al intentar guardar el producto.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/inventario/productos");
+}

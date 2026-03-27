@@ -1,0 +1,189 @@
+@page "/ventas"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject VentaService VentaService
+@inject NavigationManager Navigation
+
+<PageTitle>Historial de Ventas</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Caja y Ventas</h2>
+        <p class="text-secondary" style="margin: 0;">Historial de comprobantes emitidos</p>
+    </div>
+    <a href="/ventas/pos" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+        </svg>
+        Punto de Venta (POS)
+    </a>
+</div>
+
+<div class="glass-card">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label class="text-secondary mb-1">Desde</label>
+            <input type="date" class="form-control bg-dark text-light border-secondary" @bind="fechaDesde" />
+        </div>
+        <div class="col-md-3">
+            <label class="text-secondary mb-1">Hasta</label>
+            <input type="date" class="form-control bg-dark text-light border-secondary" @bind="fechaHasta" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-outline-info w-100" @onclick="LoadDataAsync">Filtrar</button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando comprobantes...</p>
+    }
+    else if (ventas == null || !ventas.Any())
+    {
+        <p class="text-secondary">No se encontraron ventas en el período seleccionado.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-dark table-hover" style="background: transparent;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-glass);">
+                        <th>Fecha / Hora</th>
+                        <th>Cliente</th>
+                        <th>Método Pago</th>
+                        <th>Estado</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in ventas.OrderByDescending(x => x.Fecha))
+                    {
+                        var statusClass = v.Estado.ToUpper() == "ANULADA" ? "bg-danger" : "bg-success";
+
+                        <tr style="border-bottom: 1px solid var(--border-glass);">
+                            <td>
+                                <strong>@v.Fecha.ToString("dd/MM/yyyy")</strong>
+                                <br/><small class="text-secondary">@v.Fecha.ToString("HH:mm")</small>
+                            </td>
+                            <td>@(string.IsNullOrEmpty(v.PropietarioNombre) ? "Consumidor Final" : v.PropietarioNombre)</td>
+                            <td>@v.MetodoPagoNombre</td>
+                            <td>
+                                <span class="badge @statusClass">@v.Estado</span>
+                            </td>
+                            <td class="text-end fw-bold" style="color: var(--accent-primary);">
+                                $@v.Total.ToString("N2")
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => VerDetalle(v)">Ver Detalle</button>
+                                @if (v.Estado.ToUpper() != "ANULADA")
+                                {
+                                    <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => AnularVenta(v.Id)">Anular</button>
+                                }
+                            </td>
+                        </tr>
+                        
+                        @if (selectedVenta?.Id == v.Id)
+                        {
+                            <tr style="background: rgba(255,255,255,0.02);">
+                                <td colspan="6" class="p-3">
+                                    <div class="glass-card" style="margin: 0;">
+                                        <h6 class="text-light border-bottom border-secondary pb-2">Artículos del ticket</h6>
+                                        <table class="table table-sm table-dark table-borderless m-0">
+                                            <thead>
+                                                <tr class="text-secondary">
+                                                    <th>Cant.</th>
+                                                    <th>Descripción</th>
+                                                    <th class="text-end">Precio U.</th>
+                                                    <th class="text-end">Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach(var d in v.Detalles)
+                                                {
+                                                    <tr>
+                                                        <td>@d.Cantidad</td>
+                                                        <td>@d.Descripcion</td>
+                                                        <td class="text-end">$@d.PrecioUnitario.ToString("N2")</td>
+                                                        <td class="text-end">$@d.Subtotal.ToString("N2")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                        @if(!string.IsNullOrEmpty(v.Observaciones))
+                                        {
+                                            <div class="mt-2 text-secondary small"><strong>Nota:</strong> @v.Observaciones</div>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private List<VentaDto>? ventas;
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    
+    private DateTime fechaDesde = DateTime.Today.AddDays(-7);
+    private DateTime fechaHasta = DateTime.Today.AddDays(1); // Hasta mañana para incluir las de hoy
+
+    private VentaDto? selectedVenta;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        try
+        {
+            ventas = await VentaService.GetVentasAsync(fechaDesde, fechaHasta);
+            selectedVenta = null;
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error al intentar obtener el historial de ventas o comprobantes.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void VerDetalle(VentaDto v)
+    {
+        if (selectedVenta?.Id == v.Id) selectedVenta = null; // Toggle off
+        else selectedVenta = v;
+    }
+
+    private async Task AnularVenta(string id)
+    {
+        // Require double confirmation in prod, but mock it here:
+        bool confirm = true; 
+        if(confirm)
+        {
+            var res = await VentaService.AnularVentaAsync(id, "Anulación por operador");
+            if(res) {
+                await LoadDataAsync();
+            } else {
+                errorMessage = "Hubo un problema al intentar anular el ticket de caja. Puede que la factura fiscal ya esté emitida.";
+            }
+        }
+    }
+}

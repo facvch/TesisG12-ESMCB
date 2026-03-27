@@ -10,5 +10,6 @@ namespace Application.Repositories
         Task<IEnumerable<Turno>> GetByFechaAsync(DateTime fecha);
         Task<IEnumerable<Turno>> GetProgramadosAsync(DateTime desde, DateTime hasta);
         Task<IEnumerable<Turno>> GetByEstadoAsync(EstadoTurno estado);
+        Task<IEnumerable<Turno>> GetTurnosExpandidosAsync();
     }
 }

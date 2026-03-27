@@ -1,0 +1,100 @@
+@page "/historial-clinico"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject PacienteService PacienteService
+@inject NavigationManager Navigation
+
+<PageTitle>Buscador de Historial Clínico</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Historial Clínico</h2>
+        <p class="text-secondary" style="margin: 0;">Seleccione un paciente para ver su ficha médica completa</p>
+    </div>
+</div>
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-md);">
+        <h4 style="margin: 0;">Seleccionar Paciente</h4>
+        <input type="text" @bind="searchTerm" @bind:event="oninput" @keyup="OnSearchChanged" class="form-control" placeholder="Buscar mascota por nombre..." style="width: 350px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+    </div>
+
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando directorio de pacientes...</p>
+    }
+    else if (pacientesResponse?.Items == null || !pacientesResponse.Items.Any())
+    {
+        <p class="text-secondary">No se encontraron mascotas que coincidan con la búsqueda.</p>
+    }
+    else
+    {
+        <div class="row" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-md);">
+            @foreach (var p in pacientesResponse.Items)
+            {
+                <div class="glass-card" style="padding: 15px; cursor: pointer; transition: transform 0.2s;" @onclick="() => VerHistorial(p.Id)" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <strong style="font-size: 1.1rem; color: var(--accent-primary);">@p.Nombre</strong>
+                            <div class="text-secondary" style="font-size: 0.85rem;">@p.EspecieNombre | @p.PropietarioNombre</div>
+                        </div>
+                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center;">
+                            🐾
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <span class="text-secondary">Página @pacientesResponse.PageIndex de @pacientesResponse.TotalPages</span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" disabled="@(!pacientesResponse.HasPreviousPage)" @onclick="PreviousPage">Anterior</button>
+                <button class="btn btn-sm btn-outline-secondary" disabled="@(!pacientesResponse.HasNextPage)" @onclick="NextPage">Siguiente</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private PaginatedList<PacienteDto>? pacientesResponse;
+    private bool isLoading = true;
+    private string searchTerm = string.Empty;
+    private System.Timers.Timer? searchTimer;
+    private int currentPage = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        pacientesResponse = await PacienteService.GetAllAsync(currentPage, 12, searchTerm);
+        isLoading = false;
+    }
+
+    private void OnSearchChanged()
+    {
+        if (searchTimer != null) searchTimer.Dispose();
+        
+        searchTimer = new System.Timers.Timer(500);
+        searchTimer.Elapsed += async (s, e) =>
+        {
+            currentPage = 1;
+            await InvokeAsync(LoadDataAsync);
+            await InvokeAsync(StateHasChanged);
+        };
+        searchTimer.AutoReset = false;
+        searchTimer.Start();
+    }
+
+    private void VerHistorial(string id)
+    {
+        Navigation.NavigateTo($"/historial-clinico/paciente/{id}");
+    }
+
+    private async Task PreviousPage() { if (pacientesResponse?.HasPreviousPage == true) { currentPage--; await LoadDataAsync(); } }
+    private async Task NextPage() { if (pacientesResponse?.HasNextPage == true) { currentPage++; await LoadDataAsync(); } }
+}

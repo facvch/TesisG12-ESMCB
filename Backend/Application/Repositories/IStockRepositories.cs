@@ -31,6 +31,7 @@ namespace Application.Repositories
         Task<IEnumerable<Producto>> GetStockBajoAsync();
         Task<Producto> GetByCodigoBarrasAsync(string codigoBarras);
         Task<IEnumerable<Producto>> SearchByNombreAsync(string nombre);
+        Task<IEnumerable<Producto>> GetProductosExpandidosAsync();
     }
 
     public interface IMovimientoStockRepository : IRepository<MovimientoStock>

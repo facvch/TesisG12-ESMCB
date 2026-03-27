@@ -28,16 +28,30 @@ namespace Controllers
         [HttpGet("api/v1/Paginado/pacientes")]
         public async Task<IActionResult> PacientesPaginados(
             [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
-            [FromQuery] string sortBy = "Nombre", [FromQuery] string sortDir = "asc")
+            [FromQuery] string sortBy = "Nombre", [FromQuery] string sortDir = "asc",
+            [FromQuery] string searchTerm = "")
         {
-            var entities = await pacienteRepo.FindAllAsync();
+            var entities = (await pacienteRepo.GetPacientesExpandidosAsync()).AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var st = searchTerm.ToLower();
+                entities = entities.Where(p => 
+                    p.Nombre.ToLower().Contains(st) || 
+                    (p.Propietario != null && (p.Propietario.Nombre.ToLower().Contains(st) || p.Propietario.Apellido.ToLower().Contains(st)))
+                );
+            }
+
             var dtos = entities.Select(p => new
             {
                 p.Id, p.Nombre, p.Sexo, p.FechaNacimiento,
-                Especie = p.Especie != null ? p.Especie.Nombre : "",
-                Raza = p.Raza != null ? p.Raza.Nombre : "",
-                Propietario = p.Propietario != null ? $"{p.Propietario.Nombre} {p.Propietario.Apellido}" : "",
-                PropietarioId = p.PropietarioId
+                EspecieId = p.EspecieId,
+                EspecieNombre = p.Especie != null ? p.Especie.Nombre : "",
+                RazaId = p.RazaId,
+                RazaNombre = p.Raza != null ? p.Raza.Nombre : "",
+                PropietarioId = p.PropietarioId,
+                PropietarioNombre = p.Propietario != null ? $"{p.Propietario.Nombre} {p.Propietario.Apellido}" : "",
+                EdadEnAnios = p.FechaNacimiento.HasValue ? (int?)Math.Floor((DateTime.Now - p.FechaNacimiento.Value).TotalDays / 365.25) : null,
+                p.Activo
             });
             return Ok(PaginacionHelper.Paginar(dtos, page, pageSize, sortBy, sortDir));
         }
@@ -48,14 +62,26 @@ namespace Controllers
         [HttpGet("api/v1/Paginado/propietarios")]
         public async Task<IActionResult> PropietariosPaginados(
             [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
-            [FromQuery] string sortBy = "Apellido", [FromQuery] string sortDir = "asc")
+            [FromQuery] string sortBy = "Apellido", [FromQuery] string sortDir = "asc",
+            [FromQuery] string searchTerm = "")
         {
-            var entities = await propietarioRepo.FindAllAsync();
+            var entities = (await propietarioRepo.GetPropietariosConMascotasAsync()).AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var st = searchTerm.ToLower();
+                entities = entities.Where(p => 
+                    p.Nombre.ToLower().Contains(st) || 
+                    p.Apellido.ToLower().Contains(st) || 
+                    p.DNI.Contains(st)
+                );
+            }
+
             var dtos = entities.Select(p => new
             {
                 p.Id, p.Nombre, p.Apellido, p.DNI, p.Telefono, p.Email,
                 p.Direccion, p.FechaRegistro, p.Activo,
-                CantidadMascotas = p.Mascotas != null ? p.Mascotas.Count : 0
+                CantidadMascotas = p.Mascotas != null ? p.Mascotas.Count : 0,
+                NombreCompleto = $"{p.Nombre} {p.Apellido}"
             });
             return Ok(PaginacionHelper.Paginar(dtos, page, pageSize, sortBy, sortDir));
         }
@@ -65,18 +91,31 @@ namespace Controllers
         /// </summary>
         [HttpGet("api/v1/Paginado/productos")]
         public async Task<IActionResult> ProductosPaginados(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 15,
             [FromQuery] string sortBy = "Nombre", [FromQuery] string sortDir = "asc",
-            [FromQuery] bool soloActivos = true)
+            [FromQuery] bool soloActivos = true, [FromQuery] string searchTerm = "")
         {
-            var entities = await productoRepo.FindAllAsync();
-            if (soloActivos) entities = entities.Where(p => p.Activo).ToList();
+            var entities = (await productoRepo.GetProductosExpandidosAsync()).AsEnumerable();
+            if (soloActivos) entities = entities.Where(p => p.Activo);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var st = searchTerm.ToLower();
+                entities = entities.Where(p =>
+                    p.Nombre.ToLower().Contains(st) ||
+                    (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(st))
+                );
+            }
+
             var dtos = entities.Select(p => new
             {
-                p.Id, p.Nombre, p.CodigoBarras, p.PrecioCompra, p.PrecioVenta,
+                p.Id, p.Nombre, p.Descripcion, p.CodigoBarras,
+                p.CategoriaId, CategoriaNombre = p.Categoria != null ? p.Categoria.Nombre : "",
+                p.MarcaId, MarcaNombre = p.Marca != null ? p.Marca.Nombre : "",
+                p.ProveedorId, ProveedorNombre = p.Proveedor != null ? p.Proveedor.RazonSocial : "",
+                p.DepositoId, DepositoNombre = p.Deposito != null ? p.Deposito.Nombre : "",
+                p.PrecioCompra, p.PrecioVenta,
                 p.StockActual, p.StockMinimo, p.Activo,
-                Categoria = p.Categoria != null ? p.Categoria.Nombre : "",
-                Marca = p.Marca != null ? p.Marca.Nombre : "",
                 StockBajo = p.StockActual <= p.StockMinimo
             });
             return Ok(PaginacionHelper.Paginar(dtos, page, pageSize, sortBy, sortDir));
@@ -91,7 +130,7 @@ namespace Controllers
             [FromQuery] string sortBy = "FechaHora", [FromQuery] string sortDir = "desc",
             [FromQuery] DateTime? desde = null, [FromQuery] DateTime? hasta = null)
         {
-            var entities = (await turnoRepo.FindAllAsync()).AsEnumerable();
+            var entities = (await turnoRepo.GetTurnosExpandidosAsync()).AsEnumerable();
             if (desde.HasValue) entities = entities.Where(t => t.FechaHora >= desde.Value);
             if (hasta.HasValue) entities = entities.Where(t => t.FechaHora <= hasta.Value);
 

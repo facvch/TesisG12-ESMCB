@@ -9,5 +9,6 @@ namespace Application.Repositories
         Task<IEnumerable<Paciente>> GetByEspecieIdAsync(int especieId);
         Task<IEnumerable<Paciente>> SearchByNombreAsync(string nombre);
         Task<IEnumerable<Paciente>> GetActivosAsync();
+        Task<IEnumerable<Paciente>> GetPacientesExpandidosAsync();
     }
 }

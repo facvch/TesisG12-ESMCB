@@ -1,0 +1,150 @@
+@page "/inventario/proveedores/nuevo"
+@page "/inventario/proveedores/editar/{Id:int}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject CatalogoInventarioService CatalogoService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar Proveedor" : "Nuevo Proveedor")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Edición de Proveedor" : "Alta de Proveedor")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 800px;">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando datos...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="proveedorForm">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-7" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Razón Social (*)</label>
+                    <InputText @bind-Value="model.RazonSocial" class="form-control bg-dark text-light border-secondary" placeholder="Ej. Droguería del Sur S.A." />
+                    <ValidationMessage For="@(() => model.RazonSocial)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-5" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">CUIT (*)</label>
+                    <InputText @bind-Value="model.Cuit" class="form-control bg-dark text-light border-secondary" placeholder="XX-XXXXXXXX-X" />
+                    <ValidationMessage For="@(() => model.Cuit)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Teléfono / Celular</label>
+                    <InputText @bind-Value="model.Telefono" class="form-control bg-dark text-light border-secondary" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Email de Contacto</label>
+                    <InputText @bind-Value="model.Email" type="email" class="form-control bg-dark text-light border-secondary" placeholder="ventas@proveedor.com" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Dirección Física</label>
+                    <InputText @bind-Value="model.Direccion" class="form-control bg-dark text-light border-secondary" placeholder="Calle, Número, Ciudad, Provincia" />
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="row">
+                    <div class="col-12 mt-2">
+                        <div class="form-check form-switch">
+                            <InputCheckbox @bind-Value="model.Activo" class="form-check-input" id="activoSw" />
+                            <label class="form-check-label" for="activoSw" style="color: var(--text-secondary);">Proveedor Activo (Habiltiado para compras)</label>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando...</span> } else { <span>Confirmar Datos</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private ProveedorDto model = new() { Activo = true };
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+    private bool isLoading = true;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            if (isEdit)
+            {
+                var response = await CatalogoService.GetProveedorByIdAsync(Id!);
+                if (response != null) model = response;
+                else errorMessage = "No se encontró el catálogo solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error al cargar la información del proveedor.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            bool result;
+            if (isEdit) 
+                result = await CatalogoService.UpdateProveedorAsync(Id!, model);
+            else 
+                result = await CatalogoService.CreateProveedorAsync(model);
+
+            if (result) Navigation.NavigateTo("/inventario/proveedores");
+            else errorMessage = "Error en la creación o actualización. Valide el formato del CUIT.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "Excepción crítica al guardar.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/inventario/proveedores");
+}

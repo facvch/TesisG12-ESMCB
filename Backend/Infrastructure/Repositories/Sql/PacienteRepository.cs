@@ -11,6 +11,15 @@ namespace Infrastructure.Repositories.Sql
         {
         }
 
+        public async Task<IEnumerable<Paciente>> GetPacientesExpandidosAsync()
+        {
+            return await Repository
+                .Include(p => p.Especie)
+                .Include(p => p.Raza)
+                .Include(p => p.Propietario)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Paciente>> GetActivosAsync()
         {
             return await Repository.Where(p => p.Activo).ToListAsync();

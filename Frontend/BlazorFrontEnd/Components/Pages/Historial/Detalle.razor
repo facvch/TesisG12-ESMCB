@@ -1,0 +1,225 @@
+@page "/historial-clinico/paciente/{PacienteId}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject PacienteService PacienteService
+@inject HistorialClinicoService HistorialService
+@inject VacunacionService VacunacionService
+@inject TratamientoService TratamientoService
+@inject NavigationManager Navigation
+
+<PageTitle>Ficha Clínica: @(paciente?.Nombre ?? "Cargando...")</PageTitle>
+
+@if (isLoading)
+{
+    <p class="text-secondary">Cargando ficha médica...</p>
+}
+else if (paciente == null)
+{
+    <p class="text-secondary">Paciente no encontrado.</p>
+}
+else
+{
+    <div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+        <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+        </button>
+        <div>
+            <h2 style="font-weight: 700; margin: 0;">Ficha Clínica Integral</h2>
+            <p class="text-secondary" style="margin: 0;">Paciente: <strong class="text-primary">@paciente.Nombre</strong> (@paciente.EspecieNombre/ @paciente.RazaNombre)</p>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist" style="border-bottom: 2px solid var(--border-glass); padding-bottom: 10px;">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link @(activeTab == "consultas" ? "active btn-primary-glass" : "text-light")" @onclick='() => SetTab("consultas")' style="border-radius: 8px;">Consultas Médicas</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link @(activeTab == "vacunas" ? "active btn-primary-glass" : "text-light")" @onclick='() => SetTab("vacunas")' style="border-radius: 8px; margin-left:10px;">Plan de Vacunación</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link @(activeTab == "tratamientos" ? "active btn-primary-glass" : "text-light")" @onclick='() => SetTab("tratamientos")' style="border-radius: 8px; margin-left:10px;">Tratamientos Activos</button>
+      </li>
+    </ul>
+
+    <!-- TAB CONTENT -->
+    <div class="tab-content" id="pills-tabContent">
+        
+        <!-- CONSULTAS -->
+        @if(activeTab == "consultas")
+        {
+            <div class="glass-card mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0">Últimas Consultas</h5>
+                    <button class="btn btn-sm btn-outline-success" @onclick="NuevaConsulta">
+                        + Nueva Consulta
+                    </button>
+                </div>
+                
+                @if(consultas == null || !consultas.Any())
+                {
+                    <p class="text-secondary">No hay registros de consultas en la historia clínica.</p>
+                }
+                else
+                {
+                    <div class="accordion" id="accConsultas">
+                        @foreach(var c in consultas.OrderByDescending(x => x.Fecha))
+                        {
+                            <div class="accordion-item" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); margin-bottom: 5px;">
+                                <h2 class="accordion-header">
+                                  <button class="accordion-button collapsed text-light" type="button" data-bs-toggle="collapse" data-bs-target="#col_@c.Id" style="background: transparent; box-shadow: none;">
+                                    <strong>@c.Fecha.ToString("dd/MM/yyyy")</strong>: @c.Motivo (Vet: @c.Veterinario)
+                                  </button>
+                                </h2>
+                                <div id="col_@c.Id" class="accordion-collapse collapse" data-bs-parent="#accConsultas">
+                                  <div class="accordion-body text-secondary">
+                                    <p><strong>Síntomas:</strong> @c.Sintomas</p>
+                                    <p><strong>Diagnóstico:</strong> <span class="text-light">@c.Diagnostico</span></p>
+                                    <p><strong>Indicaciones:</strong> @c.Indicaciones</p>
+                                    <p style="font-size: 0.85em; margin-top:10px;">Peso: @c.Peso kg | Temp: @c.Temperatura °C</p>
+                                  </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- VACUNAS -->
+        @if(activeTab == "vacunas")
+        {
+            <div class="glass-card mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0">Libreta Sanitaria (Vacunas)</h5>
+                    <button class="btn btn-sm btn-outline-success" @onclick="NuevaVacuna">
+                        + Registrar Vacuna
+                    </button>
+                </div>
+                
+                @if(vacunas == null || !vacunas.Any())
+                {
+                    <p class="text-secondary">El paciente no registra vacunas aplicadas.</p>
+                }
+                else
+                {
+                    <table class="table table-dark table-hover" style="background: transparent;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-glass);">
+                                <th>Fecha Aplic.</th>
+                                <th>Vacuna</th>
+                                <th>Próxima Dosis</th>
+                                <th>Lote / Vet</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in vacunas.OrderByDescending(x => x.FechaAplicacion))
+                            {
+                                <tr style="border-bottom: 1px solid var(--border-glass);">
+                                    <td>@v.FechaAplicacion.ToString("dd/MM/yyyy")</td>
+                                    <td><strong>@v.VacunaNombre</strong></td>
+                                    <td>
+                                        @if(v.FechaProximaDosis.HasValue)
+                                        {
+                                            var css = v.ProximaDosisVencida ? "text-danger" : "text-info";
+                                            <span class="@css">@v.FechaProximaDosis.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else { <span class="text-secondary">-</span> }
+                                    </td>
+                                    <td class="text-secondary" style="font-size:0.85rem;">@v.NroLote <br/> @v.Veterinario</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        }
+
+        <!-- TRATAMIENTOS -->
+        @if(activeTab == "tratamientos")
+        {
+            <div class="glass-card mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0">Tratamientos Médicos</h5>
+                    <button class="btn btn-sm btn-outline-success" @onclick="NuevoTratamiento">
+                        + Iniciar Tratamiento
+                    </button>
+                </div>
+                
+                @if(tratamientos == null || !tratamientos.Any())
+                {
+                    <p class="text-secondary">No hay tratamientos activos o finalizados.</p>
+                }
+                else
+                {
+                    <div class="row">
+                    @foreach(var t in tratamientos.OrderBy(x=>x.Finalizado).ThenByDescending(x=>x.Fecha))
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-dark border-secondary" style="border-radius: 12px; height:100%;">
+                              <div class="card-header d-flex justify-content-between">
+                                  <span>@t.Fecha.ToString("dd/MM/yyyy") - <strong>@t.Diagnostico</strong></span>
+                                  @if(t.Finalizado){ <span class="badge bg-secondary">Finalizado</span> }
+                                  else { <span class="badge bg-warning text-dark">En curso</span> }
+                              </div>
+                              <div class="card-body text-light" style="font-size: 0.9rem;">
+                                  <p><strong>Desc:</strong> @t.Descripcion</p>
+                                  <p><strong>Medicamentos:</strong> @t.Medicacion</p>
+                              </div>
+                            </div>
+                        </div>
+                    }
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string PacienteId { get; set; } = string.Empty;
+
+    private bool isLoading = true;
+    private PacienteDto? paciente;
+    private string activeTab = "consultas"; // consultas | vacunas | tratamientos
+
+    private List<HistorialClinicoDto> consultas = new();
+    private List<RegistroVacunacionDto> vacunas = new();
+    private List<TratamientoDto> tratamientos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        
+        // Cargar paciente
+        paciente = await PacienteService.GetByIdAsync(PacienteId);
+        
+        if (paciente != null)
+        {
+            // Cargar toda la historia en paralelo por performance
+            var clTask = HistorialService.GetByPacienteIdAsync(PacienteId);
+            var vcTask = VacunacionService.GetByPacienteIdAsync(PacienteId);
+            var trTask = TratamientoService.GetByPacienteIdAsync(PacienteId);
+
+            await Task.WhenAll(clTask, vcTask, trTask);
+
+            consultas = clTask.Result ?? new();
+            vacunas = vcTask.Result ?? new();
+            tratamientos = trTask.Result ?? new();
+        }
+
+        isLoading = false;
+    }
+
+    private void SetTab(string tab) => activeTab = tab;
+    private void GoBack() => Navigation.NavigateTo("/historial-clinico");
+
+    // Navegaciones a nuevos Forms
+    private void NuevaConsulta() => Navigation.NavigateTo($"/historial-clinico/nueva-consulta/{PacienteId}");
+    private void NuevaVacuna() => Navigation.NavigateTo($"/historial-clinico/nueva-vacuna/{PacienteId}");
+    private void NuevoTratamiento() => Navigation.NavigateTo($"/historial-clinico/nuevo-tratamiento/{PacienteId}");
+}

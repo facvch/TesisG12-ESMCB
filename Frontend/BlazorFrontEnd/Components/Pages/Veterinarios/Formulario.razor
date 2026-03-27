@@ -1,0 +1,135 @@
+@page "/veterinarios/nuevo"
+@page "/veterinarios/editar/{Id}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject VeterinarioService VeterinarioService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar Médico" : "Nuevo Médico")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Editar Profesional" : "Nuevo Profesional")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 800px;">
+    @if (isLoading && isEdit)
+    {
+        <p class="text-secondary">Cargando datos del médico...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Nombre(s) (*)</label>
+                    <InputText @bind-Value="model.Nombre" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Nombre)" class="text-danger" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Apellido(s) (*)</label>
+                    <InputText @bind-Value="model.Apellido" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Apellido)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>Número de Matrícula (M.P o M.N) (*)</label>
+                <InputText @bind-Value="model.Matricula" class="form-control bg-dark text-light border-secondary" disabled="@isEdit" />
+                <ValidationMessage For="@(() => model.Matricula)" class="text-danger" />
+                @if(isEdit) { <small class="text-secondary">La matrícula no puede modificarse tras el alta.</small> }
+            </div>
+
+            <div class="mb-3">
+                <label>Especialidad</label>
+                <InputText @bind-Value="model.Especialidad" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Traumatología, Dermatología..." />
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Teléfono de Contacto (*)</label>
+                    <InputText @bind-Value="model.Telefono" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Telefono)" class="text-danger" />
+                </div>
+                <div class="col-md-6">
+                    <label>Correo Electrónico Laboral</label>
+                    <InputText @bind-Value="model.Email" class="form-control bg-dark text-light border-secondary" type="email" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger p-2">@errorMessage</div>
+            }
+
+            <div class="d-flex justify-content-end mt-4 gap-2">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando...</span> } else { <span>Confirmar Datos</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private VeterinarioDto model = new();
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+    private bool isLoading = true;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (isEdit)
+        {
+            isLoading = true;
+            var response = await VeterinarioService.GetByIdAsync(Id!);
+            if (response != null) model = response;
+            else errorMessage = "No se encontró el Veterinario con ese Registro.";
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido) || string.IsNullOrWhiteSpace(model.Matricula) || string.IsNullOrWhiteSpace(model.Telefono))
+        {
+            errorMessage = "Debe completar todos los campos requeridos (*).";
+            isSaving = false;
+            return;
+        }
+
+        try
+        {
+            bool success;
+            if (isEdit) success = await VeterinarioService.UpdateAsync(Id!, model);
+            else success = await VeterinarioService.CreateAsync(model);
+
+            if (success) Navigation.NavigateTo("/veterinarios");
+            else errorMessage = "Se ha producido un error al enviar el formulario. Puede que la Matrícula ya esté en uso.";
+        }
+        catch(Exception)
+        {
+            errorMessage = "Problema crítico comunicándose con la base de datos.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/veterinarios");
+}

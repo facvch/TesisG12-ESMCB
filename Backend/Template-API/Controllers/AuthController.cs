@@ -110,7 +110,7 @@ namespace Controllers
         [Authorize]
         public async Task<IActionResult> GetProfile()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst("sub")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var usuario = await _usuarioRepo.FindOneAsync(userId);
@@ -125,7 +125,7 @@ namespace Controllers
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst("sub")?.Value;
             var usuario = await _usuarioRepo.FindOneAsync(userId);
             if (usuario == null) return NotFound();
 
@@ -183,11 +183,11 @@ namespace Controllers
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id),
-                new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-                new Claim(ClaimTypes.Email, usuario.Email),
-                new Claim(ClaimTypes.GivenName, usuario.NombreCompleto),
-                new Claim(ClaimTypes.Role, usuario.Rol?.Nombre ?? "")
+                new Claim("sub", usuario.Id),
+                new Claim("name", usuario.NombreUsuario),
+                new Claim("email", usuario.Email),
+                new Claim("given_name", usuario.NombreCompleto),
+                new Claim("role", usuario.Rol?.Nombre ?? "")
             };
 
             var token = new JwtSecurityToken(

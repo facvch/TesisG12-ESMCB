@@ -1,0 +1,125 @@
+@page "/historial-clinico/nueva-vacuna/{PacienteId}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject VacunacionService VacunacionService
+@inject PacienteService PacienteService
+@inject PersonalService PersonalService
+@inject NavigationManager Navigation
+
+<PageTitle>Registrar Vacuna - Historial Clínico</PageTitle>
+
+<div class="glass-card" style="max-width: 800px; margin: auto; margin-top:20px;">
+    <h4>Aplicación de Vacuna (@pacienteNombre)</h4>
+    <hr class="border-secondary" />
+
+    <EditForm Model="model" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator />
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label>Vacuna Aplicada (*)</label>
+                <InputSelect @bind-Value="model.VacunaId" class="form-select bg-dark text-light border-secondary">
+                    <option value="0">Seleccione vacuna...</option>
+                    @foreach (var vac in catalogoVacunas)
+                    {
+                        <option value="@vac.Id">@vac.Nombre (@vac.Laboratorio)</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => model.VacunaId)" class="text-danger" />
+            </div>
+            <div class="col-md-6">
+                <label>Veterinario (*)</label>
+                <InputSelect @bind-Value="model.Veterinario" class="form-select bg-dark text-light border-secondary">
+                    <option value="">Seleccione Médico...</option>
+                    @foreach (var v in vets)
+                    {
+                        <option value="@v.NombreCompleto">@v.NombreCompleto</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => model.Veterinario)" class="text-danger" />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label>Fecha Aplicación (*)</label>
+                <InputDate @bind-Value="model.FechaAplicacion" class="form-control bg-dark text-light border-secondary" />
+            </div>
+            <div class="col-md-6">
+                <label>Próxima Dosis</label>
+                <InputDate @bind-Value="model.FechaProximaDosis" class="form-control bg-dark text-light border-secondary" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label>Número de Lote / Etiqueta</label>
+            <InputText @bind-Value="model.NroLote" class="form-control bg-dark text-light border-secondary" placeholder="Lote de la ampolla" />
+        </div>
+
+        <div class="mb-3">
+            <label>Observaciones (Reacciones, recomendaciones)</label>
+            <InputTextArea @bind-Value="model.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger p-2 mt-2">@errorMessage</div>
+        }
+
+        <div class="d-flex justify-content-end mt-4 gap-2">
+            <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+            <button type="submit" class="btn-primary-glass" disabled="@isSaving">Registrar Vacunación</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string PacienteId { get; set; } = string.Empty;
+
+    private RegistroVacunacionDto model = new() { FechaAplicacion = DateTime.Today };
+    private string pacienteNombre = "Cargando...";
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    private List<VacunaDto> catalogoVacunas = new();
+    private List<VeterinarioDto> vets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        model.PacienteId = PacienteId;
+        var p = await PacienteService.GetByIdAsync(PacienteId);
+        if(p != null) {
+            pacienteNombre = p.Nombre;
+            model.PacienteNombre = p.Nombre;
+        }
+
+        var vacs = await VacunacionService.GetCatalogoVacunasAsync();
+        if(vacs != null) catalogoVacunas = vacs.Where(v => v.Activo).ToList();
+
+        var vRes = await PersonalService.GetVeterinariosActivosAsync();
+        if(vRes != null) vets = vRes;
+    }
+
+    private async Task HandleSave()
+    {
+        if (model.VacunaId == 0)
+        {
+            errorMessage = "Debe seleccionar una vacuna válida del catálogo.";
+            return;
+        }
+
+        isSaving = true;
+        if(await VacunacionService.CreateAsync(model))
+        {
+            GoBack();
+        }
+        else
+        {
+            errorMessage = "No se pudo guardar el registro de vacunación.";
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo($"/historial-clinico/paciente/{PacienteId}");
+}

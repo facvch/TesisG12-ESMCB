@@ -1,0 +1,66 @@
+@inherits LayoutComponentBase
+
+<div class="app-container">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main class="main-content">
+        <div class="topbar">
+            <div class="page-title">
+                Gestión Veterinaria
+            </div>
+            
+            <AuthorizeView>
+                <Authorized>
+                    <div class="user-profile" style="display: flex; align-items: center; gap: 10px;">
+                        <div style="text-align: right; line-height: 1.2;">
+                            <span style="color: var(--text-primary); font-weight: 600; font-size: 0.9rem;">@context.User.Identity?.Name</span>
+                            <br/>
+                            <span style="color: var(--accent-primary); font-size: 0.75rem; font-weight: 500;">@GetUserRole(context)</span>
+                        </div>
+                        <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9rem;">
+                            @(context.User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; padding: 4px 12px;" @onclick="Logout">
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+            
+        </div>
+
+        <article class="content-area">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    [Inject] private Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; } = default!;
+    [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private BlazorFrontEnd.Auth.TokenStorageService TokenStorage { get; set; } = default!;
+
+    private async Task Logout()
+    {
+        await LocalStorage.RemoveItemAsync("authToken");
+        TokenStorage.ClearToken();
+        ((BlazorFrontEnd.Auth.CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserLogout();
+        Navigation.NavigateTo("/login", true);
+    }
+
+    private string GetUserRole(Microsoft.AspNetCore.Components.Authorization.AuthenticationState context)
+    {
+        var roleClaim = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)
+            ?? context.User.FindFirst("role");
+        return roleClaim?.Value ?? "Usuario";
+    }
+}

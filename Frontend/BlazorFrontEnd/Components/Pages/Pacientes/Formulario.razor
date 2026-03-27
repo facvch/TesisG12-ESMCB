@@ -1,0 +1,227 @@
+@page "/pacientes/nuevo"
+@page "/pacientes/editar/{Id}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject PacienteService PacienteService
+@inject PropietarioService PropietarioService
+@inject CatalogoService CatalogoService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar Paciente" : "Nuevo Paciente")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Editar Paciente" : "Nuevo Paciente")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 800px;">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando información y catálogos...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="pacienteForm">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre de mascota (*)</label>
+                    <InputText @bind-Value="model.Nombre" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Nombre)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Propietario / Dueño (*)</label>
+                    <InputSelect @bind-Value="model.PropietarioId" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Seleccione un Dueño --</option>
+                        @foreach (var p in propietarios)
+                        {
+                            <option value="@p.Id">@p.NombreCompleto - @p.DNI</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.PropietarioId)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
+                    <InputSelect Value="model.EspecieId" ValueExpression="()=>model.EspecieId" ValueChanged="((int v) => OnEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
+                        <option value="0">-- Seleccione Especie --</option>
+                        @foreach (var e in especies)
+                        {
+                            <option value="@e.Id">@e.Nombre</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.EspecieId)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza</label>
+                    <InputSelect @bind-Value="model.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(razas.Count == 0)">
+                        <option value="">-- Seleccione Raza --</option>
+                        @foreach (var r in razas)
+                        {
+                            <option value="@r.Id">@r.Nombre</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Sexo (*)</label>
+                    <InputSelect @bind-Value="model.Sexo" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Sexo --</option>
+                        <option value="M">Macho</option>
+                        <option value="H">Hembra</option>
+                        <option value="D">Desconocido</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.Sexo)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nacimiento</label>
+                    <InputDate @bind-Value="model.FechaNacimiento" class="form-control bg-dark text-light border-secondary" />
+                </div>
+                
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Edad Estimada</label>
+                    <InputNumber @bind-Value="model.EdadEnAnios" class="form-control bg-dark text-light border-secondary" placeholder="Ej: 3" />
+                </div>
+            </div>
+
+            <div class="row" style="margin-bottom: var(--sp-sm);">
+                <div class="col-12">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones (Alergias, Condiciones previas...)</label>
+                    <InputTextArea @bind-Value="model.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando...</span> } else { <span>Guardar Paciente</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private PacienteDto model = new();
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+    private bool isLoading = true;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    // Catálogos
+    private List<PropietarioDto> propietarios = new();
+    private List<EspecieDto> especies = new();
+    private List<RazaDto> razas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            // Cargar datos dependientes (Dropdowns)
+            var props = await PropietarioService.GetAllActivosAsync();
+            if(props != null) propietarios = props;
+
+            var esp = await CatalogoService.GetEspeciesActivasAsync();
+            if(esp != null) especies = esp;
+
+            if (isEdit)
+            {
+                var response = await PacienteService.GetByIdAsync(Id!);
+                if (response != null)
+                {
+                    model = response;
+                    if (model.EspecieId > 0)
+                    {
+                        await CargarRazas(model.EspecieId);
+                    }
+                }
+                else errorMessage = "No se encontró el paciente solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error al cargar los catálogos/paciente desde la base de datos.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnEspecieChanged(int newEspecieId)
+    {
+        model.EspecieId = newEspecieId;
+        model.RazaId = null; // Reset raza al cambiar especie
+        await CargarRazas(newEspecieId);
+    }
+
+    private async Task CargarRazas(int especieId)
+    {
+        try
+        {
+            var r = await CatalogoService.GetRazasPorEspecieAsync(especieId);
+            razas = r ?? new List<RazaDto>();
+        }
+        catch
+        {
+            razas = new List<RazaDto>();
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            (bool Success, string ErrorMessage) result;
+            if (isEdit) 
+                result = await PacienteService.UpdateAsync(Id!, model);
+            else 
+                result = await PacienteService.CreateAsync(model);
+
+            if (result.Success)
+            {
+                Navigation.NavigateTo("/pacientes");
+            }
+            else
+            {
+                errorMessage = $"Ocurrió un error al guardar: {result.ErrorMessage}";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Excepción al guardar los datos.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/pacientes");
+}

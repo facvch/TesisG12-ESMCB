@@ -34,6 +34,9 @@ namespace Infrastructure.Repositories.Sql
             var inicio = fecha.Date;
             var fin = inicio.AddDays(1);
             return await Repository
+                .Include(t => t.Paciente)
+                .Include(t => t.Veterinario)
+                .Include(t => t.Servicio)
                 .Where(t => t.FechaHora >= inicio && t.FechaHora < fin)
                 .OrderBy(t => t.FechaHora)
                 .ToListAsync();
@@ -42,8 +45,10 @@ namespace Infrastructure.Repositories.Sql
         public async Task<IEnumerable<Turno>> GetProgramadosAsync(DateTime desde, DateTime hasta)
         {
             return await Repository
-                .Where(t => t.FechaHora >= desde && t.FechaHora <= hasta
-                    && (t.Estado == EstadoTurno.Programado || t.Estado == EstadoTurno.Confirmado || t.Estado == EstadoTurno.Reprogramado))
+                .Include(t => t.Paciente)
+                .Include(t => t.Veterinario)
+                .Include(t => t.Servicio)
+                .Where(t => t.FechaHora >= desde && t.FechaHora <= hasta)
                 .OrderBy(t => t.FechaHora)
                 .ToListAsync();
         }
@@ -53,6 +58,16 @@ namespace Infrastructure.Repositories.Sql
             return await Repository
                 .Where(t => t.Estado == estado)
                 .OrderBy(t => t.FechaHora)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Turno>> GetTurnosExpandidosAsync()
+        {
+            return await Repository
+                .Include(t => t.Paciente)
+                .Include(t => t.Veterinario)
+                .Include(t => t.Servicio)
+                .OrderByDescending(t => t.FechaHora)
                 .ToListAsync();
         }
     }

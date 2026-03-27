@@ -1,12 +1,14 @@
-﻿using Application;
+using Application;
 using Application.Registrations;
 using AutoMapper;
 using Core.Application;
 using Filters;
 using Infrastructure.Registrations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IO.Compression;
 using System.Text;
 
 namespace API
@@ -25,6 +27,20 @@ namespace API
             services.AddEndpointsApiExplorer();
             services.AddApplicationServices();
             services.AddInfrastructureServices(Configuration);
+
+            // Response Compression (gzip + brotli)
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+                {
+                    "application/json", "text/csv", "text/markdown"
+                });
+            });
+            services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+            services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal);
 
             // JWT Authentication
             var jwtKey = Configuration["Jwt:Key"] ?? "VeterinariaSecretKeyMuyLargaParaDesarrollo2024!@#$";
@@ -45,8 +61,8 @@ namespace API
                     ValidIssuer = Configuration["Jwt:Issuer"] ?? "VeterinariaAPI",
                     ValidAudience = Configuration["Jwt:Audience"] ?? "VeterinariaApp",
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                    RoleClaimType = System.Security.Claims.ClaimTypes.Role,
-                    NameClaimType = System.Security.Claims.ClaimTypes.Name
+                    RoleClaimType = "role",
+                    NameClaimType = "name"
                 };
                 options.Events = new JwtBearerEvents
                 {
@@ -107,7 +123,9 @@ namespace API
 
             CustomMapper.Instance = app.ApplicationServices.GetRequiredService<IMapper>();
 
+            app.UseMiddleware<API.Middleware.PerformanceMiddleware>();
             app.UseMiddleware<Middleware.GlobalExceptionMiddleware>();
+            app.UseMiddleware<API.Middleware.RateLimitingMiddleware>();
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors("AllowSpecificOrigin");

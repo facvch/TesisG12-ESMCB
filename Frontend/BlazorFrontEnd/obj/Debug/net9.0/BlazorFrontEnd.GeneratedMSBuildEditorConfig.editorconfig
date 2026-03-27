@@ -1,0 +1,189 @@
+is_global = true
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = BlazorFrontEnd
+build_property.RootNamespace = BlazorFrontEnd
+build_property.ProjectDir = D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Layout/EmptyLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcRW1wdHlMYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Agenda/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZ2VuZGFcRm9ybXVsYXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Agenda/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZ2VuZGFcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Counter.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Error.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Historial/Detalle.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIaXN0b3JpYWxcRGV0YWxsZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Historial/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIaXN0b3JpYWxcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Historial/NuevaConsulta.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIaXN0b3JpYWxcTnVldmFDb25zdWx0YS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Historial/NuevaVacuna.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIaXN0b3JpYWxcTnVldmFWYWN1bmEucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Historial/NuevoTratamiento.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIaXN0b3JpYWxcTnVldm9UcmF0YW1pZW50by5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Categorias/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXENhdGVnb3JpYXNcRm9ybXVsYXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Categorias/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXENhdGVnb3JpYXNcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Depositos/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXERlcG9zaXRvc1xGb3JtdWxhcmlvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Depositos/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXERlcG9zaXRvc1xJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXEZvcm11bGFyaW8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXEluZGV4LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Marcas/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXE1hcmNhc1xGb3JtdWxhcmlvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Marcas/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXE1hcmNhc1xJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Productos/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXFByb2R1Y3Rvc1xGb3JtdWxhcmlvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Productos/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXFByb2R1Y3Rvc1xJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Proveedores/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXFByb3ZlZWRvcmVzXEZvcm11bGFyaW8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Inventario/Proveedores/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJbnZlbnRhcmlvXFByb3ZlZWRvcmVzXEluZGV4LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Pacientes/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQYWNpZW50ZXNcRm9ybXVsYXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Pacientes/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQYWNpZW50ZXNcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Propietarios/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9waWV0YXJpb3NcRm9ybXVsYXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Propietarios/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9waWV0YXJpb3NcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Reportes/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZXBvcnRlc1xJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Usuarios/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc3Vhcmlvc1xGb3JtdWxhcmlvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Usuarios/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc3Vhcmlvc1xJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Ventas/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWZW50YXNcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Ventas/PuntoDeVenta.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWZW50YXNcUHVudG9EZVZlbnRhLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Veterinarios/Formulario.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWZXRlcmluYXJpb3NcRm9ybXVsYXJpby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Veterinarios/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWZXRlcmluYXJpb3NcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Weather.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xXZWF0aGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSZWRpcmVjdFRvTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-xwr97qaz6g
+
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2TWVudS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-q7xvt3v74w

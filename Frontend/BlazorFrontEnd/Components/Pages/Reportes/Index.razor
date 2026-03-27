@@ -1,0 +1,358 @@
+@page "/reportes"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject ReporteService ReporteService
+@inject IJSRuntime JS
+
+<PageTitle>Centro de Reportes</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="font-weight: 700; margin: 0; color: var(--text-primary);">📊 Centro de Reportes</h2>
+        <p class="text-secondary" style="margin: 0;">Análisis y Extracción de Datos (Formatos CSV)</p>
+    </div>
+</div>
+
+<!-- Navegación de Pestañas -->
+<ul class="nav nav-pills mb-4 pb-2" style="border-bottom: 1px solid var(--border-glass);">
+    <li class="nav-item">
+        <button class="nav-link @(activeTab == "FINANZAS" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "FINANZAS" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("FINANZAS")'>Finanzas y Ventas</button>
+    </li>
+    <li class="nav-item ms-2">
+        <button class="nav-link @(activeTab == "STOCK" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "STOCK" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("STOCK")'>Control de Stock</button>
+    </li>
+    <li class="nav-item ms-2">
+        <button class="nav-link @(activeTab == "TURNOS" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "TURNOS" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("TURNOS")'>Rendimiento de Turnos</button>
+    </li>
+    <li class="nav-item ms-2">
+        <button class="nav-link @(activeTab == "CLINICA" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "CLINICA" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("CLINICA")'>Resumen Clínico</button>
+    </li>
+</ul>
+
+@if (isLoading)
+{
+    <div class="text-center p-5 text-secondary">
+        <div class="spinner-border text-info mb-3" role="status"></div><br/>
+        Procesando los módulos de reportes avanzados...
+    </div>
+}
+else
+{
+    <!-- CONTENIDO: FINANZAS -->
+    @if (activeTab == "FINANZAS" && reporteVentas != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="glass-card mb-4">
+                    <h5 class="text-light mb-3">Resumen Comercial (Últimos 30 días)</h5>
+                    <div class="row text-center mb-4">
+                        <div class="col-4 border-end border-secondary">
+                            <small class="text-uppercase text-secondary d-block">Facturado</small>
+                            <h3 class="text-success m-0 fw-bold">$@reporteVentas.TotalVentas.ToString("N0")</h3>
+                        </div>
+                        <div class="col-4 border-end border-secondary">
+                            <small class="text-uppercase text-secondary d-block">Operaciones</small>
+                            <h3 class="text-light m-0 fw-bold">@reporteVentas.CantidadVentas</h3>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-uppercase text-secondary d-block">Promedio/Venta</small>
+                            <h3 class="text-info m-0 fw-bold">$@reporteVentas.PromedioVenta.ToString("N0")</h3>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-light mt-4 mb-2 border-bottom border-dark pb-1">Distribución por Método de Pago</h6>
+                    @if(!reporteVentas.VentasPorMetodoPago.Any()) { <p class="text-secondary small">Sin datos registrados.</p> }
+                    @foreach(var pago in reporteVentas.VentasPorMetodoPago)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-light">@pago.MetodoPago (@pago.Cantidad trx)</span>
+                            <span class="text-success fw-bold">$@pago.Total.ToString("N0")</span>
+                        </div>
+                    }
+
+                    <h6 class="text-light mt-4 mb-2 border-bottom border-dark pb-1">Top Productos Vendidos (Top 10)</h6>
+                    @if(!reporteVentas.ProductosMasVendidos.Any()) { <p class="text-secondary small">Sin datos registrados.</p> }
+                    @foreach (var prod in reporteVentas.ProductosMasVendidos)
+                    {
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-secondary">@prod.ProductoNombre</span>
+                            <span class="text-light">@prod.CantidadVendida uds <span class="text-success ms-2">($@prod.TotalVendido.ToString("N0"))</span></span>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body">
+                        <h6 class="text-light mb-3">Extracción de Base de Datos</h6>
+                        <p class="text-secondary small mb-4">Exporte todos los comprobantes emitidos hacia Excel o sistemas contables.</p>
+                        <button class="btn btn-outline-success w-100" @onclick='() => Download("api/v1/Export/ventas")'>
+                            📥 Descargar Ventas (CSV)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- CONTENIDO: STOCK -->
+    @if (activeTab == "STOCK" && reporteStock != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="glass-card mb-4">
+                    <h5 class="text-light mb-3">Valorización y Alertas de Inventario</h5>
+                    <div class="row text-center mb-4">
+                        <div class="col-3 border-end border-secondary">
+                            <small class="text-uppercase text-secondary d-block">Total Arts.</small>
+                            <h3 class="text-light m-0 fw-bold">@reporteStock.ProductosActivos</h3>
+                        </div>
+                        <div class="col-5 border-end border-secondary">
+                            <small class="text-uppercase text-secondary d-block">Capital Inmovilizado</small>
+                            <h3 class="text-primary m-0 fw-bold">$@reporteStock.ValorTotalStock.ToString("N0")</h3>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-uppercase text-danger d-block">Sin Stock Absoluto</small>
+                            <h3 class="text-danger m-0 fw-bold">@reporteStock.ProductosSinStock</h3>
+                        </div>
+                    </div>
+
+                    <h6 class="text-light mt-4 mb-3 border-bottom border-dark pb-1">Artículos con Stock Bajo o Nulo (@reporteStock.ListaStockBajo.Count)</h6>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-dark table-sm table-hover" style="background: transparent;">
+                            <thead>
+                                <tr>
+                                    <th>Cód/Nombre</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Actual/Mínimo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if(!reporteStock.ListaStockBajo.Any()) { <tr><td colspan="3" class="text-center text-secondary">No hay faltantes.</td></tr> }
+                                @foreach (var item in reporteStock.ListaStockBajo)
+                                {
+                                    <tr>
+                                        <td>@item.Nombre</td>
+                                        <td class="text-secondary">@item.CategoriaNombre</td>
+                                        <td class="text-center">
+                                            <span class="badge @(item.StockActual == 0 ? "bg-danger" : "bg-warning text-dark")">@item.StockActual / @item.StockMinimo</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-body">
+                        <h6 class="text-light mb-3">Exportar Catálogo Diario</h6>
+                        <button class="btn btn-outline-info w-100 mb-2" @onclick='() => Download("api/v1/Export/productos")'>
+                            📦 Maestro de Productos
+                        </button>
+                        <button class="btn btn-outline-warning w-100" @onclick='() => Download("api/v1/Export/stockBajo")'>
+                            ⚠️ Solo Faltantes (Para Compras)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- CONTENIDO: TURNOS -->
+    @if (activeTab == "TURNOS" && reporteTurnos != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="glass-card mb-4">
+                    <h5 class="text-light mb-3">Rendimiento Operativo (Últimos 30 días)</h5>
+                    <div class="row text-center mb-4">
+                        <div class="col-3 border-end border-secondary">
+                            <small class="text-uppercase text-secondary d-block">Programados</small>
+                            <h3 class="text-light m-0 fw-bold">@reporteTurnos.TotalTurnos</h3>
+                        </div>
+                        <div class="col-3 border-end border-secondary">
+                            <small class="text-uppercase text-success d-block">Completados</small>
+                            <h3 class="text-success m-0 fw-bold">@reporteTurnos.Completados</h3>
+                        </div>
+                        <div class="col-3 border-end border-secondary">
+                            <small class="text-uppercase text-warning d-block">Ausentes</small>
+                            <h3 class="text-warning m-0 fw-bold">@reporteTurnos.Ausentes</h3>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-uppercase text-danger d-block">Cancelados</small>
+                            <h3 class="text-danger m-0 fw-bold">@reporteTurnos.Cancelados</h3>
+                        </div>
+                    </div>
+                    <div class="progress mb-4" style="height: 6px; background: rgba(255,255,255,0.1);">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @(reporteTurnos.TasaCumplimiento.ToString("0.0"))%" aria-valuenow="@reporteTurnos.TasaCumplimiento" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 border-end border-secondary">
+                            <h6 class="text-light border-bottom border-dark pb-1">Distribución por Veterinarios</h6>
+                            @if(!reporteTurnos.TurnosPorVeterinario.Any()) { <p class="text-secondary small">Sin datos.</p> }
+                            @foreach(var vet in reporteTurnos.TurnosPorVeterinario)
+                            {
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-secondary small">Dr. @vet.VeterinarioNombre</span>
+                                    <span class="text-light small">@vet.Completados / @vet.TotalTurnos </span>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-light border-bottom border-dark pb-1 text-md-end">Servicios Populares</h6>
+                            @if(!reporteTurnos.TurnosPorServicio.Any()) { <p class="text-secondary small text-md-end">Sin datos.</p> }
+                            @foreach(var serv in reporteTurnos.TurnosPorServicio.OrderByDescending(s => s.CantidadTurnos).Take(8))
+                            {
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-secondary small">@serv.ServicioNombre</span>
+                                    <span class="text-info small fw-bold">@serv.CantidadTurnos </span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body">
+                        <h6 class="text-light mb-3">Agenda Completa</h6>
+                        <p class="text-secondary small mb-4">Exporta el listado completo de reservas, histórico y motivos.</p>
+                        <button class="btn btn-outline-primary w-100" @onclick='() => Download("api/v1/Export/turnos")'>
+                            📅 Descargar Agenda CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- CONTENIDO: CLINICA -->
+    @if (activeTab == "CLINICA" && reporteClinico != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="glass-card mb-4">
+                    <h5 class="text-light mb-3">Censo Poblacional y Resumen Médico</h5>
+                    <div class="row text-center mb-4">
+                        <div class="col-4 border-end border-secondary">
+                            <small class="text-uppercase text-secondary d-block">Población Activa</small>
+                            <h3 class="text-light m-0 fw-bold">@reporteClinico.TotalPacientes</h3>
+                        </div>
+                        <div class="col-4 border-end border-secondary">
+                            <small class="text-uppercase text-info d-block">Vacunados del Mes</small>
+                            <h3 class="text-info m-0 fw-bold">@reporteClinico.VacunasAplicadasMes</h3>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-uppercase text-warning d-block">Tratamientos Abiertos</small>
+                            <h3 class="text-warning m-0 fw-bold">@reporteClinico.TratamientosActivosCount</h3>
+                        </div>
+                    </div>
+
+                    <h6 class="text-light mt-4 mb-3 border-bottom border-dark pb-1">Desglose Demográfico por Especie</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if(!reporteClinico.PacientesPorEspecie.Any()) { <p class="text-secondary small">No hay pacientes censados.</p> }
+                        @foreach(var especie in reporteClinico.PacientesPorEspecie)
+                        {
+                            <div class="p-2 border border-secondary rounded text-center flex-fill" style="background: rgba(0,0,0,0.2);">
+                                <h4 class="text-light m-0 fw-bold">@especie.Cantidad</h4>
+                                <small class="text-secondary text-uppercase" style="font-size: 0.65rem;">@especie.EspecieNombre</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-body">
+                        <h6 class="text-light mb-3">Registros Maestros</h6>
+                        <button class="btn btn-outline-light w-100 mb-2" @onclick='() => Download("api/v1/Export/pacientes")'>
+                            🐕 Padrón de Mascotas
+                        </button>
+                        <button class="btn btn-outline-light w-100 mb-2" @onclick='() => Download("api/v1/Export/propietarios")'>
+                            👩‍🦰 Padrón de Dueños
+                        </button>
+                        <div class="mt-4 pt-3 border-top border-secondary">
+                            <h6 class="text-light mb-2" style="font-size: 0.85rem;">Historial Clínico (Individual)</h6>
+                            <div class="input-group input-group-sm">
+                                <input type="text" @bind="pacienteIdParaExportar" class="form-control bg-dark text-light border-secondary" placeholder="ID Paciente (GUID)" />
+                                <button class="btn btn-secondary" disabled="@string.IsNullOrWhiteSpace(pacienteIdParaExportar)" @onclick="ExportarIndividual">Bajar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private string activeTab = "FINANZAS";
+
+    // Data containers
+    private ReporteVentasDto? reporteVentas;
+    private ReporteStockDto? reporteStock;
+    private ReporteTurnosDto? reporteTurnos;
+    private ReporteClinicDto? reporteClinico;
+
+    // UI States
+    private string pacienteIdParaExportar = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataForTab(activeTab);
+    }
+
+    private async Task ChangeTab(string tabName)
+    {
+        activeTab = tabName;
+        await LoadDataForTab(tabName);
+    }
+
+    private async Task LoadDataForTab(string tabName)
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (tabName == "FINANZAS" && reporteVentas == null)
+            {
+                reporteVentas = await ReporteService.GetReporteVentasAsync();
+            }
+            else if (tabName == "STOCK" && reporteStock == null)
+            {
+                reporteStock = await ReporteService.GetReporteStockAsync();
+            }
+            else if (tabName == "TURNOS" && reporteTurnos == null)
+            {
+                reporteTurnos = await ReporteService.GetReporteTurnosAsync();
+            }
+            else if (tabName == "CLINICA" && reporteClinico == null)
+            {
+                reporteClinico = await ReporteService.GetReporteClinicoAsync();
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task Download(string endPoint)
+    {
+        await ReporteService.TriggerCsvDownloadAsync(endPoint);
+    }
+
+    private async Task ExportarIndividual()
+    {
+        if(!string.IsNullOrWhiteSpace(pacienteIdParaExportar))
+        {
+            await Download($"api/v1/Export/historial/{pacienteIdParaExportar}");
+            pacienteIdParaExportar = string.Empty; // reset
+        }
+    }
+}

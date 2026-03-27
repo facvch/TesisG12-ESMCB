@@ -8,5 +8,6 @@ namespace Application.Repositories
         Task<Propietario> GetByDNIAsync(string dni);
         Task<IEnumerable<Propietario>> SearchByNombreAsync(string nombre);
         Task<IEnumerable<Propietario>> GetActivosAsync();
+        Task<IEnumerable<Propietario>> GetPropietariosConMascotasAsync();
     }
 }

@@ -56,6 +56,16 @@ namespace Infrastructure.Repositories.Sql
             var search = nombre.ToLower();
             return await Repository.Where(p => p.Nombre.ToLower().Contains(search) && p.Activo).ToListAsync();
         }
+
+        public async Task<IEnumerable<Producto>> GetProductosExpandidosAsync()
+        {
+            return await Repository
+                .Include(p => p.Categoria)
+                .Include(p => p.Marca)
+                .Include(p => p.Proveedor)
+                .Include(p => p.Deposito)
+                .ToListAsync();
+        }
     }
 
     internal class MovimientoStockRepository : BaseRepository<MovimientoStock>, IMovimientoStockRepository

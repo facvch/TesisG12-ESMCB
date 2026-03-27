@@ -1,0 +1,170 @@
+﻿@page "/"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject DashboardService DashboardService
+@inject NavigationManager Navigation
+
+<PageTitle>Dashboard | Panel Principal</PageTitle>
+
+<!-- Banner y Título -->
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0; color: var(--text-primary);">📍 Centro de Comando</h2>
+        <p class="text-secondary" style="margin: 0;">Resumen General del Sistema (Hoy: @DateTime.Today.ToString("dd MMMM yyyy"))</p>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center p-5 text-secondary">
+        <div class="spinner-border text-info mb-3" role="status"></div>
+        <br/>
+        Cargando indicadores y procesando alertas del sistema...
+    </div>
+}
+else if (kpis == null || monitor == null)
+{
+    <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+        Error al obtener los datos. Verifique que la API del Backend esté corriendo y posea el rol adecuado.
+    </div>
+}
+else
+{
+    <!-- KPIs Principales -->
+    <div class="row mb-4">
+        <!-- Ingresos del Mes -->
+        <div class="col-md-3">
+            <div class="glass-card text-center" style="padding: var(--sp-md);">
+                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Caja del Mes</p>
+                <h3 style="color: var(--accent-primary); font-weight: 800; margin: 0;">$@kpis.IngresosMesActual.ToString("N0")</h3>
+                <small class="text-success">@kpis.VentasMesActual.ToString() tickets emitidos</small>
+            </div>
+        </div>
+        <!-- Turnos del Día -->
+        <div class="col-md-3">
+            <div class="glass-card text-center" style="padding: var(--sp-md);">
+                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Turnos de Hoy</p>
+                <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@kpis.TurnosCompletadosHoy / @kpis.TurnosHoy</h3>
+                <small class="text-info">@kpis.TurnosPendientesHoy pendientes</small>
+            </div>
+        </div>
+        <!-- Padrón de Pacientes -->
+        <div class="col-md-3">
+            <div class="glass-card text-center" style="padding: var(--sp-md);">
+                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Pacientes Activos</p>
+                <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@kpis.TotalPacientes</h3>
+                <small class="text-secondary">En @kpis.TotalPropietarios familias</small>
+            </div>
+        </div>
+        <!-- Inventario Crítico -->
+        <div class="col-md-3">
+            <div class="glass-card text-center" style="padding: var(--sp-md); @(kpis.ProductosStockBajo > 0 ? "border: 1px solid var(--accent-danger);" : "")">
+                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Stock en Alerta</p>
+                <h3 style="@(kpis.ProductosStockBajo > 0 ? "color: var(--accent-danger);" : "color: var(--text-primary);") font-weight: 800; margin: 0;">@kpis.ProductosStockBajo</h3>
+                <small class="text-secondary">De @kpis.TotalProductos Artículos Totales</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfico / Ingresos (Placeholder visual con CSS) -->
+        <div class="col-md-8">
+            <div class="glass-card" style="height: 100%;">
+                <h5 class="mb-4 text-light">Historial de Caja (Últimos 7 días)</h5>
+                @if(ingresos == null || !ingresos.Any())
+                {
+                    <p class="text-secondary">No hay data reciente para graficar.</p>
+                }
+                else
+                {
+                    <div class="d-flex align-items-end justify-content-between p-3 border border-secondary rounded" style="height: 250px; background: rgba(0,0,0,0.2);">
+                        @{ var max = ingresos.Max(i => i.Ingresos) > 0 ? ingresos.Max(i => i.Ingresos) : 1; }
+                        @foreach(var day in ingresos)
+                        {
+                            var heightPercent = (day.Ingresos / max) * 100;
+                            var minHeight = heightPercent < 5 ? 5 : heightPercent; // At least show a tiny bar
+                            
+                            <div class="d-flex flex-column align-items-center" style="width: 12%;">
+                                <small class="text-secondary mb-1" style="font-size: 0.7rem;">$@day.Ingresos.ToString("N0")</small>
+                                <div style="width: 100%; min-height: @(minHeight)%; background: linear-gradient(180deg, var(--accent-primary) 0%, rgba(56, 189, 248, 0.2) 100%); border-radius: 4px 4px 0 0; transition: min-height 1s ease;">
+                                </div>
+                                <small class="text-light mt-2" style="font-size: 0.75rem; white-space: nowrap;">@day.FechaCorta</small>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Panel de Alertas Inteligente -->
+        <div class="col-md-4">
+            <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0 text-light">Centro de Resoluciones</h5>
+                    <span class="badge @(monitor.TotalAlertas > 0 ? "bg-danger" : "bg-success") rounded-pill">@monitor.TotalAlertas</span>
+                </div>
+                
+                <div style="flex-grow: 1; overflow-y: auto; max-height: 350px;">
+                    @if(!monitor.Alertas.Any())
+                    {
+                        <div class="text-center text-secondary mt-4">
+                            <p>✅ Todo bajo control.</p>
+                            <small>No hay alertas críticas en el sistema.</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush" style="background: transparent;">
+                            @foreach(var alerta in monitor.Alertas)
+                            {
+                                var colorClass = alerta.Nivel == "CRITICA" ? "text-danger" :
+                                                alerta.Nivel == "IMPORTANTE" ? "text-warning" : "text-info";
+                                
+                                <div class="list-group-item bg-transparent text-light border-bottom border-dark px-1 py-2">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 @colorClass" style="font-size: 0.9rem; font-weight: 700;">
+                                            @if(alerta.Tipo == "Stock") { <span>📦</span> }
+                                            else if(alerta.Tipo == "Turno") { <span>⏰</span> }
+                                            else if(alerta.Tipo == "Vacunación") { <span>💉</span> }
+                                            @alerta.Titulo
+                                        </h6>
+                                        <small class="text-secondary" style="font-size: 0.7rem;">@alerta.Nivel</small>
+                                    </div>
+                                    <p class="mb-1 text-secondary" style="font-size: 0.8rem;">@alerta.Detalle</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private KpiDashboardDto? kpis;
+    private DashboardAlertasResponse? monitor;
+    private List<IngresoDiarioDto>? ingresos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var taskKpi = DashboardService.GetKpisAsync();
+            var taskMonitor = DashboardService.GetAlertasDashboardAsync();
+            var taskChart = DashboardService.GetIngresosDiariosAsync(7); // Gráfico 7 días
+
+            await Task.WhenAll(taskKpi, taskMonitor, taskChart);
+
+            kpis = taskKpi.Result;
+            monitor = taskMonitor.Result;
+            ingresos = taskChart.Result;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

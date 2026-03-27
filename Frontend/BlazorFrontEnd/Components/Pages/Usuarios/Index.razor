@@ -1,0 +1,127 @@
+@page "/usuarios"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject UsuarioService UsuarioService
+@inject NavigationManager Navigation
+
+<PageTitle>Gestión de Usuarios y Accesos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Usuarios</h2>
+        <p class="text-secondary" style="margin: 0;">Gestión de accesos y roles (Admin, Veterinario, Recepcionista)</p>
+    </div>
+    <a href="/usuarios/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+        </svg>
+        Registrar Usuario
+    </a>
+</div>
+
+<div class="glass-card">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando cuentas del personal...</p>
+    }
+    else if (usuarios == null || !usuarios.Any())
+    {
+        <p class="text-secondary">No se encontraron usuarios en el sistema.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-dark table-hover" style="background: transparent;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-glass);">
+                        <th>Usuario / Email</th>
+                        <th>Nombre Completo</th>
+                        <th>Rol Asignado</th>
+                        <th>Último Acceso</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in usuarios)
+                    {
+                        var rolColor = user.RolNombre.ToUpper() == "ADMIN" ? "badge bg-danger" : 
+                                       user.RolNombre.ToUpper() == "VETERINARIO" ? "badge bg-success" : "badge bg-info";
+
+                        <tr style="border-bottom: 1px solid var(--border-glass);">
+                            <td>
+                                <strong>@user.NombreUsuario</strong>
+                                <br/><small class="text-secondary">@user.Email</small>
+                            </td>
+                            <td>@user.NombreCompleto</td>
+                            <td>
+                                <span class="@rolColor">@user.RolNombre</span>
+                            </td>
+                            <td class="text-secondary">
+                                @if(user.UltimoLogin.HasValue) {
+                                    <span>@user.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                } else { 
+                                    <span>Nunca</span> 
+                                }
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarDelete(user)">Revocar Acceso</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private List<UsuarioDto>? usuarios = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        try
+        {
+            usuarios = await UsuarioService.GetAllUsersAsync();
+        }
+        catch (Exception)
+        {
+            errorMessage = "No se pudieron cargar los usuarios. Verifica si posees el Rol 'Admin'.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ConfirmarDelete(UsuarioDto user)
+    {
+        if(user.NombreUsuario.ToLower() == "admin") {
+            errorMessage = "No se puede eliminar la cuenta de Super-Administrador del sistema.";
+            return;
+        }
+
+        bool confirm = true; // Use real JS interact in prod
+        if(confirm)
+        {
+            var res = await UsuarioService.DeleteUserAsync(user.Id);
+            if(res) await LoadDataAsync();
+            else errorMessage = "Hubo un error al intentar eliminar el acceso del usuario.";
+        }
+    }
+}

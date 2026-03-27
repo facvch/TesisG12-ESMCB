@@ -1,0 +1,257 @@
+@page "/ventas/pos"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject VentaService VentaService
+@inject PacienteService PacienteService 
+@inject PropietarioService PropietarioService
+@inject ProductoService ProductoService
+@inject MetodoPagoService PagoService
+@inject NavigationManager Navigation
+
+<PageTitle>Punto de Venta (POS)</PageTitle>
+
+<div class="row">
+    <!-- Panel Izquierdo: Buscador y Catálogo -->
+    <div class="col-md-7">
+        <div class="d-flex align-items-center mb-3">
+            <button class="btn btn-outline-secondary me-3" @onclick="GoBack">
+                 ← Volver a Caja
+            </button>
+            <h3 class="m-0" style="font-weight: 700;">Terminal de Ventas</h3>
+        </div>
+
+        <div class="glass-card mb-3">
+            <h5 class="mb-3">Buscador de Productos / Servicios</h5>
+            <div class="input-group">
+                <input type="text" class="form-control bg-dark border-secondary text-light" placeholder="Escanear Código de Barras o Escribir nombre..." @bind-value="searchTerm" @bind-value:event="oninput" @onkeyup="OnSearch" />
+                <button class="btn btn-outline-info" type="button" @onclick="BuscarProductos">Buscar</button>
+            </div>
+
+            @if(isSearching)
+            {
+               <div class="mt-2 text-secondary small">Cargando resultados...</div> 
+            }
+            else if (searchResponse?.Items != null && searchResponse.Items.Any())
+            {
+                <div class="list-group mt-3" style="max-height: 400px; overflow-y: auto;">
+                    @foreach(var prod in searchResponse.Items)
+                    {
+                        var agotado = prod.StockActual <= 0;
+                        <button type="button" class="list-group-item list-group-item-action bg-dark text-light border-secondary d-flex justify-content-between align-items-center" disabled="@agotado" @onclick="() => AgregarAlCarrito(prod)">
+                            <div>
+                                <strong>@prod.Nombre</strong>
+                                <br/> <small class="text-secondary">Cod: @prod.CodigoBarras - Stock Disp: @prod.StockActual</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="d-block" style="color: var(--accent-primary); font-weight: bold;">$@prod.PrecioVenta.ToString("N2")</span>
+                                @if(agotado) { <span class="badge bg-danger">Agotado</span> }
+                            </div>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Panel Derecho: Ticket / Carrito -->
+    <div class="col-md-5">
+        <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="m-0">Ticket Actual</h4>
+                <button class="btn btn-sm btn-outline-danger" @onclick="VaciarCarrito">Vaciar</button>
+            </div>
+
+            <div class="mb-3">
+                <label class="text-secondary small">Cliente (Opcional - Consumidor Final si vacío)</label>
+                <!-- Aquí usaríamos un combo real o un autocompletar de clientes -->
+                <InputSelect @bind-Value="ventaRequest.PropietarioId" class="form-select bg-dark border-secondary text-light form-select-sm">
+                    <option value="">Consumidor Final</option>
+                    @foreach(var c in clientesCombo)
+                    {
+                        <option value="@c.Id">@c.NombreCompleto - DNI: @c.DNI</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <!-- Listado de items -->
+            <div class="flex-grow-1 border border-secondary rounded p-2 mb-3" style="overflow-y: auto; background: rgba(0,0,0,0.2); min-height: 250px;">
+                @if(!carrito.Any())
+                {
+                    <div class="text-center text-secondary mt-5">
+                        <p>🛒 El carrito está vacío.</p>
+                        <small>Busque o escanee productos para agregarlos al ticket de venta.</small>
+                    </div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                    @foreach(var item in carrito)
+                    {
+                        <li class="list-group-item bg-transparent text-light border-bottom border-dark px-1 py-2">
+                            <div class="d-flex justify-content-between">
+                                <strong>@item.Descripcion</strong>
+                                <button class="btn btn-link text-danger p-0" @onclick="() => RemoverDelCarrito(item)">X</button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <div class="d-flex align-items-center">
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" @onclick="() => DisminuirCantidad(item)">-</button>
+                                    <span class="mx-2 fw-bold">@item.Cantidad</span>
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" @onclick="() => AumentarCantidad(item)">+</button>
+                                </div>
+                                <div>
+                                    <span class="text-secondary small me-2">$@item.PrecioUnitario.ToString("N2") c/u</span>
+                                    <strong style="color: var(--accent-primary);">$@((item.Cantidad * item.PrecioUnitario).ToString("N2"))</strong>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    </ul>
+                }
+            </div>
+
+            <!-- Total y Cobro -->
+            <div class="mt-auto">
+                <div class="d-flex justify-content-between mb-3 text-light">
+                    <h5 class="m-0">TOTAL:</h5>
+                    <h3 class="m-0" style="color: var(--accent-primary); font-weight: 900;">$@TotalCarrito.ToString("N2")</h3>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-secondary small">Método de Pago (*)</label>
+                    <select @bind="ventaRequest.MetodoPagoId" class="form-select bg-dark border-secondary text-light form-select-lg">
+                        <option value="0">Cobrar con...</option>
+                        @foreach(var m in metodosPago)
+                        {
+                            <option value="@m.Id">@m.Nombre</option>
+                        }
+                    </select>
+                </div>
+
+                @if(!string.IsNullOrEmpty(msgError))
+                {
+                    <div class="alert alert-danger p-2 small m-0 mb-3">@msgError</div>
+                }
+
+                <button class="btn-primary-glass w-100 btn-lg" disabled="@(!PuedeCobrar)" @onclick="ProcesarVenta">
+                    @if(procesando) { <span>Procesando...</span> } else { <span>Cobrar y Emitir Ticket</span> }
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchTerm = "";
+    private System.Timers.Timer? debounceTimer;
+    private bool isSearching;
+    private PaginatedList<ProductoDto>? searchResponse;
+
+    private List<CreateDetalleVentaRequest> carrito = new();
+    private CreateVentaRequest ventaRequest = new() { MetodoPagoId = 0 };
+    
+    // Auxiliares combo boxes
+    private List<MetodoPagoDto> metodosPago = new();
+    private List<PropietarioDto> clientesCombo = new();
+
+    private bool procesando;
+    private string msgError = "";
+
+    private decimal TotalCarrito => carrito.Sum(x => x.Cantidad * x.PrecioUnitario);
+    private bool PuedeCobrar => carrito.Any() && ventaRequest.MetodoPagoId > 0 && !procesando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var pagosTask = PagoService.GetAllActivosAsync();
+        // Just for simplicity we load all clients. For a real POS, an autocomplete is better.
+        var clientsTask = PropietarioService.GetAllActivosAsync(); 
+
+        await Task.WhenAll(pagosTask, clientsTask);
+
+        if(pagosTask.Result != null) metodosPago = pagosTask.Result;
+        if(clientsTask.Result != null) clientesCombo = clientsTask.Result;
+    }
+
+    private void OnSearch()
+    {
+        if (debounceTimer != null) debounceTimer.Dispose();
+        debounceTimer = new System.Timers.Timer(400);
+        debounceTimer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(BuscarProductos);
+            await InvokeAsync(StateHasChanged);
+        };
+        debounceTimer.AutoReset = false;
+        debounceTimer.Start();
+    }
+
+    private async Task BuscarProductos()
+    {
+        if(string.IsNullOrWhiteSpace(searchTerm)) {
+            searchResponse = null;
+            return; 
+        }
+
+        isSearching = true;
+        searchResponse = await ProductoService.GetAllAsync(1, 10, searchTerm);
+        isSearching = false;
+    }
+
+    private void AgregarAlCarrito(ProductoDto p)
+    {
+        var existente = carrito.FirstOrDefault(x => x.ProductoId == p.Id);
+        if(existente != null)
+        {
+            if(existente.Cantidad < p.StockActual) existente.Cantidad++;
+        }
+        else
+        {
+            carrito.Add(new CreateDetalleVentaRequest {
+                ProductoId = p.Id, Descripcion = p.Nombre, 
+                PrecioUnitario = p.PrecioVenta, Cantidad = 1
+            });
+        }
+    }
+
+    private void RemoverDelCarrito(CreateDetalleVentaRequest item) => carrito.Remove(item);
+    private void VaciarCarrito() => carrito.Clear();
+
+    private void AumentarCantidad(CreateDetalleVentaRequest item) { item.Cantidad++; }
+    private void DisminuirCantidad(CreateDetalleVentaRequest item) { 
+        if(item.Cantidad > 1) item.Cantidad--; 
+        else RemoverDelCarrito(item);
+    }
+
+    private async Task ProcesarVenta()
+    {
+        msgError = "";
+        procesando = true;
+        
+        // Asignar los items del carrito final a la request
+        ventaRequest.Detalles = carrito;
+
+        try
+        {
+            var ventaIdStr = await VentaService.CreateVentaAsync(ventaRequest);
+            
+            if(!string.IsNullOrEmpty(ventaIdStr))
+            {
+                // Venta OK - en el mundo real quizás imprimiríamos ticket con JS.
+                Navigation.NavigateTo("/ventas"); 
+            }
+            else
+            {
+                msgError = "La caja reportó un error. Verifique niveles de stock y método de pago.";
+            }
+        }
+        catch(Exception)
+        {
+            msgError = "Falla de red procesando el ticket inter-bancario.";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/ventas");
+}

@@ -29,5 +29,10 @@ namespace Infrastructure.Repositories.Sql
                            p.Apellido.ToLower().Contains(nombreLower))
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Propietario>> GetPropietariosConMascotasAsync()
+        {
+            return await Repository.Include(p => p.Mascotas).ToListAsync();
+        }
     }
 }

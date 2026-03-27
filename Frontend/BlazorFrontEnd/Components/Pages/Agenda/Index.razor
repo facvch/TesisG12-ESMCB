@@ -1,0 +1,410 @@
+@page "/agenda"
+
+<style>
+    .diaria-view, .semanal-view, .mensual-view { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; }
+    .turno-card { transition: all 0.2s ease; cursor: pointer; border-left: 4px solid rgba(255,255,255,0.5); }
+    .turno-card:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 6px 16px rgba(0,0,0,0.3) !important; filter: brightness(1.2); }
+    .turno-card-sm { transition: all 0.2s ease; border-left: 2px solid rgba(255,255,255,0.5); }
+    .turno-card-sm:hover { transform: scale(1.05); z-index: 10; filter: brightness(1.2); }
+</style>
+
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject TurnoService TurnoService
+@inject NavigationManager Navigation
+
+<PageTitle>Agenda de Turnos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Agenda de Turnos</h2>
+        <p class="text-secondary" style="margin: 0;">Gestión de turnos médicos programados</p>
+    </div>
+    <a href="/agenda/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Agendar Turno
+    </a>
+</div>
+
+<div class="glass-card" style="margin-bottom: var(--sp-md);">
+    <div class="d-flex justify-content-between align-items-center">
+        <ul class="nav nav-pills" style="gap: 10px;">
+            <li class="nav-item">
+                <button class="nav-link @(currentView == "Lista" ? "active" : "")" style="@(currentView == "Lista" ? "background: var(--accent-primary); color: white;" : "color: var(--text-primary);")" @onclick='() => ChangeView("Lista")'>Lista</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(currentView == "Diaria" ? "active" : "")" style="@(currentView == "Diaria" ? "background: var(--accent-primary); color: white;" : "color: var(--text-primary);")" @onclick='() => ChangeView("Diaria")'>Diaria</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(currentView == "Semanal" ? "active" : "")" style="@(currentView == "Semanal" ? "background: var(--accent-primary); color: white;" : "color: var(--text-primary);")" @onclick='() => ChangeView("Semanal")'>Semanal</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(currentView == "Mensual" ? "active" : "")" style="@(currentView == "Mensual" ? "background: var(--accent-primary); color: white;" : "color: var(--text-primary);")" @onclick='() => ChangeView("Mensual")'>Mensual</button>
+            </li>
+        </ul>
+        
+        @if (currentView != "Lista")
+        {
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="NavigatePrevious"><i class="bi bi-chevron-left"></i> Anterior</button>
+                <h5 style="margin: 0; min-width: 150px; text-align: center;">@GetPeriodLabel()</h5>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="NavigateNext">Siguiente <i class="bi bi-chevron-right"></i></button>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="glass-card" style="min-height: 500px;">
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+            <p class="text-secondary">Cargando agenda...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+            @errorMessage
+        </div>
+    }
+    else
+    {
+        @if (currentView == "Lista")
+        {
+            <div class="table-responsive">
+                <table class="table table-dark table-hover" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-glass);">
+                            <th>Fecha y Hora</th>
+                            <th>Paciente</th>
+                            <th>Servicio</th>
+                            <th>Veterinario</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (turnosResponse?.Items != null && turnosResponse.Items.Any())
+                        {
+                            @foreach (var turno in turnosResponse.Items.OrderByDescending(t => t.FechaHora))
+                            {
+                                <tr style="border-bottom: 1px solid var(--border-glass);">
+                                    <td>
+                                        <strong>@turno.FechaHora.ToString("dd/MM/yyyy")</strong>
+                                        <br/><span class="text-secondary">@turno.FechaHora.ToString("HH:mm") hs</span>
+                                    </td>
+                                    <td>
+                                        <a href="/pacientes/editar/@turno.PacienteId" style="color: var(--accent-primary); text-decoration: none;">@turno.PacienteNombre</a>
+                                    </td>
+                                    <td>@turno.ServicioNombre</td>
+                                    <td>@turno.VeterinarioNombre</td>
+                                    <td>
+                                        <span class="badge @GetBadgeColor(turno.Estado)">@turno.Estado</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="/agenda/editar/@turno.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Ver/Dictamen</a>
+                                        <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmCancel(turno.Id)">Cancelar</button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="text-center text-secondary py-4">No hay turnos registrados.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (turnosResponse != null)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="text-secondary">Página @turnosResponse.PageIndex de @turnosResponse.TotalPages (@turnosResponse.TotalCount registros)</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" disabled="@(!turnosResponse.HasPreviousPage)" @onclick="PreviousPage">Anterior</button>
+                        <button class="btn btn-sm btn-outline-secondary" disabled="@(!turnosResponse.HasNextPage)" @onclick="NextPage">Siguiente</button>
+                    </div>
+                </div>
+            }
+        }
+        else if (currentView == "Diaria")
+        {
+            <div class="diaria-view">
+                <div class="row">
+                    <div class="col-md-2 border-end" style="border-color: var(--border-glass) !important;">
+                        @for (int i = 8; i <= 20; i++)
+                        {
+                            <div style="height: 60px; border-bottom: 1px dashed var(--border-glass); position: relative;">
+                                <span class="text-secondary" style="position: absolute; top: -10px; font-size: 0.85em; background: var(--bg-primary);">@($"{i:D2}:00")</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-10" style="position: relative;">
+                        @for (int i = 8; i <= 20; i++)
+                        {
+                            <div style="height: 60px; border-bottom: 1px dashed var(--border-glass);"></div>
+                        }
+                        
+                        @foreach (var turno in turnosRender)
+                        {
+                            if (turno.FechaHora.Date == currentReferenceDate.Date && turno.FechaHora.Hour >= 8 && turno.FechaHora.Hour <= 20)
+                            {
+                                var topPosition = (turno.FechaHora.Hour - 8) * 60 + turno.FechaHora.Minute;
+                                var height = 55; // Default height for 1 hr approx
+                                <div class="turno-card @GetBadgeColor(turno.Estado)" style="position: absolute; top: @(topPosition)px; left: 10px; right: 10px; height: @(height)px; padding: 5px 10px; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>@turno.FechaHora.ToString("HH:mm") - @turno.PacienteNombre</strong>
+                                        <span>@turno.ServicioNombre</span>
+                                    </div>
+                                    <div style="font-size: 0.85em; opacity: 0.9;">Dr. @turno.VeterinarioNombre</div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else if (currentView == "Semanal")
+        {
+            <div class="semanal-view">
+                <div class="d-flex border-bottom" style="border-color: var(--border-glass) !important; padding-bottom: 10px;">
+                    <div style="width: 50px;"></div>
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        var day = currentReferenceDate.AddDays(i - (int)currentReferenceDate.DayOfWeek + 1); // Start Monday
+                        <div class="flex-grow-1 text-center" style="border-left: 1px solid var(--border-glass);">
+                            <div style="font-weight: bold;">@day.ToString("ddd").ToUpper()</div>
+                            <div style="font-size: 1.2em; color: @(day.Date == DateTime.Today ? "var(--accent-primary)" : "inherit");">@day.Day</div>
+                        </div>
+                    }
+                </div>
+                
+                <div class="d-flex" style="position: relative; height: 600px; overflow-y: auto;">
+                    <div style="width: 50px; border-right: 1px solid var(--border-glass);">
+                        @for (int i = 8; i <= 20; i++)
+                        {
+                            <div style="height: 60px; border-bottom: 1px dashed var(--border-glass); position: relative;">
+                                <span class="text-secondary" style="position: absolute; top: -10px; font-size: 0.75em; right: 5px;">@($"{i:D2}")</span>
+                            </div>
+                        }
+                    </div>
+                    
+                    @for (int d = 0; d < 7; d++)
+                    {
+                        var day = currentReferenceDate.AddDays(d - (int)currentReferenceDate.DayOfWeek + 1);
+                        <div class="flex-grow-1" style="border-right: 1px solid var(--border-glass); position: relative;">
+                            @for (int i = 8; i <= 20; i++)
+                            {
+                                <div style="height: 60px; border-bottom: 1px dashed var(--border-glass);"></div>
+                            }
+                            
+                            @foreach (var turno in turnosRender.Where(t => t.FechaHora.Date == day.Date && t.FechaHora.Hour >= 8 && t.FechaHora.Hour <= 20))
+                            {
+                                var topPosition = (turno.FechaHora.Hour - 8) * 60 + turno.FechaHora.Minute;
+                                <div class="turno-card-sm @GetBadgeColor(turno.Estado)" style="position: absolute; top: @(topPosition)px; left: 2px; right: 2px; height: 50px; padding: 3px; border-radius: 4px; font-size: 0.75em; overflow: hidden; cursor: pointer;" title="@turno.PacienteNombre - @turno.ServicioNombre" @onclick="() => NavigateToEdit(turno.Id)">
+                                    <strong>@turno.FechaHora.ToString("HH:mm")</strong><br/>
+                                    <span class="text-truncate d-block">@turno.PacienteNombre</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else if (currentView == "Mensual")
+        {
+            <div class="mensual-view">
+                <div class="row text-center font-weight-bold" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 10px; margin-bottom: 10px;">
+                    <div class="col">Lun</div>
+                    <div class="col">Mar</div>
+                    <div class="col">Mié</div>
+                    <div class="col">Jue</div>
+                    <div class="col">Vie</div>
+                    <div class="col">Sáb</div>
+                    <div class="col">Dom</div>
+                </div>
+                
+                @{
+                    var firstDayOfMonth = new DateTime(currentReferenceDate.Year, currentReferenceDate.Month, 1);
+                    var daysInMonth = DateTime.DaysInMonth(currentReferenceDate.Year, currentReferenceDate.Month);
+                    var startingDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+                    if (startingDayOfWeek == 0) startingDayOfWeek = 7; // Make Sunday 7 instead of 0
+                    
+                    var currentCellDate = firstDayOfMonth.AddDays(-(startingDayOfWeek - 1));
+                }
+                
+                @for (int row = 0; row < 6; row++)
+                {
+                    <div class="row" style="min-height: 100px; border-bottom: 1px solid var(--border-glass);">
+                        @for (int col = 0; col < 7; col++)
+                        {
+                            bool isCurrentMonth = currentCellDate.Month == currentReferenceDate.Month;
+                            bool isToday = currentCellDate.Date == DateTime.Today;
+                            var dailyTurnos = turnosRender.Where(t => t.FechaHora.Date == currentCellDate.Date).ToList();
+                            
+                            <div class="col p-1" style="border-right: 1px solid var(--border-glass); opacity: @(isCurrentMonth ? "1" : "0.5"); background: @(isToday ? "rgba(var(--accent-primary-rgb), 0.1)" : "transparent");">
+                                <div class="text-end" style="font-weight: @(isToday ? "bold" : "normal"); color: @(isToday ? "var(--accent-primary)" : "inherit");">@currentCellDate.Day</div>
+                                <div class="d-flex flex-column gap-1 mt-1" style="max-height: 80px; overflow-y: auto;">
+                                    @foreach(var turno in dailyTurnos.Take(3))
+                                    {
+                                        <div class="badge text-truncate text-start px-2 py-1 @GetBadgeColor(turno.Estado)" style="font-size: 0.7em; cursor: pointer; display: block;" title="@turno.FechaHora.ToString("HH:mm") - @turno.PacienteNombre" @onclick="() => NavigateToEdit(turno.Id)">
+                                            @turno.FechaHora.ToString("HH:mm") @turno.PacienteNombre
+                                        </div>
+                                    }
+                                    @if (dailyTurnos.Count > 3)
+                                    {
+                                        <div class="text-center text-secondary" style="font-size: 0.7em; cursor: pointer;">+@(dailyTurnos.Count - 3) más...</div>
+                                    }
+                                </div>
+                            </div>
+                            
+                            currentCellDate = currentCellDate.AddDays(1);
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@using System.Globalization
+
+@code {
+    private string currentView = "Lista"; // Lista, Diaria, Semanal, Mensual
+    private DateTime currentReferenceDate = DateTime.Today;
+    
+    // Data list
+    private PaginatedList<TurnoDto>? turnosResponse;
+    private List<TurnoDto> turnosRender = new(); // Para las vistas de calendario (no paginadas)
+    
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private int currentPage = 1;
+    private int pageSize = 15;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task ChangeView(string viewName)
+    {
+        currentView = viewName;
+        currentReferenceDate = DateTime.Today; // Reset on view change
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        try
+        {
+            if (currentView == "Lista")
+            {
+                turnosResponse = await TurnoService.GetAllAsync(currentPage, pageSize, "");
+                turnosRender.Clear();
+            }
+            else
+            {
+                // Calcular limites de fecha segun la vista para traer todos los turnos del periodo
+                DateTime inicio, fin;
+                
+                if (currentView == "Diaria")
+                {
+                    inicio = currentReferenceDate.Date;
+                    fin = inicio.AddDays(1).AddSeconds(-1);
+                }
+                else if (currentView == "Semanal")
+                {
+                    int diff = (7 + (currentReferenceDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+                    inicio = currentReferenceDate.AddDays(-1 * diff).Date;
+                    fin = inicio.AddDays(7).AddSeconds(-1);
+                }
+                else // Mensual
+                {
+                    inicio = new DateTime(currentReferenceDate.Year, currentReferenceDate.Month, 1).AddDays(-7); // incl un poco antes para grilla
+                    fin = new DateTime(currentReferenceDate.Year, currentReferenceDate.Month, DateTime.DaysInMonth(currentReferenceDate.Year, currentReferenceDate.Month)).AddDays(7);
+                }
+                
+                var RangoQuery = await TurnoService.GetRangoAsync(inicio, fin);
+                turnosRender = RangoQuery ?? new List<TurnoDto>();
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error de conexión al cargar la agenda.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task NavigatePrevious()
+    {
+        if (currentView == "Diaria") currentReferenceDate = currentReferenceDate.AddDays(-1);
+        else if (currentView == "Semanal") currentReferenceDate = currentReferenceDate.AddDays(-7);
+        else if (currentView == "Mensual") currentReferenceDate = currentReferenceDate.AddMonths(-1);
+        
+        await LoadDataAsync();
+    }
+
+    private async Task NavigateNext()
+    {
+        if (currentView == "Diaria") currentReferenceDate = currentReferenceDate.AddDays(1);
+        else if (currentView == "Semanal") currentReferenceDate = currentReferenceDate.AddDays(7);
+        else if (currentView == "Mensual") currentReferenceDate = currentReferenceDate.AddMonths(1);
+        
+        await LoadDataAsync();
+    }
+
+    private string GetPeriodLabel()
+    {
+        var ci = new CultureInfo("es-ES");
+        if (currentView == "Diaria") return currentReferenceDate.ToString("dd MMMM yyyy", ci);
+        if (currentView == "Semanal")
+        {
+            int diff = (7 + (currentReferenceDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+            var inicio = currentReferenceDate.AddDays(-1 * diff);
+            var fin = inicio.AddDays(6);
+            return $"{inicio.ToString("dd MMM", ci)} - {fin.ToString("dd MMM yyyy", ci)}";
+        }
+        if (currentView == "Mensual") return currentReferenceDate.ToString("MMMM yyyy", ci).ToUpper();
+        return "";
+    }
+
+    private string GetBadgeColor(string estado)
+    {
+        return estado switch
+        {
+            "Programado" => "bg-primary",
+            "Completado" => "bg-success",
+            "Cancelado" => "bg-danger",
+            "Reprogramado" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    // List View Pagination
+    private async Task PreviousPage() { if (turnosResponse?.HasPreviousPage == true) { currentPage--; await LoadDataAsync(); } }
+    private async Task NextPage() { if (turnosResponse?.HasNextPage == true) { currentPage++; await LoadDataAsync(); } }
+
+    private void NavigateToEdit(string id)
+    {
+        Navigation.NavigateTo($"/agenda/editar/{id}");
+    }
+
+    private async Task ConfirmCancel(string id)
+    {
+        bool confirmed = true; 
+        if (confirmed)
+        {
+            var result = await TurnoService.ChangeStatusAsync(id, "Cancelado");
+            if (result) await LoadDataAsync();
+            else errorMessage = "No se pudo cancelar el turno.";
+        }
+    }
+}

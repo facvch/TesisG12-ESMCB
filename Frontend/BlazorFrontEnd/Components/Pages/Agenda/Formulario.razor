@@ -1,0 +1,207 @@
+@page "/agenda/nuevo"
+@page "/agenda/editar/{Id}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject TurnoService TurnoService
+@inject PacienteService PacienteService
+@inject PersonalService PersonalService
+@inject CatalogoServiciosService ServiciosService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar / Visor Turno" : "Nuevo Turno")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Detalle del Turno" : "Asignación de Turno")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 900px;">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando disponibilidad y pacientes...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="turnoForm">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Paciente (*)</label>
+                    <InputSelect @bind-Value="model.PacienteId" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Seleccione un Paciente --</option>
+                        @foreach (var p in pacientes)
+                        {
+                            <option value="@p.Id">@p.Nombre (@p.EspecieNombre)</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.PacienteId)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
+                    <InputSelect @bind-Value="model.VeterinarioId" class="form-select bg-dark text-light border-secondary">
+                        <option value="">-- Médico Veterinario --</option>
+                        @foreach (var v in veterinarios)
+                        {
+                            <option value="@v.Id">@v.NombreCompleto - @v.Especialidad</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.VeterinarioId)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Servicio (*)</label>
+                    <InputSelect @bind-Value="model.ServicioId" class="form-select bg-dark text-light border-secondary">
+                        <option value="0">-- Servicio Clínico --</option>
+                        @foreach (var s in servicios)
+                        {
+                            <option value="@s.Id">@s.Nombre</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.ServicioId)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
+                    <input type="datetime-local" @bind="model.FechaHora" class="form-control bg-dark text-light border-secondary" />
+                </div>
+
+                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Estado Operativo</label>
+                    <InputSelect @bind-Value="model.Estado" class="form-select bg-dark text-light border-secondary">
+                        <option value="Programado">Programado</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Cancelado">Cancelado</option>
+                        <option value="Reprogramado">Reprogramado</option>
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Motivo del Turno (*)</label>
+                    <InputText @bind-Value="model.Motivo" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Control general anual, Vacuna Sextuple" />
+                    <ValidationMessage For="@(() => model.Motivo)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones Previas / Receta</label>
+                    <InputTextArea @bind-Value="model.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Retornar a Agenda</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando Turno...</span> } else { <span>Confirmar Turno</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private TurnoDto model = new();
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+    private bool isLoading = true;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    private List<PacienteDto> pacientes = new();
+    private List<VeterinarioDto> veterinarios = new();
+    private List<ServicioDto> servicios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var resP = await PacienteService.GetAllAsync(1, 1000, "");
+            if(resP != null) pacientes = resP.Items;
+
+            var resV = await PersonalService.GetVeterinariosActivosAsync();
+            if(resV != null) veterinarios = resV;
+
+            var resS = await ServiciosService.GetServiciosActivosAsync();
+            if(resS != null) servicios = resS;
+
+            if (isEdit)
+            {
+                var response = await TurnoService.GetByIdAsync(Id!);
+                if (response != null) model = response;
+                else errorMessage = "No se encontró el turno solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error al cargar paramétricas o turno de la base de datos.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            bool result;
+            if (isEdit)
+            {
+                // Dispatch based on selected Estado
+                if (model.Estado == "Completado")
+                    result = await TurnoService.ChangeStatusAsync(Id!, "Completado");
+                else if (model.Estado == "Cancelado")
+                    result = await TurnoService.ChangeStatusAsync(Id!, "Cancelado");
+                else
+                    result = await TurnoService.UpdateAsync(Id!, model);
+            }
+            else
+            {
+                result = await TurnoService.CreateAsync(model);
+            }
+
+            if (result)
+            {
+                Navigation.NavigateTo("/agenda");
+            }
+            else
+            {
+                errorMessage = "Verifique la validación de negocio del backend (ej: Turnos superpuestos para el mismo veterinario).";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Excepción al enviar datos del turno.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/agenda");
+}

@@ -1,0 +1,150 @@
+@page "/propietarios/nuevo"
+@page "/propietarios/editar/{Id}"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject PropietarioService PropietarioService
+@inject NavigationManager Navigation
+
+<PageTitle>@(isEdit ? "Editar Cliente" : "Nuevo Cliente")</PageTitle>
+
+<div class="d-flex align-items-center" style="margin-bottom: var(--sp-lg);">
+    <button class="btn btn-link" style="color: var(--text-secondary); padding: 0; margin-right: 15px;" @onclick="GoBack">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+    </button>
+    <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Editar Cliente" : "Nuevo Cliente")</h2>
+</div>
+
+<div class="glass-card" style="max-width: 800px;">
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando información...</p>
+    }
+    else
+    {
+        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="propietarioForm">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                    <InputText @bind-Value="model.Nombre" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Nombre)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Apellido (*)</label>
+                    <InputText @bind-Value="model.Apellido" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.Apellido)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">DNI (*)</label>
+                    <InputText @bind-Value="model.DNI" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.DNI)" class="text-danger" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Celular / Teléfono</label>
+                    <InputText @bind-Value="model.Telefono" class="form-control bg-dark text-light border-secondary" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Correo Electrónico</label>
+                    <InputText @bind-Value="model.Email" type="email" class="form-control bg-dark text-light border-secondary" />
+                </div>
+                
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Dirección Física</label>
+                    <InputText @bind-Value="model.Direccion" class="form-control bg-dark text-light border-secondary" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
+                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                    @if(isSaving) { <span>Guardando...</span> } else { <span>Guardar Cliente</span> }
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private PropietarioDto model = new();
+    private bool isEdit => !string.IsNullOrEmpty(Id);
+    private bool isLoading;
+    private bool isSaving;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (isEdit)
+        {
+            isLoading = true;
+            try
+            {
+                var response = await PropietarioService.GetByIdAsync(Id!);
+                if (response != null) model = response;
+                else errorMessage = "No se encontró el propietario solicitado.";
+            }
+            catch (Exception)
+            {
+                errorMessage = "Error al comunicarse con el servidor.";
+            }
+            finally
+            {
+                isLoading = false;
+            }
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            bool result;
+            if (isEdit) 
+                result = await PropietarioService.UpdateAsync(Id!, model);
+            else 
+                result = await PropietarioService.CreateAsync(model);
+
+            if (result)
+            {
+                Navigation.NavigateTo("/propietarios");
+            }
+            else
+            {
+                errorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/propietarios");
+}

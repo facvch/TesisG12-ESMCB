@@ -1,0 +1,163 @@
+@page "/inventario"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject ProductoService ProductoService
+@inject NavigationManager Navigation
+
+<PageTitle>Inventario de Productos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Gestión de Inventario</h2>
+        <p class="text-secondary" style="margin: 0;">Control de stock y catálogo de productos</p>
+    </div>
+    <a href="/inventario/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Nuevo Producto
+    </a>
+</div>
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-md);">
+        <h4 style="margin: 0;">Catálogo</h4>
+        <input type="text" @bind="searchTerm" @bind:event="oninput" @keyup="OnSearchChanged" class="form-control" placeholder="Buscar por Nombre o Código..." style="width: 300px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+    </div>
+
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando catálogo...</p>
+    }
+    else if (productosResponse?.Items == null || !productosResponse.Items.Any())
+    {
+        <p class="text-secondary">No se encontraron productos en el inventario.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-dark table-hover" style="background: transparent;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-glass);">
+                        <th>Código / Producto</th>
+                        <th>Categoría</th>
+                        <th>Costo</th>
+                        <th>Venta</th>
+                        <th>Stock Actual</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var prod in productosResponse.Items)
+                    {
+                        <tr style="border-bottom: 1px solid var(--border-glass);">
+                            <td>
+                                <strong>@prod.Nombre</strong>
+                                <br/><small class="text-secondary">CB: @prod.CodigoBarras</small>
+                            </td>
+                            <td>
+                                @prod.CategoriaNombre
+                                @if(!string.IsNullOrEmpty(prod.MarcaNombre)) { <br/><small class="text-secondary">@prod.MarcaNombre</small> }
+                            </td>
+                            <td>$@prod.PrecioCompra.ToString("0.00")</td>
+                            <td>
+                                <strong style="color: var(--accent-primary);">$@prod.PrecioVenta.ToString("0.00")</strong>
+                            </td>
+                            <td>
+                                <span class="@(prod.StockBajo ? "text-danger" : "text-light")" style="font-weight: bold; font-size: 1.1em;">
+                                    @prod.StockActual
+                                </span>
+                                @if(prod.StockBajo)
+                                {
+                                    <span class="badge bg-danger ms-2">Reabastecer (Min: @prod.StockMinimo)</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a href="/inventario/editar/@prod.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar / Stock</a>
+                                <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(prod.Id)">Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span class="text-secondary">Página @productosResponse.PageIndex de @productosResponse.TotalPages (@productosResponse.TotalCount registros)</span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" disabled="@(!productosResponse.HasPreviousPage)" @onclick="PreviousPage">Anterior</button>
+                <button class="btn btn-sm btn-outline-secondary" disabled="@(!productosResponse.HasNextPage)" @onclick="NextPage">Siguiente</button>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private PaginatedList<ProductoDto>? productosResponse;
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    
+    private int currentPage = 1;
+    private int pageSize = 15;
+    private string searchTerm = string.Empty;
+    private System.Timers.Timer? searchTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        try
+        {
+            productosResponse = await ProductoService.GetAllAsync(currentPage, pageSize, searchTerm);
+        }
+        catch (Exception)
+        {
+            errorMessage = "Error de conexión al cargar el inventario.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnSearchChanged()
+    {
+        if (searchTimer != null) searchTimer.Dispose();
+        
+        searchTimer = new System.Timers.Timer(500);
+        searchTimer.Elapsed += async (s, e) =>
+        {
+            currentPage = 1;
+            await InvokeAsync(LoadDataAsync);
+            await InvokeAsync(StateHasChanged);
+        };
+        searchTimer.AutoReset = false;
+        searchTimer.Start();
+    }
+
+    private async Task PreviousPage() { if (productosResponse?.HasPreviousPage == true) { currentPage--; await LoadDataAsync(); } }
+    private async Task NextPage() { if (productosResponse?.HasNextPage == true) { currentPage++; await LoadDataAsync(); } }
+
+    private async Task ConfirmDelete(string id)
+    {
+        bool confirmed = true; 
+        if (confirmed)
+        {
+            var result = await ProductoService.DeleteAsync(id);
+            if (result) await LoadDataAsync();
+            else errorMessage = "No se pudo eliminar el producto.";
+        }
+    }
+}
