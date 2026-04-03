@@ -7,6 +7,7 @@ namespace Application.DataTransferObjects
         public string Id { get; set; }
         public string PacienteId { get; set; }
         public string PacienteNombre { get; set; }
+        public string PropietarioNombre { get; set; }
         public string VeterinarioId { get; set; }
         public string VeterinarioNombre { get; set; }
         public int ServicioId { get; set; }

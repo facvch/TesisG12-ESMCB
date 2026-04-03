@@ -13,6 +13,7 @@ namespace BlazorFrontEnd.Models
         [Required(ErrorMessage = "Debe seleccionar un veterinario")]
         public string VeterinarioId { get; set; } = string.Empty;
         public string VeterinarioNombre { get; set; } = string.Empty;
+        public string PropietarioNombre { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Debe seleccionar un servicio")]
         public int ServicioId { get; set; }

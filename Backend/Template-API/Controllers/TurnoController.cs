@@ -41,11 +41,25 @@ namespace Controllers
         /// Obtiene turnos programados en un rango de fechas
         /// </summary>
         [HttpGet("api/v1/[Controller]/programados")]
-        public async Task<IActionResult> GetProgramados([FromQuery] DateTime desde, [FromQuery] DateTime hasta)
+        public async Task<IActionResult> GetProgramados([FromQuery] DateTime desde, [FromQuery] DateTime hasta, [FromQuery] string? veterinarioId = null, [FromQuery] string? searchTerm = null)
         {
             if (hasta <= desde) return BadRequest("La fecha 'hasta' debe ser posterior a 'desde'");
 
             var entities = await _turnoRepository.GetProgramadosAsync(desde, hasta);
+            
+            if (!string.IsNullOrWhiteSpace(veterinarioId))
+            {
+                entities = entities.Where(t => t.VeterinarioId == veterinarioId).ToList();
+            }
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var searchUpper = searchTerm.ToUpper();
+                entities = entities.Where(t => 
+                    (t.Paciente != null && t.Paciente.Nombre.ToUpper().Contains(searchUpper)) ||
+                    (t.Motivo != null && t.Motivo.ToUpper().Contains(searchUpper))
+                ).ToList();
+            }
+            
             var dtos = entities.Select(MapToDto).ToList();
             return Ok(dtos);
         }
@@ -244,6 +258,7 @@ namespace Controllers
             Id = t.Id,
             PacienteId = t.PacienteId,
             PacienteNombre = t.Paciente?.Nombre ?? "",
+            PropietarioNombre = t.Paciente?.Propietario?.Nombre != null ? $"{t.Paciente.Propietario.Nombre} {t.Paciente.Propietario.Apellido}".Trim() : "",
             VeterinarioId = t.VeterinarioId,
             VeterinarioNombre = t.Veterinario?.NombreCompleto ?? "",
             ServicioId = t.ServicioId,

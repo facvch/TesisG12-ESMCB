@@ -160,7 +160,7 @@ namespace Controllers
         {
             var e = await _repo.FindOneAsync(r.Id);
             if (e == null) return NotFound();
-            e.Actualizar(r.RazonSocial, r.Telefono, r.Email ?? "", r.Direccion ?? "", r.Contacto ?? "");
+            e.Actualizar(r.RazonSocial, r.CUIT, r.Telefono, r.Email ?? "", r.Direccion ?? "", r.Contacto ?? "");
             if (!e.IsValid) return BadRequest(e.GetErrors().Select(x => x.ErrorMessage));
             _repo.Update(r.Id, e);
             return NoContent();
@@ -193,6 +193,7 @@ namespace Controllers
     public class UpdateProveedorRequest
     {
         public string Id { get; set; } public string RazonSocial { get; set; }
+        public string CUIT { get; set; }
         public string Telefono { get; set; } public string Email { get; set; }
         public string Direccion { get; set; } public string Contacto { get; set; }
     }

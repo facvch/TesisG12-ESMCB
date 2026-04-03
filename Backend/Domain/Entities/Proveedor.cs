@@ -28,9 +28,10 @@ namespace Domain.Entities
             Activo = true;
         }
 
-        public void Actualizar(string razonSocial, string telefono, string email, string direccion, string contacto)
+        public void Actualizar(string razonSocial, string cuit, string telefono, string email, string direccion, string contacto)
         {
             RazonSocial = razonSocial;
+            CUIT = cuit;
             Telefono = telefono;
             Email = email;
             Direccion = direccion;

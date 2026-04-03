@@ -49,6 +49,26 @@
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private BlazorFrontEnd.Auth.TokenStorageService TokenStorage { get; set; } = default!;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Sync token from localStorage to in-memory TokenStorageService.
+            // This is the ONLY place where JS interop works reliably for reading localStorage.
+            // The HttpClient handler (DelegatingHandler) runs outside the Blazor circuit 
+            // and cannot use JS interop, so it reads from TokenStorageService.
+            try
+            {
+                var token = await LocalStorage.GetItemAsync<string>("authToken");
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    TokenStorage.SetToken(token);
+                }
+            }
+            catch { /* localStorage not available yet */ }
+        }
+    }
+
     private async Task Logout()
     {
         await LocalStorage.RemoveItemAsync("authToken");

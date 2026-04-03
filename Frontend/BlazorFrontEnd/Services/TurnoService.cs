@@ -14,16 +14,22 @@ namespace BlazorFrontEnd.Services
             _httpClient = httpClient;
         }
 
-        public async Task<PaginatedList<TurnoDto>?> GetAllAsync(int page = 1, int pageSize = 10, string searchTerm = "")
+        public async Task<PaginatedList<TurnoDto>?> GetAllAsync(int page = 1, int pageSize = 10, string searchTerm = "", string? veterinarioId = null)
         {
-            var url = $"api/v1/Paginado/turnos?page={page}&pageSize={pageSize}&searchTerm={searchTerm}";
+            var url = $"api/v1/Paginado/turnos?page={page}&pageSize={pageSize}";
+            if (!string.IsNullOrWhiteSpace(searchTerm)) url += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
+            if (!string.IsNullOrWhiteSpace(veterinarioId)) url += $"&veterinarioId={Uri.EscapeDataString(veterinarioId)}";
+            
             return await _httpClient.GetUnwrappedAsync<PaginatedList<TurnoDto>>(url);
         }
 
         // Endpoint for Calendar View
-        public async Task<List<TurnoDto>?> GetRangoAsync(DateTime inicio, DateTime fin)
+        public async Task<List<TurnoDto>?> GetRangoAsync(DateTime inicio, DateTime fin, string? searchTerm = null, string? veterinarioId = null)
         {
             var url = $"{BaseUrl}/programados?desde={inicio:s}&hasta={fin:s}";
+            if (!string.IsNullOrWhiteSpace(searchTerm)) url += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
+            if (!string.IsNullOrWhiteSpace(veterinarioId)) url += $"&veterinarioId={Uri.EscapeDataString(veterinarioId)}";
+            
             return await _httpClient.GetUnwrappedAsync<List<TurnoDto>>(url);
         }
 

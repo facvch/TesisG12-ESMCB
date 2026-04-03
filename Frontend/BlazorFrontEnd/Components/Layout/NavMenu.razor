@@ -43,29 +43,35 @@
     </div>
 
     <div class="nav-item">
-        <NavLink class="nav-link" href="inventario" Match="NavLinkMatch.All">
+        <a class="nav-link" href="inventario" style="cursor: pointer; display: flex; align-items: center;" @onclick="ToggleInventarioMenu" @onclick:preventDefault>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
             </svg>
-            Inventario Principal
-        </NavLink>
-        <div class="nav-submenu" style="padding-left: 2rem; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <NavLink class="nav-link nav-submenu-link" href="inventario/productos" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
-                ▶ Productos
-            </NavLink>
-            <NavLink class="nav-link nav-submenu-link" href="inventario/categorias" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
-                ▶ Categorías
-            </NavLink>
-            <NavLink class="nav-link nav-submenu-link" href="inventario/marcas" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
-                ▶ Marcas
-            </NavLink>
-            <NavLink class="nav-link nav-submenu-link" href="inventario/proveedores" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
-                ▶ Proveedores
-            </NavLink>
-            <NavLink class="nav-link nav-submenu-link" href="inventario/depositos" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
-                ▶ Depósitos
-            </NavLink>
-        </div>
+            <span style="flex: 1;">Inventario</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 14px; height: 14px; transition: transform 0.2s ease; transform: rotate(@(inventarioMenuOpen ? "180" : "0")deg);">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+        </a>
+        @if (inventarioMenuOpen)
+        {
+            <div class="nav-submenu" style="padding-left: 2rem; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; animation: fadeIn 0.15s ease;">
+                <NavLink class="nav-link nav-submenu-link" href="inventario/productos" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
+                    Productos
+                </NavLink>
+                <NavLink class="nav-link nav-submenu-link" href="inventario/categorias" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
+                    Categorías
+                </NavLink>
+                <NavLink class="nav-link nav-submenu-link" href="inventario/marcas" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
+                    Marcas
+                </NavLink>
+                <NavLink class="nav-link nav-submenu-link" href="inventario/proveedores" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
+                    Proveedores
+                </NavLink>
+                <NavLink class="nav-link nav-submenu-link" href="inventario/depositos" style="font-size: 0.85rem; padding: 0.25rem 0.5rem; color: var(--text-secondary);">
+                    Depósitos
+                </NavLink>
+            </div>
+        }
     </div>
 
     <div class="nav-item">
@@ -108,3 +114,12 @@
         </Authorized>
     </AuthorizeView>
 </nav>
+
+@code {
+    private bool inventarioMenuOpen = false;
+
+    private void ToggleInventarioMenu()
+    {
+        inventarioMenuOpen = !inventarioMenuOpen;
+    }
+}

@@ -3,6 +3,8 @@
 @using BlazorFrontEnd.Services
 @inject UsuarioService UsuarioService
 @inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject BlazorFrontEnd.Auth.TokenStorageService TokenStorage
 
 <PageTitle>Gestión de Usuarios y Accesos</PageTitle>
 
@@ -86,9 +88,25 @@
     private bool isLoading = true;
     private string errorMessage = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await LoadDataAsync();
+        if (firstRender)
+        {
+            await SyncTokenAsync();
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SyncTokenAsync()
+    {
+        try
+        {
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
+            if (!string.IsNullOrWhiteSpace(token))
+                TokenStorage.SetToken(token);
+        }
+        catch { }
     }
 
     private async Task LoadDataAsync()

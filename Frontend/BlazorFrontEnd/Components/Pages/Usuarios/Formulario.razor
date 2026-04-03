@@ -3,6 +3,8 @@
 @using BlazorFrontEnd.Services
 @inject UsuarioService UsuarioService
 @inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject BlazorFrontEnd.Auth.TokenStorageService TokenStorage
 
 <PageTitle>Registrar Nuevo Usuario</PageTitle>
 
@@ -85,12 +87,29 @@
     private bool isSaving = false;
     private string errorMessage = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        isLoading = true;
-        var r = await UsuarioService.GetRolesAsync();
-        if(r != null) roles = r;
-        isLoading = false;
+        if (firstRender)
+        {
+            await SyncTokenAsync();
+            isLoading = true;
+            StateHasChanged();
+            var r = await UsuarioService.GetRolesAsync();
+            if(r != null) roles = r;
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SyncTokenAsync()
+    {
+        try
+        {
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
+            if (!string.IsNullOrWhiteSpace(token))
+                TokenStorage.SetToken(token);
+        }
+        catch { }
     }
 
     private async Task HandleSave()

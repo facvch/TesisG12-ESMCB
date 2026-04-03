@@ -128,19 +128,37 @@ namespace Controllers
         public async Task<IActionResult> TurnosPaginados(
             [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
             [FromQuery] string sortBy = "FechaHora", [FromQuery] string sortDir = "desc",
-            [FromQuery] DateTime? desde = null, [FromQuery] DateTime? hasta = null)
+            [FromQuery] DateTime? desde = null, [FromQuery] DateTime? hasta = null,
+            [FromQuery] string? veterinarioId = null, [FromQuery] string? searchTerm = null)
         {
             var entities = (await turnoRepo.GetTurnosExpandidosAsync()).AsEnumerable();
             if (desde.HasValue) entities = entities.Where(t => t.FechaHora >= desde.Value);
             if (hasta.HasValue) entities = entities.Where(t => t.FechaHora <= hasta.Value);
+            
+            if (!string.IsNullOrWhiteSpace(veterinarioId))
+            {
+                entities = entities.Where(t => t.VeterinarioId == veterinarioId);
+            }
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var searchUpper = searchTerm.ToUpper();
+                entities = entities.Where(t => 
+                    (t.Paciente != null && t.Paciente.Nombre.ToUpper().Contains(searchUpper)) ||
+                    (t.Motivo != null && t.Motivo.ToUpper().Contains(searchUpper))
+                );
+            }
 
             var dtos = entities.Select(t => new
             {
                 t.Id, t.FechaHora, t.DuracionMinutos,
                 Estado = t.Estado.ToString(), t.Motivo,
-                Paciente = t.Paciente != null ? t.Paciente.Nombre : "",
-                Veterinario = t.Veterinario != null ? $"Dr. {t.Veterinario.Apellido}" : "",
-                Servicio = t.Servicio != null ? t.Servicio.Nombre : ""
+                t.PacienteId,
+                PacienteNombre = t.Paciente != null ? t.Paciente.Nombre : "",
+                PropietarioNombre = t.Paciente?.Propietario?.Nombre != null ? $"{t.Paciente.Propietario.Nombre} {t.Paciente.Propietario.Apellido}".Trim() : "",
+                t.VeterinarioId,
+                VeterinarioNombre = t.Veterinario != null ? $"Dr. {t.Veterinario.Apellido}" : "",
+                t.ServicioId,
+                ServicioNombre = t.Servicio != null ? t.Servicio.Nombre : ""
             });
             return Ok(PaginacionHelper.Paginar(dtos, page, pageSize, sortBy, sortDir));
         }

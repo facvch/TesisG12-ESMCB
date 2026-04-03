@@ -7,21 +7,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add Authorization Handler
-builder.Services.AddScoped<BlazorFrontEnd.Auth.JwtAuthorizationMessageHandler>();
-
-// Add HttpClient to interact with Backend API
-builder.Services.AddHttpClient("BackendApi", client =>
+// Add HttpClient to interact with Backend API (created per-scope so the auth handler
+// shares the same TokenStorageService instance as the components in the circuit)
+builder.Services.AddScoped<HttpClient>(sp =>
 {
-    client.BaseAddress = new Uri("https://localhost:7204/");
-})
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
-})
-.AddHttpMessageHandler<BlazorFrontEnd.Auth.JwtAuthorizationMessageHandler>();
-
-builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("BackendApi"));
+    var tokenStorage = sp.GetRequiredService<BlazorFrontEnd.Auth.TokenStorageService>();
+    var handler = new BlazorFrontEnd.Auth.JwtAuthorizationMessageHandler(tokenStorage)
+    {
+        InnerHandler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        }
+    };
+    return new HttpClient(handler)
+    {
+        BaseAddress = new Uri("https://localhost:7204/")
+    };
+});
 
 // Add LocalStorage for auth tokens
 builder.Services.AddBlazoredLocalStorage();

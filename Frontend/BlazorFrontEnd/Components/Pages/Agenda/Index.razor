@@ -11,6 +11,7 @@
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject TurnoService TurnoService
+@inject VeterinarioService VeterinarioService
 @inject NavigationManager Navigation
 
 <PageTitle>Agenda de Turnos</PageTitle>
@@ -52,6 +53,30 @@
                 <h5 style="margin: 0; min-width: 150px; text-align: center;">@GetPeriodLabel()</h5>
                 <button class="btn btn-sm btn-outline-secondary" @onclick="NavigateNext">Siguiente <i class="bi bi-chevron-right"></i></button>
             </div>
+        }
+    </div>
+    
+    <div class="d-flex flex-wrap gap-3 mt-3 pt-3" style="border-top: 1px solid var(--border-glass);">
+        <div style="flex: 1; min-width: 200px;">
+            <div class="input-group">
+                <span class="input-group-text" style="background: rgba(255,255,255,0.05); border-color: var(--border-glass); color: var(--text-primary);"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="Buscar por Paciente/Mascota..." @bind="searchMascota" @bind:event="oninput" @onkeyup="HandleSearch" style="background: rgba(255,255,255,0.05); border-color: var(--border-glass); color: var(--text-primary);" />
+            </div>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <select class="form-select bg-dark text-light border-secondary" @onchange="OnVeterinarioChanged">
+                <option value="">TODOS LOS VETERINARIOS</option>
+                @foreach(var vet in veterinariosList)
+                {
+                    <option value="@vet.Id" selected="@(filterVeterinarioId == vet.Id)">@vet.NombreCompleto</option>
+                }
+            </select>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(searchMascota) || !string.IsNullOrWhiteSpace(filterVeterinarioId))
+        {
+            <button class="btn btn-outline-danger" @onclick="ClearFilters">
+                <i class="bi bi-x-circle"></i> Limpiar
+            </button>
         }
     </div>
 </div>
@@ -96,7 +121,11 @@
                                         <br/><span class="text-secondary">@turno.FechaHora.ToString("HH:mm") hs</span>
                                     </td>
                                     <td>
-                                        <a href="/pacientes/editar/@turno.PacienteId" style="color: var(--accent-primary); text-decoration: none;">@turno.PacienteNombre</a>
+                                        <a href="/pacientes/editar/@turno.PacienteId" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">@turno.PacienteNombre</a>
+                                        @if (!string.IsNullOrEmpty(turno.PropietarioNombre))
+                                        {
+                                            <br/><span class="text-secondary" style="font-size: 0.85em;"><i class="bi bi-person"></i> @turno.PropietarioNombre</span>
+                                        }
                                     </td>
                                     <td>@turno.ServicioNombre</td>
                                     <td>@turno.VeterinarioNombre</td>
@@ -278,14 +307,53 @@
     // Data list
     private PaginatedList<TurnoDto>? turnosResponse;
     private List<TurnoDto> turnosRender = new(); // Para las vistas de calendario (no paginadas)
+    private List<VeterinarioDto> veterinariosList = new();
     
     private bool isLoading = true;
     private string errorMessage = string.Empty;
     private int currentPage = 1;
     private int pageSize = 15;
+    
+    // Filters
+    private string searchMascota = "";
+    private string filterVeterinarioId = "";
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadVeterinariosAsync();
+        await LoadDataAsync();
+    }
+    
+    private async Task LoadVeterinariosAsync()
+    {
+        var paginateVets = await VeterinarioService.GetAllAsync(true);
+        if (paginateVets?.Items != null)
+        {
+            veterinariosList = paginateVets.Items.Where(v => v.Activo).ToList();
+        }
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" || searchMascota.Length >= 3 || searchMascota.Length == 0)
+        {
+            currentPage = 1;
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OnVeterinarioChanged(ChangeEventArgs e)
+    {
+        filterVeterinarioId = e.Value?.ToString() ?? "";
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchMascota = "";
+        filterVeterinarioId = "";
+        currentPage = 1;
         await LoadDataAsync();
     }
 
@@ -304,7 +372,7 @@
         {
             if (currentView == "Lista")
             {
-                turnosResponse = await TurnoService.GetAllAsync(currentPage, pageSize, "");
+                turnosResponse = await TurnoService.GetAllAsync(currentPage, pageSize, searchMascota, filterVeterinarioId);
                 turnosRender.Clear();
             }
             else
@@ -329,7 +397,7 @@
                     fin = new DateTime(currentReferenceDate.Year, currentReferenceDate.Month, DateTime.DaysInMonth(currentReferenceDate.Year, currentReferenceDate.Month)).AddDays(7);
                 }
                 
-                var RangoQuery = await TurnoService.GetRangoAsync(inicio, fin);
+                var RangoQuery = await TurnoService.GetRangoAsync(inicio, fin, searchMascota, filterVeterinarioId);
                 turnosRender = RangoQuery ?? new List<TurnoDto>();
             }
         }

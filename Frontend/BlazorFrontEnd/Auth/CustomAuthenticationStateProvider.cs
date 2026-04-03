@@ -8,10 +8,12 @@ namespace BlazorFrontEnd.Auth
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
         private readonly ILocalStorageService _localStorage;
+        private readonly TokenStorageService _tokenStorage;
 
-        public CustomAuthenticationStateProvider(ILocalStorageService localStorage)
+        public CustomAuthenticationStateProvider(ILocalStorageService localStorage, TokenStorageService tokenStorage)
         {
             _localStorage = localStorage;
+            _tokenStorage = tokenStorage;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -31,8 +33,13 @@ namespace BlazorFrontEnd.Auth
                 if (jwtToken.ValidTo < DateTime.UtcNow)
                 {
                     await _localStorage.RemoveItemAsync("authToken");
+                    _tokenStorage.ClearToken();
                     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
                 }
+
+                // Sync the token to in-memory storage so the HttpClient handler can use it
+                // even when JS interop is temporarily unavailable
+                _tokenStorage.SetToken(token);
 
                 var identity = new ClaimsIdentity(jwtToken.Claims, "jwt", "name", "role");
                 var user = new ClaimsPrincipal(identity);
@@ -41,9 +48,6 @@ namespace BlazorFrontEnd.Auth
             }
             catch (InvalidOperationException)
             {
-                // This exception occurs during Blazor Server static prerendering
-                // because JavaScript interop (LocalStorage) cannot be used yet.
-                // It's safe to return an empty state here; it will re-render interactively.
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
         }
@@ -55,11 +59,14 @@ namespace BlazorFrontEnd.Auth
             var identity = new ClaimsIdentity(jwtToken.Claims, "jwt", "name", "role");
             var user = new ClaimsPrincipal(identity);
 
+            _tokenStorage.SetToken(token);
+
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
         }
 
         public void NotifyUserLogout()
         {
+            _tokenStorage.ClearToken();
             var authState = Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
             NotifyAuthenticationStateChanged(authState);
         }
