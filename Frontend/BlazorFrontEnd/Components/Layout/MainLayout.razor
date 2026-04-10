@@ -19,7 +19,7 @@
                             <br/>
                             <span style="color: var(--accent-primary); font-size: 0.75rem; font-weight: 500;">@GetUserRole(context)</span>
                         </div>
-                        <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9rem;">
+                        <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9rem;">
                             @(context.User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
                         </div>
                         <button class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; padding: 4px 12px;" @onclick="Logout">

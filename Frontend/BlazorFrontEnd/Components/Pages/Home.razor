@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject DashboardService DashboardService
@@ -24,7 +24,7 @@
 }
 else if (kpis == null || monitor == null)
 {
-    <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+    <div class="alert alert-danger" style="background: rgba(255, 107, 107, 0.1); border: 1px solid var(--accent-danger); color: #c0392b;">
         Error al obtener los datos. Verifique que la API del Backend esté corriendo y posea el rol adecuado.
     </div>
 }
@@ -70,14 +70,14 @@ else
         <!-- Gráfico / Ingresos (Placeholder visual con CSS) -->
         <div class="col-md-8">
             <div class="glass-card" style="height: 100%;">
-                <h5 class="mb-4 text-light">Historial de Caja (Últimos 7 días)</h5>
+                <h5 class="mb-4" style="color: var(--text-primary);">Historial de Caja (Últimos 7 días)</h5>
                 @if(ingresos == null || !ingresos.Any())
                 {
                     <p class="text-secondary">No hay data reciente para graficar.</p>
                 }
                 else
                 {
-                    <div class="d-flex align-items-end justify-content-between p-3 border border-secondary rounded" style="height: 250px; background: rgba(0,0,0,0.2);">
+                    <div class="d-flex align-items-end justify-content-between p-3 border rounded" style="height: 250px; background: var(--bg-main); border-color: var(--border-color);">
                         @{ var max = ingresos.Max(i => i.Ingresos) > 0 ? ingresos.Max(i => i.Ingresos) : 1; }
                         @foreach(var day in ingresos)
                         {
@@ -88,7 +88,7 @@ else
                                 <small class="text-secondary mb-1" style="font-size: 0.7rem;">$@day.Ingresos.ToString("N0")</small>
                                 <div style="width: 100%; min-height: @(minHeight)%; background: linear-gradient(180deg, var(--accent-primary) 0%, rgba(56, 189, 248, 0.2) 100%); border-radius: 4px 4px 0 0; transition: min-height 1s ease;">
                                 </div>
-                                <small class="text-light mt-2" style="font-size: 0.75rem; white-space: nowrap;">@day.FechaCorta</small>
+                                <small class="mt-2" style="font-size: 0.75rem; white-space: nowrap; color: var(--text-secondary);">@day.FechaCorta</small>
                             </div>
                         }
                     </div>
@@ -100,7 +100,7 @@ else
         <div class="col-md-4">
             <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="m-0 text-light">Centro de Resoluciones</h5>
+                    <h5 class="m-0" style="color: var(--text-primary);">Centro de Resoluciones</h5>
                     <span class="badge @(monitor.TotalAlertas > 0 ? "bg-danger" : "bg-success") rounded-pill">@monitor.TotalAlertas</span>
                 </div>
                 
@@ -120,7 +120,7 @@ else
                                 var colorClass = alerta.Nivel == "CRITICA" ? "text-danger" :
                                                 alerta.Nivel == "IMPORTANTE" ? "text-warning" : "text-info";
                                 
-                                <div class="list-group-item bg-transparent text-light border-bottom border-dark px-1 py-2">
+                                <div class="list-group-item bg-transparent border-bottom px-1 py-2" style="color: var(--text-primary); border-color: var(--border-light) !important;">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1 @colorClass" style="font-size: 0.9rem; font-weight: 700;">
                                             @if(alerta.Tipo == "Stock") { <span>📦</span> }
