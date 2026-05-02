@@ -115,4 +115,17 @@ namespace Application.DataTransferObjects
         public string EspecieNombre { get; set; }
         public int Cantidad { get; set; }
     }
+
+    // ── Reporte Histórico de Tratamientos (R003) ──
+    public class HistoricoTratamientoItemDto
+    {
+        public string Id { get; set; }
+        public DateTime Fecha { get; set; }
+        public string PacienteNombre { get; set; }
+        public string PropietarioNombre { get; set; }
+        public string Veterinario { get; set; }
+        public string Diagnostico { get; set; }
+        public string Descripcion { get; set; }
+        public bool Finalizado { get; set; }
+    }
 }

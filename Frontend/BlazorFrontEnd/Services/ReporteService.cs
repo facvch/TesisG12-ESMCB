@@ -57,6 +57,26 @@ namespace BlazorFrontEnd.Services
             catch { return null; }
         }
 
+        public async Task<List<HistoricoTratamientoItemDto>?> GetHistoricoTratamientosAsync(
+            DateTime? desde = null, DateTime? hasta = null,
+            string? pacienteNombre = null, string? propietarioNombre = null,
+            string? veterinarioNombre = null)
+        {
+            try
+            {
+                var parts = new List<string>();
+                if (desde.HasValue) parts.Add($"desde={desde.Value:yyyy-MM-dd}");
+                if (hasta.HasValue) parts.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+                if (!string.IsNullOrWhiteSpace(pacienteNombre)) parts.Add($"pacienteNombre={Uri.EscapeDataString(pacienteNombre)}");
+                if (!string.IsNullOrWhiteSpace(propietarioNombre)) parts.Add($"propietarioNombre={Uri.EscapeDataString(propietarioNombre)}");
+                if (!string.IsNullOrWhiteSpace(veterinarioNombre)) parts.Add($"veterinarioNombre={Uri.EscapeDataString(veterinarioNombre)}");
+                var qs = parts.Any() ? "?" + string.Join("&", parts) : "";
+
+                return await _httpClient.GetUnwrappedAsync<List<HistoricoTratamientoItemDto>>($"api/v1/Reporte/tratamientos{qs}");
+            }
+            catch { return null; }
+        }
+
         // ════ EXPORTACIONES CSV (Browser Download) ════
 
         public async Task TriggerCsvDownloadAsync(string endpointUrl)

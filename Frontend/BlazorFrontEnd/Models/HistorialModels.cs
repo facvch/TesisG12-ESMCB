@@ -38,6 +38,8 @@ namespace BlazorFrontEnd.Models
         
         public DateTime Fecha { get; set; } = DateTime.Today;
         public string Diagnostico { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "La descripción del tratamiento es requerida")]
         public string Descripcion { get; set; } = string.Empty;
         public string Medicacion { get; set; } = string.Empty;
         public string Veterinario { get; set; } = string.Empty;
@@ -69,6 +71,8 @@ namespace BlazorFrontEnd.Models
     public class VacunaDto
     {
         public int Id { get; set; }
+        
+        [Required(ErrorMessage = "El nombre de la vacuna es requerido")]
         public string Nombre { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
         public string Laboratorio { get; set; } = string.Empty;

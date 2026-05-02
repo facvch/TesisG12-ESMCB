@@ -126,8 +126,9 @@ namespace Controllers
             if (metodo == null) return BadRequest($"No existe el método de pago con Id {request.MetodoPagoId}");
 
             // Crear la venta
+            var propId = string.IsNullOrWhiteSpace(request.PropietarioId) ? null : request.PropietarioId;
             var venta = new Domain.Entities.Venta(
-                request.PropietarioId ?? "", request.MetodoPagoId, request.Observaciones ?? "");
+                propId, request.MetodoPagoId, request.Observaciones ?? "");
 
             if (!venta.IsValid) return BadRequest(venta.GetErrors().Select(e => e.ErrorMessage));
 

@@ -7,7 +7,7 @@ namespace BlazorFrontEnd.Services
     public class VacunacionService
     {
         private readonly HttpClient _httpClient;
-        private const string BaseUrl = "api/v1/registros-vacunacion";
+        private const string BaseUrl = "api/v1/RegistroVacunacion";
 
         public VacunacionService(HttpClient httpClient)
         {
@@ -20,7 +20,7 @@ namespace BlazorFrontEnd.Services
             {
                 // Typically you get everything and filter, or use an endpoint. Assuming an endpoint exists or we use the general one.
                 // Depending on the backend mapping it might be at "api/v1/registros-vacunacion/paciente/{id}"
-                return await _httpClient.GetUnwrappedAsync<List<RegistroVacunacionDto>>($"{BaseUrl}/paciente/{pacienteId}");
+                return await _httpClient.GetUnwrappedAsync<List<RegistroVacunacionDto>>($"{BaseUrl}/byPaciente/{pacienteId}");
             }
             catch { return new List<RegistroVacunacionDto>(); }
         }
@@ -32,8 +32,31 @@ namespace BlazorFrontEnd.Services
 
         public async Task<bool> CreateAsync(RegistroVacunacionDto modelo)
         {
-            var response = await _httpClient.PostAsJsonAsync(BaseUrl, modelo);
-            return response.IsSuccessStatusCode;
+            try
+            {
+                var request = new
+                {
+                    PacienteId = modelo.PacienteId,
+                    VacunaId = modelo.VacunaId,
+                    FechaAplicacion = modelo.FechaAplicacion,
+                    FechaProximaDosis = modelo.FechaProximaDosis,
+                    Veterinario = modelo.Veterinario,
+                    NroLote = modelo.NroLote,
+                    Observaciones = modelo.Observaciones
+                };
+                var response = await _httpClient.PostAsJsonAsync(BaseUrl, request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[VACUNACION CREATE ERROR] {response.StatusCode}: {err}");
+                }
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VACUNACION CREATE EXCEPTION] {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> UpdateAsync(string id, RegistroVacunacionDto modelo)
@@ -52,9 +75,26 @@ namespace BlazorFrontEnd.Services
         {
             try
             {
-                return await _httpClient.GetUnwrappedAsync<List<VacunaDto>>("api/v1/vacunas");
+                // Backend returns QueryResult<VacunaDto> wrapped in HttpMessageResult
+                // GetUnwrappedAsync extracts Data → we get a QueryResult-like object
+                // We need to get the Items from it
+                var result = await _httpClient.GetUnwrappedAsync<QueryResultWrapper<VacunaDto>>("api/v1/Vacuna");
+                return result?.Items?.ToList() ?? new List<VacunaDto>();
             }
-            catch { return new List<VacunaDto>(); }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VACUNA CATALOG ERROR] {ex.Message}");
+                return new List<VacunaDto>();
+            }
         }
+    }
+
+    // Helper class to deserialize QueryResult from backend
+    public class QueryResultWrapper<T>
+    {
+        public List<T> Items { get; set; } = new();
+        public long Count { get; set; }
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
     }
 }

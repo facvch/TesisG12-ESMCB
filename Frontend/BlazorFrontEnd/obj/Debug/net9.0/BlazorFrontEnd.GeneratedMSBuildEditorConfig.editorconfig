@@ -148,6 +148,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc3Vhcmlvc1xJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Vacunas/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWYWN1bmFzXEluZGV4LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/Components/Pages/Ventas/Index.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWZW50YXNcSW5kZXgucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 

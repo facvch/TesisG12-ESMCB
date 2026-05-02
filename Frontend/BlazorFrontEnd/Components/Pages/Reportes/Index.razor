@@ -13,20 +13,32 @@
     </div>
 </div>
 
-<!-- Navegación de Pestañas -->
+<!-- Navegación de Pestañas (filtradas por rol) -->
 <ul class="nav nav-pills mb-4 pb-2" style="border-bottom: 1px solid var(--border-glass);">
-    <li class="nav-item">
-        <button class="nav-link @(activeTab == "FINANZAS" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "FINANZAS" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("FINANZAS")'>Finanzas y Ventas</button>
-    </li>
-    <li class="nav-item ms-2">
-        <button class="nav-link @(activeTab == "STOCK" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "STOCK" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("STOCK")'>Control de Stock</button>
-    </li>
-    <li class="nav-item ms-2">
-        <button class="nav-link @(activeTab == "TURNOS" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "TURNOS" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("TURNOS")'>Rendimiento de Turnos</button>
-    </li>
-    <li class="nav-item ms-2">
-        <button class="nav-link @(activeTab == "CLINICA" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "CLINICA" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("CLINICA")'>Resumen Clínico</button>
-    </li>
+    @if (CanSeeTab("FINANZAS"))
+    {
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == "FINANZAS" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "FINANZAS" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("FINANZAS")'>Finanzas y Ventas</button>
+        </li>
+    }
+    @if (CanSeeTab("STOCK"))
+    {
+        <li class="nav-item ms-2">
+            <button class="nav-link @(activeTab == "STOCK" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "STOCK" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("STOCK")'>Control de Stock</button>
+        </li>
+    }
+    @if (CanSeeTab("TURNOS"))
+    {
+        <li class="nav-item ms-2">
+            <button class="nav-link @(activeTab == "TURNOS" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "TURNOS" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("TURNOS")'>Rendimiento de Turnos</button>
+        </li>
+    }
+    @if (CanSeeTab("CLINICA"))
+    {
+        <li class="nav-item ms-2">
+            <button class="nav-link @(activeTab == "CLINICA" ? "active bg-primary disabled" : "text-light")" style="@(activeTab == "CLINICA" ? "border-radius: 8px; font-weight: 600;" : "border-radius: 8px;")" @onclick='() => ChangeTab("CLINICA")'>Resumen Clínico</button>
+        </li>
+    }
 </ul>
 
 @if (isLoading)
@@ -84,8 +96,8 @@ else
             <div class="col-md-4">
                 <div class="card bg-dark border-secondary">
                     <div class="card-body">
-                        <h6 class="text-light mb-3">Extracción de Base de Datos</h6>
-                        <p class="text-secondary small mb-4">Exporte todos los comprobantes emitidos hacia Excel o sistemas contables.</p>
+                        <h6 class="mb-3" style="color: var(--accent-primary);">Extracción de Base de Datos</h6>
+                        <p class="small mb-4" style="color: white; opacity: 0.9;">Exporte todos los comprobantes emitidos hacia Excel o sistemas contables.</p>
                         <button class="btn btn-outline-success w-100" @onclick='() => Download("api/v1/Export/ventas")'>
                             📥 Descargar Ventas (CSV)
                         </button>
@@ -147,7 +159,7 @@ else
             <div class="col-md-4">
                 <div class="card bg-dark border-secondary mb-3">
                     <div class="card-body">
-                        <h6 class="text-light mb-3">Exportar Catálogo Diario</h6>
+                        <h6 class="mb-3" style="color: var(--accent-primary);">Exportar Catálogo Diario</h6>
                         <button class="btn btn-outline-info w-100 mb-2" @onclick='() => Download("api/v1/Export/productos")'>
                             📦 Maestro de Productos
                         </button>
@@ -218,8 +230,8 @@ else
             <div class="col-md-4">
                 <div class="card bg-dark border-secondary">
                     <div class="card-body">
-                        <h6 class="text-light mb-3">Agenda Completa</h6>
-                        <p class="text-secondary small mb-4">Exporta el listado completo de reservas, histórico y motivos.</p>
+                        <h6 class="mb-3" style="color: var(--accent-primary);">Agenda Completa</h6>
+                        <p class="small mb-4" style="color: white; opacity: 0.9;">Exporta el listado completo de reservas, histórico y motivos.</p>
                         <button class="btn btn-outline-primary w-100" @onclick='() => Download("api/v1/Export/turnos")'>
                             📅 Descargar Agenda CSV
                         </button>
@@ -267,7 +279,7 @@ else
             <div class="col-md-4">
                 <div class="card bg-dark border-secondary mb-3">
                     <div class="card-body">
-                        <h6 class="text-light mb-3">Registros Maestros</h6>
+                        <h6 class="mb-3" style="color: var(--accent-primary);">Registros Maestros</h6>
                         <button class="btn btn-outline-light w-100 mb-2" @onclick='() => Download("api/v1/Export/pacientes")'>
                             🐕 Padrón de Mascotas
                         </button>
@@ -275,7 +287,7 @@ else
                             👩‍🦰 Padrón de Dueños
                         </button>
                         <div class="mt-4 pt-3 border-top border-secondary">
-                            <h6 class="text-light mb-2" style="font-size: 0.85rem;">Historial Clínico (Individual)</h6>
+                            <h6 class="mb-2" style="font-size: 0.85rem; color: var(--accent-primary);">Historial Clínico (Individual)</h6>
                             <div class="input-group input-group-sm">
                                 <input type="text" @bind="pacienteIdParaExportar" class="form-control bg-dark text-light border-secondary" placeholder="ID Paciente (GUID)" />
                                 <button class="btn btn-secondary" disabled="@string.IsNullOrWhiteSpace(pacienteIdParaExportar)" @onclick="ExportarIndividual">Bajar</button>
@@ -285,25 +297,154 @@ else
                 </div>
             </div>
         </div>
+
+        @* ── Histórico de Tratamientos (R003) ── *@
+        <div class="glass-card mb-4">
+            <h5 class="text-light mb-3">📋 Histórico de Tratamientos</h5>
+            <p class="text-secondary small mb-3">Lista completa de tratamientos realizados. Utilice los filtros para refinar los resultados.</p>
+
+            @* Filtros *@
+            <div class="row g-2 mb-3">
+                <div class="col-md-2">
+                    <label class="form-label text-secondary small mb-1">Desde</label>
+                    <input type="date" @bind="filtroDesde" class="form-control form-control-sm bg-dark text-light border-secondary" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-secondary small mb-1">Hasta</label>
+                    <input type="date" @bind="filtroHasta" class="form-control form-control-sm bg-dark text-light border-secondary" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-secondary small mb-1">Paciente</label>
+                    <input type="text" @bind="filtroPaciente" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Buscar..." />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-secondary small mb-1">Dueño</label>
+                    <input type="text" @bind="filtroPropietario" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Buscar..." />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-secondary small mb-1">Veterinario</label>
+                    <input type="text" @bind="filtroVeterinario" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Buscar..." />
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-1">
+                    <button class="btn btn-primary-glass flex-fill" style="height: 31px; font-size: 0.875rem; padding: 0 0.75rem;" @onclick="BuscarTratamientos" disabled="@isLoadingTratamientos">
+                        @if (isLoadingTratamientos) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        Buscar
+                    </button>
+                    @if (HasActiveTratamientosFilter)
+                    {
+                        <button class="btn btn-outline-secondary" style="height: 31px; font-size: 0.875rem; padding: 0 0.5rem;" @onclick="LimpiarFiltrosTratamientos" title="Limpiar filtros">✕</button>
+                    }
+                </div>
+            </div>
+
+            @* Tabla de resultados *@
+            @if (historicoTratamientos != null)
+            {
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-dark table-sm table-hover" style="background: transparent;">
+                        <thead>
+                            <tr>
+                                <th>Paciente</th>
+                                <th>Tratamiento</th>
+                                <th>Fecha</th>
+                                <th>Veterinario</th>
+                                <th>Dueño</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!historicoTratamientos.Any())
+                            {
+                                <tr><td colspan="6" class="text-center text-secondary">No se encontraron tratamientos con los filtros aplicados.</td></tr>
+                            }
+                            @foreach (var t in historicoTratamientos)
+                            {
+                                <tr>
+                                    <td class="text-light">@t.PacienteNombre</td>
+                                    <td>
+                                        <span class="text-light">@t.Diagnostico</span>
+                                        @if (!string.IsNullOrWhiteSpace(t.Descripcion))
+                                        {
+                                            <br/><small class="text-secondary">@t.Descripcion</small>
+                                        }
+                                    </td>
+                                    <td class="text-secondary">@t.Fecha.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-secondary">@t.Veterinario</td>
+                                    <td class="text-secondary">@t.PropietarioNombre</td>
+                                    <td class="text-center">
+                                        <span class="badge @(t.Finalizado ? "bg-success" : "bg-warning text-dark")">@(t.Finalizado ? "Finalizado" : "En curso")</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-secondary small mt-2 mb-0">Total: @historicoTratamientos.Count tratamiento(s)</p>
+            }
+        </div>
     }
 }
 
 @code {
+    [CascadingParameter] private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState>? AuthState { get; set; }
+
     private bool isLoading = true;
     private string activeTab = "FINANZAS";
+    private string userRole = "";
 
     // Data containers
     private ReporteVentasDto? reporteVentas;
     private ReporteStockDto? reporteStock;
     private ReporteTurnosDto? reporteTurnos;
     private ReporteClinicDto? reporteClinico;
+    private List<HistoricoTratamientoItemDto>? historicoTratamientos;
 
     // UI States
     private string pacienteIdParaExportar = string.Empty;
 
+    // Filtros Histórico de Tratamientos
+    private DateTime? filtroDesde;
+    private DateTime? filtroHasta;
+    private string filtroPaciente = string.Empty;
+    private string filtroPropietario = string.Empty;
+    private string filtroVeterinario = string.Empty;
+    private bool isLoadingTratamientos = false;
+
     protected override async Task OnInitializedAsync()
     {
+        // Determine user role
+        if (AuthState != null)
+        {
+            var authState = await AuthState;
+            var roleClaim = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)
+                ?? authState.User.FindFirst("role");
+            userRole = roleClaim?.Value ?? "";
+        }
+
+        // Set default tab based on role
+        if (userRole == "Veterinario")
+            activeTab = "TURNOS";
+        else
+            activeTab = "FINANZAS"; // Admin default
+
         await LoadDataForTab(activeTab);
+    }
+
+    /// <summary>
+    /// Determines if the current user role can see a specific report tab.
+    /// Admin: FINANZAS, STOCK
+    /// Veterinario: TURNOS, CLINICA
+    /// </summary>
+    private bool CanSeeTab(string tabName)
+    {
+        return tabName switch
+        {
+            "FINANZAS" => userRole == "Admin",
+            "STOCK" => userRole == "Admin",
+            "TURNOS" => userRole == "Veterinario",
+            "CLINICA" => userRole == "Veterinario",
+            _ => false
+        };
     }
 
     private async Task ChangeTab(string tabName)
@@ -355,4 +496,41 @@ else
             pacienteIdParaExportar = string.Empty; // reset
         }
     }
+
+    // ═══ Histórico de Tratamientos (R003) ═══
+
+    private async Task BuscarTratamientos()
+    {
+        isLoadingTratamientos = true;
+        StateHasChanged();
+        try
+        {
+            historicoTratamientos = await ReporteService.GetHistoricoTratamientosAsync(
+                filtroDesde, filtroHasta,
+                string.IsNullOrWhiteSpace(filtroPaciente) ? null : filtroPaciente,
+                string.IsNullOrWhiteSpace(filtroPropietario) ? null : filtroPropietario,
+                string.IsNullOrWhiteSpace(filtroVeterinario) ? null : filtroVeterinario);
+        }
+        finally
+        {
+            isLoadingTratamientos = false;
+        }
+    }
+
+    private void LimpiarFiltrosTratamientos()
+    {
+        filtroDesde = null;
+        filtroHasta = null;
+        filtroPaciente = string.Empty;
+        filtroPropietario = string.Empty;
+        filtroVeterinario = string.Empty;
+        historicoTratamientos = null;
+    }
+
+    private bool HasActiveTratamientosFilter =>
+        filtroDesde.HasValue ||
+        filtroHasta.HasValue ||
+        !string.IsNullOrWhiteSpace(filtroPaciente) ||
+        !string.IsNullOrWhiteSpace(filtroPropietario) ||
+        !string.IsNullOrWhiteSpace(filtroVeterinario);
 }

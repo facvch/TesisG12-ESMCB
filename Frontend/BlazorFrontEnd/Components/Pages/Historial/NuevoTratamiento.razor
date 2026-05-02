@@ -40,8 +40,9 @@
         </div>
 
         <div class="mb-3">
-            <label>Descripción clínica del Tratamiento</label>
-            <InputTextArea @bind-Value="model.Descripcion" class="form-control bg-dark text-light border-secondary" rows="2" />
+            <label>Descripción clínica del Tratamiento (*)</label>
+            <InputTextArea @bind-Value="model.Descripcion" class="form-control bg-dark text-light border-secondary" rows="2" placeholder="Ej: Limpieza ótica + aplicación tópica..." />
+            <ValidationMessage For="@(() => model.Descripcion)" class="text-danger" />
         </div>
 
         <div class="mb-3">

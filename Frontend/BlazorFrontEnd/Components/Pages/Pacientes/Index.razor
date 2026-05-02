@@ -62,7 +62,7 @@
                                 <a href="/propietarios/editar/@pac.PropietarioId" style="color: var(--accent-primary); text-decoration: none;">@pac.PropietarioNombre</a>
                             </td>
                             <td>
-                                @pac.EdadEnAnios años <br/> <small class="text-secondary">@pac.Sexo</small>
+                                @pac.EdadEnAnios años <br/> <small class="text-secondary">@(pac.Sexo == "M" ? "Macho" : pac.Sexo == "H" ? "Hembra" : "Desconocido")</small>
                             </td>
                             <td>
                                 @if(pac.Activo) { <span style="color: var(--accent-primary);">Activo</span> }

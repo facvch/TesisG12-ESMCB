@@ -85,7 +85,7 @@ namespace BlazorFrontEnd.Models
 
     public class TurnosPorServicioDto
     {
-        public string ServicioId { get; set; } = string.Empty;
+        public int ServicioId { get; set; }
         public string ServicioNombre { get; set; } = string.Empty;
         public int CantidadTurnos { get; set; }
     }
@@ -106,5 +106,20 @@ namespace BlazorFrontEnd.Models
         public int EspecieId { get; set; }
         public string EspecieNombre { get; set; } = string.Empty;
         public int Cantidad { get; set; }
+    }
+
+    // ════════════════════════════════════
+    // REPORTE HISTÓRICO DE TRATAMIENTOS (R003)
+    // ════════════════════════════════════
+    public class HistoricoTratamientoItemDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public DateTime Fecha { get; set; }
+        public string PacienteNombre { get; set; } = string.Empty;
+        public string PropietarioNombre { get; set; } = string.Empty;
+        public string Veterinario { get; set; } = string.Empty;
+        public string Diagnostico { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public bool Finalizado { get; set; }
     }
 }

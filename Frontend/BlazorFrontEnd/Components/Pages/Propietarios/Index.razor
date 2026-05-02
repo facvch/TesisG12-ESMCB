@@ -20,9 +20,17 @@
 </div>
 
 <div class="glass-card">
-    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-md);">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="margin-bottom: var(--sp-md);">
         <h4 style="margin: 0;">Lista de Clientes</h4>
-        <input type="text" @bind="searchTerm" @bind:after="OnSearchChanged" class="form-control" placeholder="Buscar por DNI o Apellido..." style="width: 300px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+        <div class="d-flex gap-2">
+            <input type="text" @bind="searchTerm" @bind:after="OnSearchChanged" class="form-control" placeholder="Buscar por DNI o Apellido..." style="width: 300px;" />
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button class="btn btn-outline-secondary" @onclick="ClearSearch" title="Limpiar filtro">
+                    Limpiar
+                </button>
+            }
+        </div>
     </div>
 
     @if (isLoading)
@@ -58,7 +66,7 @@
                             <td>@prop.DNI</td>
                             <td>@prop.Telefono</td>
                             <td>
-                                <span style="background: var(--accent-secondary); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">
+                                <span style="background: var(--accent-secondary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">
                                     @prop.CantidadMascotas
                                 </span>
                             </td>
@@ -127,6 +135,13 @@
 
     private async Task OnSearchChanged()
     {
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task ClearSearch()
+    {
+        searchTerm = string.Empty;
         currentPage = 1;
         await LoadDataAsync();
     }

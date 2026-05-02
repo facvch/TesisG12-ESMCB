@@ -306,5 +306,62 @@ namespace Controllers
                 TratamientosActivosCount = tratamientosActivos
             });
         }
+
+        // ═══════════════════════════════════════════
+        // REPORTE HISTÓRICO DE TRATAMIENTOS (R003)
+        // ═══════════════════════════════════════════
+
+        /// <summary>
+        /// Histórico de tratamientos realizados, filtrable por paciente, dueño, veterinario y período
+        /// </summary>
+        [HttpGet("api/v1/[Controller]/tratamientos")]
+        public async Task<IActionResult> GetHistoricoTratamientos(
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta,
+            [FromQuery] string? pacienteNombre,
+            [FromQuery] string? propietarioNombre,
+            [FromQuery] string? veterinarioNombre)
+        {
+            var todos = await tratamientoRepo.GetAllWithIncludesAsync();
+            var lista = todos.AsEnumerable();
+
+            // Filtro por período
+            if (desde.HasValue)
+                lista = lista.Where(t => t.Fecha.Date >= desde.Value.Date);
+            if (hasta.HasValue)
+                lista = lista.Where(t => t.Fecha.Date <= hasta.Value.Date);
+
+            // Filtro por nombre de paciente
+            if (!string.IsNullOrWhiteSpace(pacienteNombre))
+                lista = lista.Where(t =>
+                    t.Paciente != null &&
+                    t.Paciente.Nombre.Contains(pacienteNombre, StringComparison.OrdinalIgnoreCase));
+
+            // Filtro por nombre de propietario/dueño
+            if (!string.IsNullOrWhiteSpace(propietarioNombre))
+                lista = lista.Where(t =>
+                    t.Paciente?.Propietario != null &&
+                    t.Paciente.Propietario.NombreCompleto.Contains(propietarioNombre, StringComparison.OrdinalIgnoreCase));
+
+            // Filtro por veterinario
+            if (!string.IsNullOrWhiteSpace(veterinarioNombre))
+                lista = lista.Where(t =>
+                    t.Veterinario != null &&
+                    t.Veterinario.Contains(veterinarioNombre, StringComparison.OrdinalIgnoreCase));
+
+            var resultado = lista.Select(t => new HistoricoTratamientoItemDto
+            {
+                Id = t.Id,
+                Fecha = t.Fecha,
+                PacienteNombre = t.Paciente?.Nombre ?? "",
+                PropietarioNombre = t.Paciente?.Propietario?.NombreCompleto ?? "",
+                Veterinario = t.Veterinario ?? "",
+                Diagnostico = t.Diagnostico ?? "",
+                Descripcion = t.Descripcion ?? "",
+                Finalizado = t.Finalizado
+            }).ToList();
+
+            return Ok(resultado);
+        }
     }
 }

@@ -24,5 +24,14 @@ namespace Infrastructure.Repositories.Sql
                 .OrderByDescending(t => t.Fecha)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Tratamiento>> GetAllWithIncludesAsync()
+        {
+            return await Repository
+                .Include(t => t.Paciente)
+                    .ThenInclude(p => p.Propietario)
+                .OrderByDescending(t => t.Fecha)
+                .ToListAsync();
+        }
     }
 }

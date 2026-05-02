@@ -82,7 +82,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Sexo (*)</label>
                     <InputSelect @bind-Value="model.Sexo" class="form-select bg-dark text-light border-secondary">
                         <option value="">-- Sexo --</option>
@@ -93,14 +93,9 @@
                     <ValidationMessage For="@(() => model.Sexo)" class="text-danger" />
                 </div>
                 
-                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nacimiento</label>
                     <InputDate @bind-Value="model.FechaNacimiento" class="form-control bg-dark text-light border-secondary" />
-                </div>
-                
-                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Edad Estimada</label>
-                    <InputNumber @bind-Value="model.EdadEnAnios" class="form-control bg-dark text-light border-secondary" placeholder="Ej: 3" />
                 </div>
             </div>
 

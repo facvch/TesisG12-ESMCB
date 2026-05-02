@@ -7,5 +7,6 @@ namespace Application.Repositories
     {
         Task<IEnumerable<Tratamiento>> GetByPacienteIdAsync(string pacienteId);
         Task<IEnumerable<Tratamiento>> GetActivosAsync(string pacienteId);
+        Task<IEnumerable<Tratamiento>> GetAllWithIncludesAsync();
     }
 }

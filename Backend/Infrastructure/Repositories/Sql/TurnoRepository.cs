@@ -35,6 +35,7 @@ namespace Infrastructure.Repositories.Sql
             var fin = inicio.AddDays(1);
             return await Repository
                 .Include(t => t.Paciente)
+                    .ThenInclude(p => p.Propietario)
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
                 .Where(t => t.FechaHora >= inicio && t.FechaHora < fin)
@@ -46,6 +47,7 @@ namespace Infrastructure.Repositories.Sql
         {
             return await Repository
                 .Include(t => t.Paciente)
+                    .ThenInclude(p => p.Propietario)
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
                 .Where(t => t.FechaHora >= desde && t.FechaHora <= hasta)
@@ -65,10 +67,20 @@ namespace Infrastructure.Repositories.Sql
         {
             return await Repository
                 .Include(t => t.Paciente)
+                    .ThenInclude(p => p.Propietario)
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
                 .OrderByDescending(t => t.FechaHora)
                 .ToListAsync();
+        }
+
+        public async Task<Turno?> GetByIdWithIncludesAsync(string id)
+        {
+            return await Repository
+                .Include(t => t.Veterinario)
+                .Include(t => t.Servicio)
+                .Include(t => t.Paciente)
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
     }
 }

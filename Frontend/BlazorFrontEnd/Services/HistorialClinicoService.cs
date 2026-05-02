@@ -7,7 +7,7 @@ namespace BlazorFrontEnd.Services
     public class HistorialClinicoService
     {
         private readonly HttpClient _httpClient;
-        private const string BaseUrl = "api/v1/historiales";
+        private const string BaseUrl = "api/v1/HistorialClinico";
 
         public HistorialClinicoService(HttpClient httpClient)
         {
@@ -20,7 +20,7 @@ namespace BlazorFrontEnd.Services
             // However, the HistorialesController might have a get by patient endpoint
             var url = string.IsNullOrEmpty(pacienteId) 
                 ? $"api/v1/Paginado/historiales?page={page}&pageSize={pageSize}" // Just in case a general list is needed
-                : $"api/v1/historiales/paciente/{pacienteId}"; // Fetch all history items for a specific patient
+                : $"api/v1/HistorialClinico/byPaciente/{pacienteId}"; // Fetch all history items for a specific patient
 
             try
             {
@@ -42,7 +42,7 @@ namespace BlazorFrontEnd.Services
         {
             try
             {
-                return await _httpClient.GetUnwrappedAsync<List<HistorialClinicoDto>>($"{BaseUrl}/paciente/{pacienteId}");
+                return await _httpClient.GetUnwrappedAsync<List<HistorialClinicoDto>>($"{BaseUrl}/byPaciente/{pacienteId}");
             }
             catch { return new List<HistorialClinicoDto>(); }
         }

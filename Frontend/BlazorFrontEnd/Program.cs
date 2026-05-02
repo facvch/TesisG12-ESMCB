@@ -48,6 +48,7 @@ builder.Services.AddScoped<BlazorFrontEnd.Services.CatalogoServiciosService>();
 builder.Services.AddScoped<BlazorFrontEnd.Services.HistorialClinicoService>();
 builder.Services.AddScoped<BlazorFrontEnd.Services.TratamientoService>();
 builder.Services.AddScoped<BlazorFrontEnd.Services.VacunacionService>();
+builder.Services.AddScoped<BlazorFrontEnd.Services.VacunaService>();
 
 // Módulo Inventario
 builder.Services.AddScoped<BlazorFrontEnd.Services.ProductoService>();

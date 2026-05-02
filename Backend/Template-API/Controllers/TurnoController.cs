@@ -14,7 +14,8 @@ namespace Controllers
         ITurnoRepository turnoRepository,
         IPacienteRepository pacienteRepository,
         IVeterinarioRepository veterinarioRepository,
-        IServicioRepository servicioRepository) : BaseController
+        IServicioRepository servicioRepository,
+        IHistorialClinicoRepository historialClinicoRepository) : BaseController
     {
         private readonly ITurnoRepository _turnoRepository = turnoRepository
             ?? throw new ArgumentNullException(nameof(turnoRepository));
@@ -24,6 +25,8 @@ namespace Controllers
             ?? throw new ArgumentNullException(nameof(veterinarioRepository));
         private readonly IServicioRepository _servicioRepository = servicioRepository
             ?? throw new ArgumentNullException(nameof(servicioRepository));
+        private readonly IHistorialClinicoRepository _historialClinicoRepository = historialClinicoRepository
+            ?? throw new ArgumentNullException(nameof(historialClinicoRepository));
 
         /// <summary>
         /// Obtiene la agenda de un día (todos los turnos)
@@ -215,7 +218,7 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Completar turno
+        /// Completar turno y registrar automáticamente una consulta en el historial clínico
         /// </summary>
         [HttpPut("api/v1/[Controller]/{id}/completar")]
         public async Task<IActionResult> Completar(string id, [FromBody] string observaciones = "")
@@ -224,6 +227,41 @@ namespace Controllers
             if (entity == null) return NotFound($"No se encontró el turno con Id {id}");
             entity.Completar(observaciones);
             _turnoRepository.Update(id, entity);
+
+            // Cargar las relaciones para obtener nombres del veterinario y servicio
+            var turnoExpandido = await _turnoRepository.GetByIdWithIncludesAsync(id);
+
+            // Auto-crear entrada en historial clínico del paciente
+            try
+            {
+                var vet = turnoExpandido?.Veterinario;
+                var svc = turnoExpandido?.Servicio;
+                var veterinarioNombre = vet?.NombreCompleto ?? "No especificado";
+                var servicioNombre = svc?.Nombre ?? "";
+                var motivo = !string.IsNullOrWhiteSpace(entity.Motivo) 
+                    ? entity.Motivo 
+                    : $"Consulta - {servicioNombre}".Trim(' ', '-');
+
+                var historial = new Domain.Entities.HistorialClinico(
+                    pacienteId: entity.PacienteId,
+                    fecha: DateTime.Now,
+                    motivo: motivo,
+                    veterinario: veterinarioNombre,
+                    observaciones: !string.IsNullOrWhiteSpace(observaciones) 
+                        ? observaciones 
+                        : $"Generado automáticamente al completar turno del {entity.FechaHora:dd/MM/yyyy HH:mm}. Servicio: {servicioNombre}");
+
+                if (historial.IsValid)
+                {
+                    await _historialClinicoRepository.AddAsync(historial);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log pero no fallar — el turno ya fue completado
+                Console.WriteLine($"[WARN] Error al auto-crear historial clínico desde turno {id}: {ex.Message}");
+            }
+
             return NoContent();
         }
 

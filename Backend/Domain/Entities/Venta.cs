@@ -9,7 +9,7 @@ namespace Domain.Entities
     public class Venta : DomainEntity<string, VentaValidator>
     {
         public DateTime Fecha { get; private set; }
-        public string PropietarioId { get; private set; }
+        public string? PropietarioId { get; private set; }
         public int MetodoPagoId { get; private set; }
         public decimal Total { get; private set; }
         public EstadoVenta Estado { get; private set; }
@@ -25,7 +25,7 @@ namespace Domain.Entities
             Detalles = new List<DetalleVenta>();
         }
 
-        public Venta(string propietarioId, int metodoPagoId, string observaciones = "") : this()
+        public Venta(string? propietarioId, int metodoPagoId, string observaciones = "") : this()
         {
             Id = Guid.NewGuid().ToString();
             Fecha = DateTime.Now;

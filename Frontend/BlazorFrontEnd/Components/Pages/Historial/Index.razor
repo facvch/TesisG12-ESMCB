@@ -16,7 +16,7 @@
 <div class="glass-card">
     <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-md);">
         <h4 style="margin: 0;">Seleccionar Paciente</h4>
-        <input type="text" @bind="searchTerm" @bind:event="oninput" @keyup="OnSearchChanged" class="form-control" placeholder="Buscar mascota por nombre..." style="width: 350px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+        <input type="text" value="@searchTerm" @oninput="OnSearchInput" class="form-control" placeholder="Buscar mascota por nombre..." style="width: 350px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
     </div>
 
     @if (isLoading)
@@ -60,7 +60,7 @@
     private PaginatedList<PacienteDto>? pacientesResponse;
     private bool isLoading = true;
     private string searchTerm = string.Empty;
-    private System.Timers.Timer? searchTimer;
+    private CancellationTokenSource? _debounceToken;
     private int currentPage = 1;
 
     protected override async Task OnInitializedAsync()
@@ -71,23 +71,30 @@
     private async Task LoadDataAsync()
     {
         isLoading = true;
+        StateHasChanged();
         pacientesResponse = await PacienteService.GetAllAsync(currentPage, 12, searchTerm);
         isLoading = false;
     }
 
-    private void OnSearchChanged()
+    private async Task OnSearchInput(ChangeEventArgs e)
     {
-        if (searchTimer != null) searchTimer.Dispose();
-        
-        searchTimer = new System.Timers.Timer(500);
-        searchTimer.Elapsed += async (s, e) =>
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        currentPage = 1;
+
+        // Debounce: cancel previous pending search
+        _debounceToken?.Cancel();
+        _debounceToken = new CancellationTokenSource();
+        var token = _debounceToken.Token;
+
+        try
         {
-            currentPage = 1;
-            await InvokeAsync(LoadDataAsync);
-            await InvokeAsync(StateHasChanged);
-        };
-        searchTimer.AutoReset = false;
-        searchTimer.Start();
+            await Task.Delay(400, token);
+            if (!token.IsCancellationRequested)
+            {
+                await LoadDataAsync();
+            }
+        }
+        catch (TaskCanceledException) { /* debounce cancelled, expected */ }
     }
 
     private void VerHistorial(string id)
@@ -98,3 +105,4 @@
     private async Task PreviousPage() { if (pacientesResponse?.HasPreviousPage == true) { currentPage--; await LoadDataAsync(); } }
     private async Task NextPage() { if (pacientesResponse?.HasNextPage == true) { currentPage++; await LoadDataAsync(); } }
 }
+

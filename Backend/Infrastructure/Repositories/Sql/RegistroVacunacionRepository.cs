@@ -12,6 +12,7 @@ namespace Infrastructure.Repositories.Sql
         public async Task<IEnumerable<RegistroVacunacion>> GetByPacienteIdAsync(string pacienteId)
         {
             return await Repository
+                .Include(r => r.Vacuna)
                 .Where(r => r.PacienteId == pacienteId)
                 .OrderByDescending(r => r.FechaAplicacion)
                 .ToListAsync();
