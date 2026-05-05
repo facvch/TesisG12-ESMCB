@@ -1,8 +1,8 @@
 @inherits LayoutComponentBase
 
 <div class="app-container">
-    <div class="sidebar">
-        <NavMenu />
+    <div class="sidebar @(sidebarCollapsed ? "sidebar-collapsed" : "")">
+        <NavMenu Collapsed="sidebarCollapsed" OnToggleRequested="ToggleSidebar" />
     </div>
 
     <main class="main-content">
@@ -38,8 +38,8 @@
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    Ha ocurrido un error.
+    <a href="/login" class="reload">Recargar</a>
     <span class="dismiss">🗙</span>
 </div>
 
@@ -49,14 +49,13 @@
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private BlazorFrontEnd.Auth.TokenStorageService TokenStorage { get; set; } = default!;
 
+    private bool sidebarCollapsed = false;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             // Sync token from localStorage to in-memory TokenStorageService.
-            // This is the ONLY place where JS interop works reliably for reading localStorage.
-            // The HttpClient handler (DelegatingHandler) runs outside the Blazor circuit 
-            // and cannot use JS interop, so it reads from TokenStorageService.
             try
             {
                 var token = await LocalStorage.GetItemAsync<string>("authToken");
@@ -67,6 +66,11 @@
             }
             catch { /* localStorage not available yet */ }
         }
+    }
+
+    private void ToggleSidebar()
+    {
+        sidebarCollapsed = !sidebarCollapsed;
     }
 
     private async Task Logout()

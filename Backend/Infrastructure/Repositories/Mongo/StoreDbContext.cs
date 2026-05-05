@@ -1,6 +1,4 @@
-﻿using Core.Infraestructure.Repositories.MongoDb;
-using Domain.Entities;
-using Infrastructure.Repositories.Mongo.Maps;
+using Core.Infraestructure.Repositories.MongoDb;
 using MongoDB.Driver;
 
 namespace Infrastructure.Repositories.Mongo
@@ -13,19 +11,15 @@ namespace Infrastructure.Repositories.Mongo
     {
         public StoreDbContext(string connectionString) : base(connectionString)
         {
-            MapTypes();
         }
 
         public override IMongoCollection<T> GetCollection<T>()
         {
-            if (typeof(T) == typeof(DummyEntity))
-                return Database.GetCollection<T>(DummyEntityMap.GetCollectionName());
             return null;
         }
 
         private static void MapTypes()
         {
-            DummyEntityMap.Configure();
         }
     }
 }

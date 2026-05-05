@@ -85,26 +85,137 @@ body {
 /* Sidebar */
 .sidebar {
     width: 260px;
+    min-width: 260px;
     background: var(--bg-topbar);
     display: flex;
     flex-direction: column;
     z-index: 100;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-.sidebar-header {
-    padding: var(--sp-md);
+/* ── Collapsed state ── */
+.sidebar.sidebar-collapsed {
+    width: 48px !important;
+    min-width: 48px !important;
+    overflow: hidden !important;
+}
+
+.sidebar.sidebar-collapsed .nav-label {
+    display: none !important;
+}
+
+.sidebar.sidebar-collapsed .nav-submenu {
+    display: none !important;
+}
+
+.sidebar.sidebar-collapsed .nav-link {
+    justify-content: center !important;
+    padding: 10px 0 !important;
+    gap: 0 !important;
+}
+
+.sidebar.sidebar-collapsed .nav-link svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.sidebar.sidebar-collapsed .nav-link.active {
+    border-left: none !important;
+    border-radius: 6px !important;
+}
+
+.sidebar.sidebar-collapsed .nav-item {
+    padding: 0 5px !important;
+    margin-bottom: 1px !important;
+}
+
+.sidebar.sidebar-collapsed .sidebar-header {
+    justify-content: center !important;
+    padding: 10px 4px !important;
+    gap: 0 !important;
+}
+
+.sidebar.sidebar-collapsed .sidebar-logo {
+    width: 26px !important;
+    height: 26px !important;
+}
+
+/* ── Bottom toggle container ── */
+.sidebar-toggle-container {
+    padding: 8px;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    justify-content: center;
+}
+
+.sidebar.sidebar-collapsed .sidebar-toggle-container {
+    padding: 6px 4px !important;
+}
+
+.sidebar.sidebar-collapsed .sidebar-hamburger {
+    padding: 5px !important;
+}
+
+.sidebar.sidebar-collapsed .sidebar-hamburger svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* ── Hamburger button (Reddit-style) ── */
+.sidebar-hamburger {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.85);
     display: flex;
     align-items: center;
-    gap: var(--sp-sm);
+    justify-content: center;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+}
+
+.sidebar-hamburger:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+}
+
+/* ── Logo ── */
+.sidebar-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    transition: width 0.25s ease, height 0.25s ease;
+}
+
+/* ── Nav labels ── */
+.nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* ── Header ── */
+.sidebar-header {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .sidebar-header h2 {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 700;
     margin: 0;
     color: var(--text-on-green);
+    white-space: nowrap;
 }
 
 .nav-menu {

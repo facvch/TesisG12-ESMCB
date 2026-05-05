@@ -1,4 +1,4 @@
-﻿using Domain.Entities;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories.Sql
@@ -9,10 +9,6 @@ namespace Infrastructure.Repositories.Sql
     /// </summary>
     internal class StoreDbContext : DbContext
     {
-        // Entidades del sistema educativo (legacy)
-        public DbSet<Alumno> Alumnos { get; set; }
-        public DbSet<DummyEntity> DummyEntities { get; set; }
-
         // Entidades del sistema veterinario
         public DbSet<Especie> Especies { get; set; }
         public DbSet<Raza> Razas { get; set; }
@@ -70,10 +66,6 @@ namespace Infrastructure.Repositories.Sql
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Legacy entities
-            modelBuilder.Entity<DummyEntity>().ToTable("DummyEntity");
-            modelBuilder.Entity<Alumno>().ToTable("Alumnos");
-
             // Configuración de Especie
             modelBuilder.Entity<Especie>(entity =>
             {

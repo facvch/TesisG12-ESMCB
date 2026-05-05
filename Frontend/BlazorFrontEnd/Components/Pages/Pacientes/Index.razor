@@ -2,6 +2,7 @@
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject PacienteService PacienteService
+@inject CatalogoService CatalogoService
 @inject NavigationManager Navigation
 
 <PageTitle>Mascotas / Pacientes</PageTitle>
@@ -20,18 +21,56 @@
 </div>
 
 <div class="glass-card">
-    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-md);">
-        <h4 style="margin: 0;">Lista de Mascotas</h4>
-        <input type="text" @bind-value="searchTerm" @bind-value:after="OnSearchChanged" class="form-control" placeholder="Buscar por Nombre o Dueño..." style="width: 300px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+    <div style="margin-bottom: var(--sp-md);">
+        <h4 style="margin: 0 0 12px 0;">Lista de Mascotas</h4>
+
+        <!-- Filtros -->
+        <div class="d-flex flex-wrap align-items-end gap-3" style="margin-bottom: 12px;">
+            <div style="flex: 1; min-width: 200px;">
+                <label class="text-secondary" style="font-size: 0.78rem; margin-bottom: 4px; display: block;">Nombre de mascota o dueño</label>
+                <input type="text" @bind-value="searchTerm" @bind-value:after="OnFilterChanged" class="form-control form-control-sm"
+                       placeholder="Buscar..."
+                       style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+            </div>
+            <div style="min-width: 150px;">
+                <label class="text-secondary" style="font-size: 0.78rem; margin-bottom: 4px; display: block;">Especie</label>
+                <select @bind="filtroEspecie" @bind:after="OnFilterChanged" class="form-select form-select-sm"
+                        style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;">
+                    <option value="">Todas</option>
+                    @if (especiesDisponibles != null)
+                    {
+                        @foreach (var esp in especiesDisponibles)
+                        {
+                            <option value="@esp.Nombre">@esp.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="min-width: 140px;">
+                <label class="text-secondary" style="font-size: 0.78rem; margin-bottom: 4px; display: block;">Estado</label>
+                <select @bind="filtroEstado" @bind:after="OnFilterChanged" class="form-select form-select-sm"
+                        style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;">
+                    <option value="Activo">Activos</option>
+                    <option value="Inactivo">Inactivos</option>
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(filtroEspecie) || filtroEstado != "Activo")
+            {
+                <button class="btn btn-sm btn-outline-secondary" style="height: 31px; border-color: var(--border-glass); color: var(--text-secondary);" @onclick="ClearFilters">
+                    Limpiar filtros
+                </button>
+            }
+        </div>
     </div>
 
     @if (isLoading)
     {
         <p class="text-secondary">Cargando datos...</p>
     }
-    else if (pacientesResponse?.Items == null || !pacientesResponse.Items.Any())
+    else if (filteredItems == null || !filteredItems.Any())
     {
-        <p class="text-secondary">No se encontraron mascotas.</p>
+        <p class="text-secondary">No se encontraron mascotas con los filtros aplicados.</p>
     }
     else
     {
@@ -48,7 +87,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var pac in pacientesResponse.Items)
+                    @foreach (var pac in filteredItems)
                     {
                         <tr style="border-bottom: 1px solid var(--border-glass);">
                             <td>
@@ -79,10 +118,16 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-            <span class="text-secondary">Página @pacientesResponse.PageIndex de @pacientesResponse.TotalPages (@pacientesResponse.TotalCount registros)</span>
+            <span class="text-secondary">
+                Mostrando @filteredItems.Count de @pacientesResponse?.TotalCount registros
+                @if (pacientesResponse != null)
+                {
+                    <text> (Página @pacientesResponse.PageIndex de @pacientesResponse.TotalPages)</text>
+                }
+            </span>
             <div>
-                <button class="btn btn-sm btn-outline-secondary" disabled="@(!pacientesResponse.HasPreviousPage)" @onclick="PreviousPage">Anterior</button>
-                <button class="btn btn-sm btn-outline-secondary" disabled="@(!pacientesResponse.HasNextPage)" @onclick="NextPage">Siguiente</button>
+                <button class="btn btn-sm btn-outline-secondary" disabled="@(pacientesResponse?.HasPreviousPage != true)" @onclick="PreviousPage">Anterior</button>
+                <button class="btn btn-sm btn-outline-secondary" disabled="@(pacientesResponse?.HasNextPage != true)" @onclick="NextPage">Siguiente</button>
             </div>
         </div>
     }
@@ -97,16 +142,30 @@
 
 @code {
     private PaginatedList<PacienteDto>? pacientesResponse;
+    private List<PacienteDto>? filteredItems;
+    private List<EspecieDto>? especiesDisponibles;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
     
     private int currentPage = 1;
-    private int pageSize = 10;
+    private int pageSize = 50; // Load more to allow client-side filtering
     private string searchTerm = string.Empty;
+    private string filtroEspecie = string.Empty;
+    private string filtroEstado = "Activo"; // Default: only active
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadEspeciesAsync();
         await LoadDataAsync();
+    }
+
+    private async Task LoadEspeciesAsync()
+    {
+        try
+        {
+            especiesDisponibles = await CatalogoService.GetEspeciesActivasAsync();
+        }
+        catch { /* ignore */ }
     }
 
     private async Task LoadDataAsync()
@@ -116,6 +175,7 @@
         try
         {
             pacientesResponse = await PacienteService.GetAllAsync(currentPage, pageSize, searchTerm);
+            ApplyClientFilters();
         }
         catch (Exception)
         {
@@ -127,8 +187,40 @@
         }
     }
 
-    private async Task OnSearchChanged()
+    private void ApplyClientFilters()
     {
+        if (pacientesResponse?.Items == null)
+        {
+            filteredItems = null;
+            return;
+        }
+
+        IEnumerable<PacienteDto> items = pacientesResponse.Items;
+
+        // Filter by Estado
+        if (filtroEstado == "Activo")
+            items = items.Where(p => p.Activo);
+        else if (filtroEstado == "Inactivo")
+            items = items.Where(p => !p.Activo);
+
+        // Filter by Especie
+        if (!string.IsNullOrEmpty(filtroEspecie))
+            items = items.Where(p => p.EspecieNombre == filtroEspecie);
+
+        filteredItems = items.ToList();
+    }
+
+    private async Task OnFilterChanged()
+    {
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = string.Empty;
+        filtroEspecie = string.Empty;
+        filtroEstado = "Activo";
         currentPage = 1;
         await LoadDataAsync();
     }

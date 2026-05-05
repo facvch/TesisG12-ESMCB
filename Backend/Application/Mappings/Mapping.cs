@@ -1,7 +1,4 @@
-﻿using Application.DataTransferObjects;
-using Application.DomainEvents;
 using AutoMapper;
-using Domain.Entities;
 
 namespace Application.Mappings
 {
@@ -12,11 +9,6 @@ namespace Application.Mappings
     {
         public Mapping()
         {
-            CreateMap<DummyEntity, DummyEntityCreated>().ReverseMap();
-            CreateMap<DummyEntity, DummyEntityUpdated>().ReverseMap();
-            CreateMap<DummyEntity, DummyEntityDto>().ReverseMap();
-
-            CreateMap<Alumno, AlumnoCreado>().ReverseMap();
         }
     }
 }

@@ -81,6 +81,6 @@ D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Fr
 D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
 D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\b8u3f361lh-e6ujeipzfr.gz
 D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\pjjw12ef7k-nn99og1uo3.gz
 D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\7hk5fo1r0y-nn99og1uo3.gz
+D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\b8u3f361lh-3jrvodhox4.gz

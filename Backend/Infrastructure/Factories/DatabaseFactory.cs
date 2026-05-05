@@ -1,4 +1,4 @@
-﻿using Application.Repositories;
+using Application.Repositories;
 using Domain.Others.Utils;
 using Infrastructure.Constants;
 using Microsoft.EntityFrameworkCore;
@@ -65,10 +65,6 @@ namespace Infrastructure.Factories
 
         private static void RegisterSqlRepositories(IServiceCollection services)
         {
-            // Legacy repositories
-            services.AddTransient<IDummyEntityRepository, Repositories.Sql.DummyEntityRepository>();
-            services.AddTransient<IAlumnoRepository, Repositories.Sql.AlumnoRepository>();
-
             // Veterinary system repositories
             services.AddTransient<IEspecieRepository, Repositories.Sql.EspecieRepository>();
             services.AddTransient<IRazaRepository, Repositories.Sql.RazaRepository>();
@@ -118,9 +114,6 @@ namespace Infrastructure.Factories
 
             Repositories.Mongo.StoreDbContext db = new(configuration.GetConnectionString("MongoConnection") ?? throw new NullReferenceException());
             services.AddSingleton(typeof(Repositories.Mongo.StoreDbContext), db);
-
-            /* MongoDb Repositories */
-            services.AddTransient<IDummyEntityRepository, Repositories.Mongo.DummyEntityRepository>();
 
             return services;
         }

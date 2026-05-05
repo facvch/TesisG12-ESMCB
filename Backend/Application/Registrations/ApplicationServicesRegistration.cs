@@ -1,4 +1,3 @@
-﻿using Application.ApplicationServices;
 using Core.Application;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -15,32 +14,10 @@ namespace Application.Registrations
             /* Automapper */
             services.AddAutoMapper(config => config.AddMaps(Assembly.GetExecutingAssembly()));
 
-            /* EventBus */
-            services.AddPublishers();
-            services.AddSubscribers();
-
             /* MediatR*/
             services.AddMediatR(config => config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
             services.AddScoped<ICommandQueryBus, MediatrCommandQueryBus>();
 
-            /* Application Services */
-            services.AddScoped<IDummyEntityApplicationService, DummyEntityApplicationService>();
-            services.AddScoped<IAlumnoApplicationService, AlumnoApplicationService>();
-
-            return services;
-        }
-
-        private static IServiceCollection AddPublishers(this IServiceCollection services)
-        {
-            //Aqui se registran los handlers que publican en el bus de eventos
-            services.AddTransient<IIntegrationEventHandler<DummyEntityCreatedIntegrationEvent>, DummyEntityCreatedIntegrationEventHandlerPub>();
-            return services;
-        }
-
-        private static IServiceCollection AddSubscribers(this IServiceCollection services)
-        {
-            //Aqui se registran los handlers que se suscriben al bus de eventos
-            services.AddTransient<DummyEntityCreatedIntegrationEventHandlerSub>();
             return services;
         }
     }
