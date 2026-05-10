@@ -23,6 +23,7 @@ namespace Domain.Entities
         public virtual Marca Marca { get; private set; }
         public virtual Proveedor Proveedor { get; private set; }
         public virtual Deposito Deposito { get; private set; }
+        public virtual ICollection<ProductoDeposito> StocksDepositos { get; private set; } = new List<ProductoDeposito>();
 
         public bool StockBajo => StockActual <= StockMinimo;
 
@@ -79,5 +80,19 @@ namespace Domain.Entities
 
         public void Desactivar() => Activo = false;
         public void Activar() => Activo = true;
+
+        /// <summary>
+        /// Recalcula StockActual sumando el stock de todos los depósitos vinculados
+        /// </summary>
+        public void SincronizarStockTotal()
+        {
+            if (StocksDepositos != null && StocksDepositos.Any())
+                StockActual = StocksDepositos.Sum(sd => sd.StockActual);
+        }
+
+        public void SetStockDirecto(int stock)
+        {
+            StockActual = stock;
+        }
     }
 }

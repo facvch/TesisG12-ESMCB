@@ -44,6 +44,8 @@ namespace Domain.Entities
         public string PasswordHash { get; private set; }
         public string PasswordSalt { get; private set; }
         public int RolId { get; private set; }
+        public string? FotoUrl { get; private set; }
+        public string? VeterinarioId { get; private set; }
         public DateTime FechaCreacion { get; private set; }
         public DateTime? UltimoLogin { get; private set; }
         public bool Activo { get; private set; }
@@ -89,6 +91,8 @@ namespace Domain.Entities
             NombreCompleto = nombreCompleto;
         }
 
+        public void SetFotoUrl(string? fotoUrl) => FotoUrl = fotoUrl;
+        public void SetVeterinarioId(string? veterinarioId) => VeterinarioId = veterinarioId;
         public void CambiarRol(int rolId) => RolId = rolId;
         public void Desactivar() => Activo = false;
         public void Activar() => Activo = true;

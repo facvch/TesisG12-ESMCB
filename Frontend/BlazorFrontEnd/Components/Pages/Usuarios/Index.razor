@@ -11,7 +11,7 @@
 <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
     <div>
         <h2 style="font-weight: 700; margin: 0;">Usuarios</h2>
-        <p class="text-secondary" style="margin: 0;">Gestión de accesos y roles (Admin, Veterinario, Recepcionista)</p>
+        <p class="text-secondary" style="margin: 0;">Gestión de accesos, roles y auditoría del sistema</p>
     </div>
     <a href="/usuarios/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
@@ -21,60 +21,189 @@
     </a>
 </div>
 
-<div class="glass-card">
-    @if (isLoading)
-    {
-        <p class="text-secondary">Cargando cuentas del personal...</p>
-    }
-    else if (usuarios == null || !usuarios.Any())
-    {
-        <p class="text-secondary">No se encontraron usuarios en el sistema.</p>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-dark table-hover" style="background: transparent;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--border-glass);">
-                        <th>Usuario / Email</th>
-                        <th>Nombre Completo</th>
-                        <th>Rol Asignado</th>
-                        <th>Último Acceso</th>
-                        <th class="text-end">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in usuarios)
-                    {
-                        var rolColor = user.RolNombre.ToUpper() == "ADMIN" ? "badge bg-danger" : 
-                                       user.RolNombre.ToUpper() == "VETERINARIO" ? "badge bg-success" : "badge bg-info";
-
-                        <tr style="border-bottom: 1px solid var(--border-glass);">
-                            <td>
-                                <strong>@user.NombreUsuario</strong>
-                                <br/><small class="text-secondary">@user.Email</small>
-                            </td>
-                            <td>@user.NombreCompleto</td>
-                            <td>
-                                <span class="@rolColor">@user.RolNombre</span>
-                            </td>
-                            <td class="text-secondary">
-                                @if(user.UltimoLogin.HasValue) {
-                                    <span>@user.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm")</span>
-                                } else { 
-                                    <span>Nunca</span> 
-                                }
-                            </td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarDelete(user)">Revocar Acceso</button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+<!-- Tabs -->
+<div style="display: flex; gap: 0; margin-bottom: var(--sp-lg);">
+    <button class="@(activeTab == "usuarios" ? "btn-primary-glass" : "btn btn-sm btn-outline-secondary")"
+            style="border-radius: 8px 0 0 8px; padding: 8px 20px; font-size: 0.85rem; @(activeTab == "usuarios" ? "" : "border-color: var(--border-glass); color: var(--text-secondary);")"
+            @onclick='() => activeTab = "usuarios"'>
+        👥 Usuarios del Sistema
+    </button>
+    <button class="@(activeTab == "auditoria" ? "btn-primary-glass" : "btn btn-sm btn-outline-secondary")"
+            style="border-radius: 0 8px 8px 0; padding: 8px 20px; font-size: 0.85rem; @(activeTab == "auditoria" ? "" : "border-color: var(--border-glass); color: var(--text-secondary);")"
+            @onclick="ActivarTabAuditoria">
+        📋 Log de Auditoría
+    </button>
 </div>
+
+@if (activeTab == "usuarios")
+{
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: USUARIOS                                        -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="glass-card">
+        @if (isLoading)
+        {
+            <p class="text-secondary">Cargando cuentas del personal...</p>
+        }
+        else if (usuarios == null || !usuarios.Any())
+        {
+            <p class="text-secondary">No se encontraron usuarios en el sistema.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark table-hover" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-glass);">
+                            <th>Usuario / Email</th>
+                            <th>Nombre Completo</th>
+                            <th>Rol Asignado</th>
+                            <th>Último Acceso</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in usuarios)
+                        {
+                            var rolColor = user.RolNombre.ToUpper() == "ADMIN" ? "badge bg-danger" : 
+                                           user.RolNombre.ToUpper() == "VETERINARIO" ? "badge bg-success" : "badge bg-info";
+
+                            <tr style="border-bottom: 1px solid var(--border-glass);">
+                                <td>
+                                    <strong>@user.NombreUsuario</strong>
+                                    <br/><small class="text-secondary">@user.Email</small>
+                                </td>
+                                <td>@user.NombreCompleto</td>
+                                <td>
+                                    <span class="@rolColor">@user.RolNombre</span>
+                                </td>
+                                <td class="text-secondary">
+                                    @if(user.UltimoLogin.HasValue) {
+                                        <span>@user.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    } else { 
+                                        <span>Nunca</span> 
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarDelete(user)">Revocar Acceso</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: LOG DE AUDITORÍA                                -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="glass-card">
+        <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 12px 0;">Registro de Actividad del Sistema</h4>
+
+            <!-- Filtros -->
+            <div class="d-flex flex-wrap align-items-end gap-3">
+                <div style="min-width: 140px;">
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Desde</label>
+                    <input type="date" @bind="filtroDesde" @bind:after="ApplyAuditFilters" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div style="min-width: 140px;">
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Hasta</label>
+                    <input type="date" @bind="filtroHasta" @bind:after="ApplyAuditFilters" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div style="min-width: 140px;">
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Usuario</label>
+                    <select @bind="filtroUsuario" @bind:after="ApplyAuditFilters" class="form-select form-select-sm"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;">
+                        <option value="">Todos</option>
+                        @foreach (var u in usuariosUnicos)
+                        {
+                            <option value="@u">@u</option>
+                        }
+                    </select>
+                </div>
+                <div style="min-width: 120px;">
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Acción</label>
+                    <select @bind="filtroAccion" @bind:after="ApplyAuditFilters" class="form-select form-select-sm"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;">
+                        <option value="">Todas</option>
+                        <option value="POST">POST (Crear)</option>
+                        <option value="PUT">PUT (Editar)</option>
+                        <option value="DELETE">DELETE (Eliminar)</option>
+                    </select>
+                </div>
+                <div style="min-width: 140px;">
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Entidad</label>
+                    <select @bind="filtroEntidad" @bind:after="ApplyAuditFilters" class="form-select form-select-sm"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;">
+                        <option value="">Todas</option>
+                        @foreach (var e in entidadesUnicas)
+                        {
+                            <option value="@e">@e</option>
+                        }
+                    </select>
+                </div>
+                @if (HasActiveFilters())
+                {
+                    <button class="btn btn-sm btn-outline-secondary" style="height: 31px; border-color: var(--border-glass); color: var(--text-secondary);" @onclick="ClearAuditFilters">
+                        Limpiar filtros
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (isLoadingAudit)
+        {
+            <p class="text-secondary">Cargando registros de auditoría...</p>
+        }
+        else if (filteredAuditLogs == null || !filteredAuditLogs.Any())
+        {
+            <p class="text-secondary">No se encontraron registros con los filtros aplicados.</p>
+        }
+        else
+        {
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-dark table-hover" style="background: transparent; font-size: 0.82rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-glass); position: sticky; top: 0; background: var(--bg-card, rgba(17,24,39,0.95)); z-index: 1;">
+                            <th style="width: 145px;">Fecha</th>
+                            <th style="width: 120px;">Usuario</th>
+                            <th style="width: 75px;">Acción</th>
+                            <th style="width: 130px;">Entidad</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in filteredAuditLogs)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border-glass);">
+                                <td>@log.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <strong>@(log.NombreUsuario ?? "Anónimo")</strong>
+                                </td>
+                                <td>
+                                    <span style="@GetAccionStyle(log.Accion); font-size: 0.75rem; padding: 2px 8px; border-radius: 6px;">@log.Accion</span>
+                                </td>
+                                <td>@log.Entidad</td>
+                                <td class="text-secondary" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    @(log.Descripcion ?? "—")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-2 text-secondary" style="font-size: 0.78rem;">
+                Mostrando @filteredAuditLogs.Count de @allAuditLogs?.Count registros totales
+            </div>
+        }
+    </div>
+}
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -87,6 +216,24 @@
     private List<UsuarioDto>? usuarios = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+    private string activeTab = "usuarios";
+
+    // Audit log
+    private List<AuditLogDto>? allAuditLogs;
+    private List<AuditLogDto>? filteredAuditLogs;
+    private bool isLoadingAudit;
+    private bool auditLoaded;
+
+    // Audit filters
+    private DateTime? filtroDesde;
+    private DateTime? filtroHasta;
+    private string filtroUsuario = string.Empty;
+    private string filtroAccion = string.Empty;
+    private string filtroEntidad = string.Empty;
+
+    // Computed unique values for dropdowns
+    private List<string> usuariosUnicos = new();
+    private List<string> entidadesUnicas = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -127,6 +274,99 @@
         }
     }
 
+    private async Task ActivarTabAuditoria()
+    {
+        activeTab = "auditoria";
+        if (!auditLoaded)
+        {
+            await LoadAuditLogs();
+        }
+    }
+
+    private async Task LoadAuditLogs()
+    {
+        isLoadingAudit = true;
+        try
+        {
+            allAuditLogs = await UsuarioService.GetAllAuditLogsAsync(200);
+
+            // Build unique values for filter dropdowns
+            if (allAuditLogs != null)
+            {
+                usuariosUnicos = allAuditLogs
+                    .Where(l => !string.IsNullOrEmpty(l.NombreUsuario) && l.NombreUsuario != "Anónimo")
+                    .Select(l => l.NombreUsuario!)
+                    .Distinct()
+                    .OrderBy(u => u)
+                    .ToList();
+
+                entidadesUnicas = allAuditLogs
+                    .Where(l => !string.IsNullOrEmpty(l.Entidad))
+                    .Select(l => l.Entidad)
+                    .Distinct()
+                    .OrderBy(e => e)
+                    .ToList();
+            }
+
+            ApplyAuditFilters();
+            auditLoaded = true;
+        }
+        catch
+        {
+            errorMessage = "Error al cargar los registros de auditoría.";
+        }
+        finally
+        {
+            isLoadingAudit = false;
+        }
+    }
+
+    private void ApplyAuditFilters()
+    {
+        if (allAuditLogs == null)
+        {
+            filteredAuditLogs = null;
+            return;
+        }
+
+        IEnumerable<AuditLogDto> items = allAuditLogs;
+
+        // Filter by date range
+        if (filtroDesde.HasValue)
+            items = items.Where(l => l.Fecha.Date >= filtroDesde.Value.Date);
+        if (filtroHasta.HasValue)
+            items = items.Where(l => l.Fecha.Date <= filtroHasta.Value.Date);
+
+        // Filter by user
+        if (!string.IsNullOrEmpty(filtroUsuario))
+            items = items.Where(l => l.NombreUsuario == filtroUsuario);
+
+        // Filter by action
+        if (!string.IsNullOrEmpty(filtroAccion))
+            items = items.Where(l => l.Accion == filtroAccion);
+
+        // Filter by entity
+        if (!string.IsNullOrEmpty(filtroEntidad))
+            items = items.Where(l => l.Entidad == filtroEntidad);
+
+        filteredAuditLogs = items.OrderByDescending(l => l.Fecha).ToList();
+    }
+
+    private bool HasActiveFilters() =>
+        filtroDesde.HasValue || filtroHasta.HasValue ||
+        !string.IsNullOrEmpty(filtroUsuario) || !string.IsNullOrEmpty(filtroAccion) ||
+        !string.IsNullOrEmpty(filtroEntidad);
+
+    private void ClearAuditFilters()
+    {
+        filtroDesde = null;
+        filtroHasta = null;
+        filtroUsuario = string.Empty;
+        filtroAccion = string.Empty;
+        filtroEntidad = string.Empty;
+        ApplyAuditFilters();
+    }
+
     private async Task ConfirmarDelete(UsuarioDto user)
     {
         if(user.NombreUsuario.ToLower() == "admin") {
@@ -142,4 +382,12 @@
             else errorMessage = "Hubo un error al intentar eliminar el acceso del usuario.";
         }
     }
+
+    private string GetAccionStyle(string accion) => accion?.ToUpper() switch
+    {
+        "POST" => "background: rgba(34,197,94,0.15); color: #22c55e; font-weight: 600;",
+        "PUT" => "background: rgba(245,158,11,0.15); color: #f59e0b; font-weight: 600;",
+        "DELETE" => "background: rgba(239,68,68,0.15); color: var(--accent-danger); font-weight: 600;",
+        _ => "color: var(--text-secondary);"
+    };
 }

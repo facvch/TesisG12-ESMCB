@@ -15,10 +15,14 @@ namespace Controllers
     public class AuthController(
         IUsuarioRepository usuarioRepo,
         IRolRepository rolRepo,
+        IVeterinarioRepository veterinarioRepo,
+        IAuditLogRepository auditRepo,
         IConfiguration config) : BaseController
     {
         private readonly IUsuarioRepository _usuarioRepo = usuarioRepo;
         private readonly IRolRepository _rolRepo = rolRepo;
+        private readonly IVeterinarioRepository _veterinarioRepo = veterinarioRepo;
+        private readonly IAuditLogRepository _auditRepo = auditRepo;
         private readonly IConfiguration _config = config;
 
         /// <summary>
@@ -103,6 +107,10 @@ namespace Controllers
             return Ok(new { Message = "Seed completado", AdminUser = "admin", AdminPass = "Admin123!" });
         }
 
+        // ═══════════════════════════════════════════
+        // PERFIL DEL USUARIO AUTENTICADO
+        // ═══════════════════════════════════════════
+
         /// <summary>
         /// Obtener perfil del usuario autenticado
         /// </summary>
@@ -115,6 +123,38 @@ namespace Controllers
 
             var usuario = await _usuarioRepo.FindOneAsync(userId);
             if (usuario == null) return NotFound();
+            return Ok(MapToDto(usuario));
+        }
+
+        /// <summary>
+        /// Actualizar perfil del usuario autenticado (nombre completo, email)
+        /// </summary>
+        [HttpPut("api/v1/auth/perfil")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            var usuario = await _usuarioRepo.FindOneAsync(userId);
+            if (usuario == null) return NotFound();
+
+            usuario.Actualizar(request.Email ?? usuario.Email, request.NombreCompleto ?? usuario.NombreCompleto);
+            _usuarioRepo.Update(usuario.Id, usuario);
+            return Ok(MapToDto(usuario));
+        }
+
+        /// <summary>
+        /// Subir/actualizar foto de perfil (base64)
+        /// </summary>
+        [HttpPut("api/v1/auth/perfil/foto")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfilePhoto([FromBody] UpdatePhotoRequest request)
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            var usuario = await _usuarioRepo.FindOneAsync(userId);
+            if (usuario == null) return NotFound();
+
+            usuario.SetFotoUrl(request.FotoBase64);
+            _usuarioRepo.Update(usuario.Id, usuario);
             return Ok(MapToDto(usuario));
         }
 
@@ -135,6 +175,97 @@ namespace Controllers
             usuario.SetPassword(request.NuevaPassword);
             _usuarioRepo.Update(usuario.Id, usuario);
             return NoContent();
+        }
+
+        /// <summary>
+        /// Obtener los audit logs del usuario autenticado
+        /// </summary>
+        [HttpGet("api/v1/auth/me/audit")]
+        [Authorize]
+        public async Task<IActionResult> GetMyAuditLogs([FromQuery] int cantidad = 30)
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var logs = await _auditRepo.GetByUsuarioIdAsync(userId);
+            var result = logs.OrderByDescending(l => l.Fecha).Take(Math.Min(cantidad, 100))
+                .Select(a => new AuditLogDto
+                {
+                    Id = a.Id, UsuarioId = a.UsuarioId, NombreUsuario = a.NombreUsuario,
+                    Accion = a.Accion, Entidad = a.Entidad, EntidadId = a.EntidadId,
+                    Descripcion = a.Descripcion, IpOrigen = a.IpOrigen,
+                    Fecha = a.Fecha, StatusCode = a.StatusCode
+                }).ToList();
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Obtener datos de veterinario vinculado al usuario autenticado
+        /// </summary>
+        [HttpGet("api/v1/auth/me/veterinario")]
+        [Authorize]
+        public async Task<IActionResult> GetMyVeterinario()
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            var usuario = await _usuarioRepo.FindOneAsync(userId);
+            if (usuario == null) return NotFound();
+
+            if (string.IsNullOrEmpty(usuario.VeterinarioId))
+                return Ok((object)null);
+
+            var vet = await _veterinarioRepo.FindOneAsync(usuario.VeterinarioId);
+            if (vet == null) return Ok((object)null);
+
+            return Ok(new VeterinarioPerfilDto
+            {
+                Id = vet.Id, Nombre = vet.Nombre, Apellido = vet.Apellido,
+                Matricula = vet.Matricula, Telefono = vet.Telefono,
+                Email = vet.Email, Especialidad = vet.Especialidad, Activo = vet.Activo
+            });
+        }
+
+        /// <summary>
+        /// Crear o actualizar registro de veterinario vinculado al usuario autenticado
+        /// </summary>
+        [HttpPut("api/v1/auth/me/veterinario")]
+        [Authorize]
+        public async Task<IActionResult> SaveMyVeterinario([FromBody] SaveVeterinarioRequest request)
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            var usuario = await _usuarioRepo.FindOneAsync(userId);
+            if (usuario == null) return NotFound();
+
+            // Check role is Veterinario
+            var rolName = usuario.Rol?.Nombre ?? "";
+            if (rolName != "Veterinario")
+                return BadRequest("Solo los usuarios con rol Veterinario pueden completar estos datos");
+
+            // Parse nombre completo into nombre/apellido
+            var partes = (usuario.NombreCompleto ?? "").Split(' ', 2);
+            var nombre = request.Nombre ?? (partes.Length > 0 ? partes[0] : "");
+            var apellido = request.Apellido ?? (partes.Length > 1 ? partes[1] : "");
+
+            if (!string.IsNullOrEmpty(usuario.VeterinarioId))
+            {
+                // Update existing
+                var vet = await _veterinarioRepo.FindOneAsync(usuario.VeterinarioId);
+                if (vet != null)
+                {
+                    vet.Actualizar(nombre, apellido, request.Telefono ?? "", request.Email ?? "", request.Especialidad ?? "");
+                    _veterinarioRepo.Update(vet.Id, vet);
+                    return Ok(new { Message = "Datos de veterinario actualizados", VeterinarioId = vet.Id });
+                }
+            }
+
+            // Create new
+            var nuevoVet = new Veterinario(nombre, apellido, request.Matricula ?? "",
+                request.Telefono ?? "", request.Email ?? "", request.Especialidad ?? "");
+
+            var vetId = await _veterinarioRepo.AddAsync(nuevoVet);
+            usuario.SetVeterinarioId(vetId.ToString());
+            _usuarioRepo.Update(usuario.Id, usuario);
+
+            return Ok(new { Message = "Registro de veterinario creado y vinculado", VeterinarioId = vetId });
         }
 
         // ═══════════════════════════════════════════
@@ -204,7 +335,8 @@ namespace Controllers
         {
             Id = u.Id, NombreUsuario = u.NombreUsuario, Email = u.Email,
             NombreCompleto = u.NombreCompleto, RolId = u.RolId,
-            RolNombre = u.Rol?.Nombre ?? "", FechaCreacion = u.FechaCreacion,
+            RolNombre = u.Rol?.Nombre ?? "", FotoUrl = u.FotoUrl,
+            VeterinarioId = u.VeterinarioId, FechaCreacion = u.FechaCreacion,
             UltimoLogin = u.UltimoLogin, Activo = u.Activo
         };
     }
@@ -228,5 +360,38 @@ namespace Controllers
     {
         public string PasswordActual { get; set; }
         public string NuevaPassword { get; set; }
+    }
+
+    public class UpdateProfileRequest
+    {
+        public string? NombreCompleto { get; set; }
+        public string? Email { get; set; }
+    }
+
+    public class UpdatePhotoRequest
+    {
+        public string? FotoBase64 { get; set; }
+    }
+
+    public class SaveVeterinarioRequest
+    {
+        public string? Nombre { get; set; }
+        public string? Apellido { get; set; }
+        public string? Matricula { get; set; }
+        public string? Telefono { get; set; }
+        public string? Email { get; set; }
+        public string? Especialidad { get; set; }
+    }
+
+    public class VeterinarioPerfilDto
+    {
+        public string Id { get; set; }
+        public string Nombre { get; set; }
+        public string Apellido { get; set; }
+        public string Matricula { get; set; }
+        public string Telefono { get; set; }
+        public string Email { get; set; }
+        public string Especialidad { get; set; }
+        public bool Activo { get; set; }
     }
 }

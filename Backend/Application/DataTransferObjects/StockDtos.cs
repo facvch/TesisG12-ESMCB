@@ -57,6 +57,18 @@ namespace Application.DataTransferObjects
         public int StockMinimo { get; set; }
         public bool StockBajo { get; set; }
         public bool Activo { get; set; }
+        public List<ProductoDepositoStockDto> StocksDepositos { get; set; } = new();
+    }
+
+    public class ProductoDepositoStockDto
+    {
+        public string Id { get; set; }
+        public string ProductoId { get; set; }
+        public int DepositoId { get; set; }
+        public string DepositoNombre { get; set; }
+        public int StockActual { get; set; }
+        public int StockMinimo { get; set; }
+        public bool StockBajo { get; set; }
     }
 
     public class MovimientoStockDto

@@ -1,4 +1,5 @@
 using BlazorFrontEnd.Models;
+using BlazorFrontEnd.Extensions;
 using System.Net.Http.Json;
 
 namespace BlazorFrontEnd.Services
@@ -41,6 +42,74 @@ namespace BlazorFrontEnd.Services
                 }
                 throw; // Rethrow para que el componente Login lo atrape
             }
+        }
+
+        /// <summary>
+        /// Obtener perfil del usuario autenticado
+        /// </summary>
+        public async Task<UsuarioDto?> GetProfileAsync()
+        {
+            return await _httpClient.GetUnwrappedAsync<UsuarioDto>("api/v1/auth/me");
+        }
+
+        /// <summary>
+        /// Actualizar datos del perfil (nombre completo, email)
+        /// </summary>
+        public async Task<(bool Success, string Error)> UpdateProfileAsync(UpdateProfileRequest request)
+        {
+            var response = await _httpClient.PutAsJsonAsync("api/v1/auth/perfil", request);
+            if (response.IsSuccessStatusCode) return (true, string.Empty);
+            var err = await response.Content.ReadAsStringAsync();
+            return (false, err);
+        }
+
+        /// <summary>
+        /// Subir/actualizar foto de perfil
+        /// </summary>
+        public async Task<(bool Success, string Error)> UpdatePhotoAsync(string? fotoBase64)
+        {
+            var response = await _httpClient.PutAsJsonAsync("api/v1/auth/perfil/foto", new UpdatePhotoRequest { FotoBase64 = fotoBase64 });
+            if (response.IsSuccessStatusCode) return (true, string.Empty);
+            var err = await response.Content.ReadAsStringAsync();
+            return (false, err);
+        }
+
+        /// <summary>
+        /// Cambiar contraseña
+        /// </summary>
+        public async Task<(bool Success, string Error)> ChangePasswordAsync(ChangePasswordRequest request)
+        {
+            var response = await _httpClient.PutAsJsonAsync("api/v1/auth/cambiarPassword", request);
+            if (response.IsSuccessStatusCode) return (true, string.Empty);
+            var err = await response.Content.ReadAsStringAsync();
+            return (false, err);
+        }
+
+        /// <summary>
+        /// Obtener audit logs del usuario autenticado
+        /// </summary>
+        public async Task<List<AuditLogDto>?> GetMyAuditLogsAsync(int cantidad = 30)
+        {
+            return await _httpClient.GetUnwrappedAsync<List<AuditLogDto>>($"api/v1/auth/me/audit?cantidad={cantidad}");
+        }
+
+        /// <summary>
+        /// Obtener datos de veterinario vinculado
+        /// </summary>
+        public async Task<VeterinarioPerfilDto?> GetMyVeterinarioAsync()
+        {
+            return await _httpClient.GetUnwrappedAsync<VeterinarioPerfilDto>("api/v1/auth/me/veterinario");
+        }
+
+        /// <summary>
+        /// Guardar datos de veterinario vinculado
+        /// </summary>
+        public async Task<(bool Success, string Error)> SaveMyVeterinarioAsync(SaveVeterinarioRequest request)
+        {
+            var response = await _httpClient.PutAsJsonAsync("api/v1/auth/me/veterinario", request);
+            if (response.IsSuccessStatusCode) return (true, string.Empty);
+            var err = await response.Content.ReadAsStringAsync();
+            return (false, err);
         }
     }
 

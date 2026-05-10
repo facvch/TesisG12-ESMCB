@@ -78,4 +78,27 @@ namespace Infrastructure.Repositories.Sql
         public async Task<IEnumerable<MovimientoStock>> GetByFechaRangoAsync(DateTime desde, DateTime hasta) =>
             await Repository.Where(m => m.Fecha >= desde && m.Fecha <= hasta).OrderByDescending(m => m.Fecha).ToListAsync();
     }
+
+    internal class ProductoDepositoRepository : BaseRepository<ProductoDeposito>, IProductoDepositoRepository
+    {
+        public ProductoDepositoRepository(StoreDbContext context) : base(context) { }
+
+        public async Task<IEnumerable<ProductoDeposito>> GetByProductoIdAsync(string productoId) =>
+            await Repository
+                .Include(pd => pd.Deposito)
+                .Where(pd => pd.ProductoId == productoId)
+                .ToListAsync();
+
+        public async Task<IEnumerable<ProductoDeposito>> GetByDepositoIdAsync(int depositoId) =>
+            await Repository
+                .Include(pd => pd.Producto)
+                .Where(pd => pd.DepositoId == depositoId)
+                .ToListAsync();
+
+        public async Task<ProductoDeposito> GetByProductoYDepositoAsync(string productoId, int depositoId) =>
+            await Repository
+                .Include(pd => pd.Deposito)
+                .FirstOrDefaultAsync(pd => pd.ProductoId == productoId && pd.DepositoId == depositoId);
+    }
 }
+

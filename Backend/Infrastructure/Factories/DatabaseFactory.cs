@@ -89,6 +89,7 @@ namespace Infrastructure.Factories
             services.AddTransient<IDepositoRepository, Repositories.Sql.DepositoRepository>();
             services.AddTransient<IProductoRepository, Repositories.Sql.ProductoRepository>();
             services.AddTransient<IMovimientoStockRepository, Repositories.Sql.MovimientoStockRepository>();
+            services.AddTransient<IProductoDepositoRepository, Repositories.Sql.ProductoDepositoRepository>();
 
             // Phase 7 - Ventas y Facturación
             services.AddTransient<IMetodoPagoRepository, Repositories.Sql.MetodoPagoRepository>();

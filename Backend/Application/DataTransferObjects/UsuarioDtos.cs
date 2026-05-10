@@ -16,6 +16,8 @@ namespace Application.DataTransferObjects
         public string NombreCompleto { get; set; }
         public int RolId { get; set; }
         public string RolNombre { get; set; }
+        public string? FotoUrl { get; set; }
+        public string? VeterinarioId { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? UltimoLogin { get; set; }
         public bool Activo { get; set; }

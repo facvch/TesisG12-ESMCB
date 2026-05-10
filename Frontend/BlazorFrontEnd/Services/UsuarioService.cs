@@ -56,5 +56,18 @@ namespace BlazorFrontEnd.Services
             var response = await _httpClient.DeleteAsync($"{BaseUrl}/usuarios/{id}");
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<List<AuditLogDto>?> GetAllAuditLogsAsync(int cantidad = 200)
+        {
+            try
+            {
+                return await _httpClient.GetUnwrappedAsync<List<AuditLogDto>>($"api/v1/Audit/logs?cantidad={cantidad}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UsuarioService.GetAuditLogs ERROR] {ex.Message}");
+                return null;
+            }
+        }
     }
 }

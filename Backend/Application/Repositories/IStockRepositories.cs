@@ -39,4 +39,11 @@ namespace Application.Repositories
         Task<IEnumerable<MovimientoStock>> GetByProductoIdAsync(string productoId);
         Task<IEnumerable<MovimientoStock>> GetByFechaRangoAsync(DateTime desde, DateTime hasta);
     }
+
+    public interface IProductoDepositoRepository : IRepository<ProductoDeposito>
+    {
+        Task<IEnumerable<ProductoDeposito>> GetByProductoIdAsync(string productoId);
+        Task<IEnumerable<ProductoDeposito>> GetByDepositoIdAsync(int depositoId);
+        Task<ProductoDeposito> GetByProductoYDepositoAsync(string productoId, int depositoId);
+    }
 }

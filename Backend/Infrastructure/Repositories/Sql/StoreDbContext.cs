@@ -32,6 +32,7 @@ namespace Infrastructure.Repositories.Sql
         public DbSet<Proveedor> Proveedores { get; set; }
         public DbSet<Deposito> Depositos { get; set; }
         public DbSet<Producto> Productos { get; set; }
+        public DbSet<ProductoDeposito> ProductoDepositos { get; set; }
         public DbSet<MovimientoStock> MovimientosStock { get; set; }
 
         // Entidades de ventas y facturación
@@ -339,6 +340,25 @@ namespace Infrastructure.Repositories.Sql
                 entity.HasIndex(p => p.CodigoBarras);
             });
 
+            // Configuración de ProductoDeposito (stock por depósito)
+            modelBuilder.Entity<ProductoDeposito>(entity =>
+            {
+                entity.ToTable("ProductoDepositos");
+                entity.HasKey(pd => pd.Id);
+
+                entity.HasOne(pd => pd.Producto)
+                    .WithMany(p => p.StocksDepositos)
+                    .HasForeignKey(pd => pd.ProductoId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(pd => pd.Deposito)
+                    .WithMany()
+                    .HasForeignKey(pd => pd.DepositoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(pd => new { pd.ProductoId, pd.DepositoId }).IsUnique();
+            });
+
             // Configuración de MovimientoStock
             modelBuilder.Entity<MovimientoStock>(entity =>
             {
@@ -449,6 +469,8 @@ namespace Infrastructure.Repositories.Sql
                 entity.Property(u => u.NombreCompleto).IsRequired().HasMaxLength(150);
                 entity.Property(u => u.PasswordHash).IsRequired();
                 entity.Property(u => u.PasswordSalt).IsRequired();
+                entity.Property(u => u.FotoUrl).HasMaxLength(500000); // base64 photos
+                entity.Property(u => u.VeterinarioId).HasMaxLength(50);
 
                 entity.HasOne(u => u.Rol)
                     .WithMany()

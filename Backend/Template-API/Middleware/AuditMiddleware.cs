@@ -1,6 +1,5 @@
 using Application.Repositories;
 using Domain.Entities;
-using System.Security.Claims;
 
 namespace API.Middleware
 {
@@ -31,8 +30,9 @@ namespace API.Middleware
 
             try
             {
-                var userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var userName = context.User?.FindFirst(ClaimTypes.Name)?.Value;
+                // Claims use short names ("sub", "name") because MapInboundClaims = false
+                var userId = context.User?.FindFirst("sub")?.Value;
+                var userName = context.User?.FindFirst("name")?.Value;
                 var path = context.Request.Path.Value ?? "";
                 var entidad = ExtractEntityName(path);
                 var entidadId = ExtractEntityId(path);

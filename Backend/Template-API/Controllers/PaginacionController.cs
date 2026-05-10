@@ -14,6 +14,7 @@ namespace Controllers
         IPacienteRepository pacienteRepo,
         IPropietarioRepository propietarioRepo,
         IProductoRepository productoRepo,
+        IProductoDepositoRepository productoDepositoRepo,
         ITurnoRepository turnoRepo,
         IVentaRepository ventaRepo,
         IHistorialClinicoRepository historialRepo,
@@ -107,17 +108,26 @@ namespace Controllers
                 );
             }
 
-            var dtos = entities.Select(p => new
+            var list = entities.ToList();
+            var dtos = new List<object>();
+            foreach (var p in list)
             {
-                p.Id, p.Nombre, p.Descripcion, p.CodigoBarras,
-                p.CategoriaId, CategoriaNombre = p.Categoria != null ? p.Categoria.Nombre : "",
-                p.MarcaId, MarcaNombre = p.Marca != null ? p.Marca.Nombre : "",
-                p.ProveedorId, ProveedorNombre = p.Proveedor != null ? p.Proveedor.RazonSocial : "",
-                p.DepositoId, DepositoNombre = p.Deposito != null ? p.Deposito.Nombre : "",
-                p.PrecioCompra, p.PrecioVenta,
-                p.StockActual, p.StockMinimo, p.Activo,
-                StockBajo = p.StockActual <= p.StockMinimo
-            });
+                var stocks = (await productoDepositoRepo.GetByProductoIdAsync(p.Id))
+                    .Select(s => new { s.Id, s.ProductoId, s.DepositoId, DepositoNombre = s.Deposito?.Nombre ?? "", s.StockActual, s.StockMinimo, StockBajo = s.StockBajo })
+                    .ToList();
+                dtos.Add(new
+                {
+                    p.Id, p.Nombre, p.Descripcion, p.CodigoBarras,
+                    p.CategoriaId, CategoriaNombre = p.Categoria != null ? p.Categoria.Nombre : "",
+                    p.MarcaId, MarcaNombre = p.Marca != null ? p.Marca.Nombre : "",
+                    p.ProveedorId, ProveedorNombre = p.Proveedor != null ? p.Proveedor.RazonSocial : "",
+                    p.DepositoId, DepositoNombre = p.Deposito != null ? p.Deposito.Nombre : "",
+                    p.PrecioCompra, p.PrecioVenta,
+                    p.StockActual, p.StockMinimo, p.Activo,
+                    StockBajo = p.StockActual <= p.StockMinimo,
+                    StocksDepositos = stocks
+                });
+            }
             return Ok(PaginacionHelper.Paginar(dtos, page, pageSize, sortBy, sortDir));
         }
 

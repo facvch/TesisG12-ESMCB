@@ -7,23 +7,44 @@ using Microsoft.AspNetCore.Mvc;
 namespace Controllers
 {
     /// <summary>
-    /// Controller para gestionar Productos con control de stock
+    /// Controller para gestionar Productos con control de stock por depósito
     /// </summary>
     [ApiController]
     public class ProductoController(
         IProductoRepository productoRepo,
         ICategoriaRepository categoriaRepo,
-        IMovimientoStockRepository movimientoRepo) : BaseController
+        IMovimientoStockRepository movimientoRepo,
+        IProductoDepositoRepository productoDepositoRepo,
+        IDepositoRepository depositoRepo) : BaseController
     {
         private readonly IProductoRepository _productoRepo = productoRepo ?? throw new ArgumentNullException(nameof(productoRepo));
         private readonly ICategoriaRepository _categoriaRepo = categoriaRepo ?? throw new ArgumentNullException(nameof(categoriaRepo));
         private readonly IMovimientoStockRepository _movimientoRepo = movimientoRepo ?? throw new ArgumentNullException(nameof(movimientoRepo));
+        private readonly IProductoDepositoRepository _pdRepo = productoDepositoRepo ?? throw new ArgumentNullException(nameof(productoDepositoRepo));
+        private readonly IDepositoRepository _depositoRepo = depositoRepo ?? throw new ArgumentNullException(nameof(depositoRepo));
 
         [HttpGet("api/v1/[Controller]")]
         public async Task<IActionResult> GetAll(bool soloActivos = true)
         {
             var entities = soloActivos ? await _productoRepo.GetActivosAsync() : await _productoRepo.FindAllAsync();
-            var dtos = entities.Select(MapToDto).ToList();
+            var dtos = new List<ProductoDto>();
+            foreach (var p in entities)
+            {
+                var dto = MapToDto(p);
+                // Cargar stocks por depósito
+                var stocks = await _pdRepo.GetByProductoIdAsync(p.Id);
+                dto.StocksDepositos = stocks.Select(s => new ProductoDepositoStockDto
+                {
+                    Id = s.Id,
+                    ProductoId = s.ProductoId,
+                    DepositoId = s.DepositoId,
+                    DepositoNombre = s.Deposito?.Nombre ?? "",
+                    StockActual = s.StockActual,
+                    StockMinimo = s.StockMinimo,
+                    StockBajo = s.StockBajo
+                }).ToList();
+                dtos.Add(dto);
+            }
             return Ok(new QueryResult<ProductoDto>(dtos, dtos.Count, 1, 10));
         }
 
@@ -32,7 +53,15 @@ namespace Controllers
         {
             var entity = await _productoRepo.FindOneAsync(id);
             if (entity == null) return NotFound();
-            return Ok(MapToDto(entity));
+            var dto = MapToDto(entity);
+            var stocks = await _pdRepo.GetByProductoIdAsync(id);
+            dto.StocksDepositos = stocks.Select(s => new ProductoDepositoStockDto
+            {
+                Id = s.Id, ProductoId = s.ProductoId, DepositoId = s.DepositoId,
+                DepositoNombre = s.Deposito?.Nombre ?? "",
+                StockActual = s.StockActual, StockMinimo = s.StockMinimo, StockBajo = s.StockBajo
+            }).ToList();
+            return Ok(dto);
         }
 
         [HttpGet("api/v1/[Controller]/search")]
@@ -59,13 +88,29 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Obtiene productos con stock bajo (stock actual <= stock mínimo)
+        /// Obtiene productos con stock bajo (stock actual &lt;= stock mínimo)
         /// </summary>
         [HttpGet("api/v1/[Controller]/stockBajo")]
         public async Task<IActionResult> GetStockBajo()
         {
             var entities = await _productoRepo.GetStockBajoAsync();
             return Ok(entities.Select(MapToDto).ToList());
+        }
+
+        /// <summary>
+        /// Obtiene el stock desglosado por depósito de un producto
+        /// </summary>
+        [HttpGet("api/v1/[Controller]/{id}/stockDepositos")]
+        public async Task<IActionResult> GetStockDepositos(string id)
+        {
+            var stocks = await _pdRepo.GetByProductoIdAsync(id);
+            var dtos = stocks.Select(s => new ProductoDepositoStockDto
+            {
+                Id = s.Id, ProductoId = s.ProductoId, DepositoId = s.DepositoId,
+                DepositoNombre = s.Deposito?.Nombre ?? "",
+                StockActual = s.StockActual, StockMinimo = s.StockMinimo, StockBajo = s.StockBajo
+            }).ToList();
+            return Ok(dtos);
         }
 
         [HttpPost("api/v1/[Controller]")]
@@ -83,7 +128,15 @@ namespace Controllers
                 r.MarcaId, r.ProveedorId, r.DepositoId);
 
             if (!entity.IsValid) return BadRequest(entity.GetErrors().Select(e => e.ErrorMessage));
-            var id = await _productoRepo.AddAsync(entity);
+            var id = (string)await _productoRepo.AddAsync(entity);
+
+            // Si se especificó depósito, crear el registro de stock por depósito
+            if (r.DepositoId.HasValue && r.DepositoId.Value > 0)
+            {
+                var pd = new ProductoDeposito(id, r.DepositoId.Value, r.StockActual, r.StockMinimo);
+                await _pdRepo.AddAsync(pd);
+            }
+
             return Created($"api/v1/Producto/{id}", new { Id = id });
         }
 
@@ -99,7 +152,7 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Registra entrada de stock
+        /// Registra entrada de stock en un depósito específico
         /// </summary>
         [HttpPost("api/v1/[Controller]/{id}/entrada")]
         public async Task<IActionResult> EntradaStock(string id, [FromBody] MovimientoStockRequest r)
@@ -108,7 +161,33 @@ namespace Controllers
             if (entity == null) return NotFound($"No se encontró el producto con Id {id}");
             if (r.Cantidad <= 0) return BadRequest("La cantidad debe ser mayor a 0");
 
-            entity.AgregarStock(r.Cantidad);
+            if (r.DepositoId.HasValue && r.DepositoId.Value > 0)
+            {
+                // Stock por depósito
+                var pd = await _pdRepo.GetByProductoYDepositoAsync(id, r.DepositoId.Value);
+                if (pd == null)
+                {
+                    // Crear registro de stock para este depósito
+                    pd = new ProductoDeposito(id, r.DepositoId.Value, r.Cantidad, 0);
+                    await _pdRepo.AddAsync(pd);
+                }
+                else
+                {
+                    pd.AgregarStock(r.Cantidad);
+                    _pdRepo.Update(pd.Id, pd);
+                }
+
+                // Sincronizar stock total del producto
+                var allStocks = await _pdRepo.GetByProductoIdAsync(id);
+                var total = allStocks.Sum(s => s.StockActual);
+                entity.SetStockDirecto(total);
+            }
+            else
+            {
+                // Fallback: stock global (sin depósito)
+                entity.AgregarStock(r.Cantidad);
+            }
+
             _productoRepo.Update(id, entity);
 
             var movimiento = new Domain.Entities.MovimientoStock(
@@ -119,7 +198,7 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Registra salida de stock
+        /// Registra salida de stock de un depósito específico
         /// </summary>
         [HttpPost("api/v1/[Controller]/{id}/salida")]
         public async Task<IActionResult> SalidaStock(string id, [FromBody] MovimientoStockRequest r)
@@ -128,8 +207,29 @@ namespace Controllers
             if (entity == null) return NotFound($"No se encontró el producto con Id {id}");
             if (r.Cantidad <= 0) return BadRequest("La cantidad debe ser mayor a 0");
 
-            if (!entity.DescontarStock(r.Cantidad))
-                return BadRequest($"Stock insuficiente. Stock actual: {entity.StockActual}, cantidad solicitada: {r.Cantidad}");
+            if (r.DepositoId.HasValue && r.DepositoId.Value > 0)
+            {
+                // Stock por depósito
+                var pd = await _pdRepo.GetByProductoYDepositoAsync(id, r.DepositoId.Value);
+                if (pd == null)
+                    return BadRequest("No hay stock registrado para este producto en el depósito seleccionado");
+
+                if (!pd.DescontarStock(r.Cantidad))
+                    return BadRequest($"Stock insuficiente en el depósito. Stock actual: {pd.StockActual}, cantidad solicitada: {r.Cantidad}");
+
+                _pdRepo.Update(pd.Id, pd);
+
+                // Sincronizar stock total del producto
+                var allStocks = await _pdRepo.GetByProductoIdAsync(id);
+                var total = allStocks.Sum(s => s.StockActual);
+                entity.SetStockDirecto(total);
+            }
+            else
+            {
+                // Fallback: stock global (sin depósito)
+                if (!entity.DescontarStock(r.Cantidad))
+                    return BadRequest($"Stock insuficiente. Stock actual: {entity.StockActual}, cantidad solicitada: {r.Cantidad}");
+            }
 
             _productoRepo.Update(id, entity);
 
@@ -203,5 +303,6 @@ namespace Controllers
         public int Cantidad { get; set; }
         public string Motivo { get; set; }
         public string Referencia { get; set; }
+        public int? DepositoId { get; set; }
     }
 }

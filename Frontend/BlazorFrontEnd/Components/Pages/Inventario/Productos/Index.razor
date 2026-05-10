@@ -56,6 +56,16 @@
             </select>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
+            <label style="color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;">Depósito:</label>
+            <select @bind="filterDeposito" @bind:after="ApplyFilters" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 160px; font-size: 0.85rem;">
+                <option value="0">Todos</option>
+                @foreach (var d in depositos)
+                {
+                    <option value="@d.Id">@d.Nombre</option>
+                }
+            </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
             <label style="color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;">Estado:</label>
             <select @bind="filterEstado" @bind:after="ApplyFilters" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 130px; font-size: 0.85rem;">
                 <option value="todos">Todos</option>
@@ -94,7 +104,11 @@
                         <th>Marca</th>
                         <th style="text-align: right;">P. Compra</th>
                         <th style="text-align: right;">P. Venta</th>
-                        <th style="text-align: center;">Stock</th>
+                        <th style="text-align: center;">Stock Total</th>
+                        @if (filterDeposito > 0)
+                        {
+                            <th style="text-align: center;">Stock Depósito</th>
+                        }
                         <th>Estado</th>
                         <th class="text-end">Acciones</th>
                     </tr>
@@ -102,6 +116,9 @@
                 <tbody>
                     @foreach (var p in filteredItems!)
                     {
+                        var stockDeposito = filterDeposito > 0
+                            ? p.StocksDepositos?.FirstOrDefault(sd => sd.DepositoId == filterDeposito)
+                            : null;
                         <tr style="border-bottom: 1px solid var(--border-glass);">
                             <td>
                                 <strong>@p.Nombre</strong>
@@ -128,6 +145,30 @@
                                     </span>
                                 }
                             </td>
+                            @if (filterDeposito > 0)
+                            {
+                                <td style="text-align: center;">
+                                    @if (stockDeposito != null)
+                                    {
+                                        @if(stockDeposito.StockBajo)
+                                        {
+                                            <span style="background: rgba(239,68,68,0.3); color: #ff6b6b; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                                                @stockDeposito.StockActual
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span style="background: rgba(59,130,246,0.2); color: #60a5fa; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem;">
+                                                @stockDeposito.StockActual
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary" style="font-size: 0.8rem;">—</span>
+                                    }
+                                </td>
+                            }
                             <td>
                                 @if(p.Activo) { <span style="color: var(--accent-primary);">Activo</span> }
                                 else { <span style="color: var(--accent-danger);">Inactivo</span> }
@@ -171,9 +212,28 @@
 @if (showStockModal && selectedProducto != null)
 {
     <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000;" @onclick="CloseStockModal">
-        <div class="glass-card" style="width: 450px; max-width: 95vw;" @onclick:stopPropagation>
+        <div class="glass-card" style="width: 480px; max-width: 95vw;" @onclick:stopPropagation>
             <h4 style="margin-bottom: var(--sp-md);">Movimiento de Stock — @selectedProducto.Nombre</h4>
-            <p class="text-secondary">Stock actual: <strong style="color: white;">@selectedProducto.StockActual</strong></p>
+            <p class="text-secondary">Stock total: <strong style="color: white;">@selectedProducto.StockActual</strong></p>
+
+            @* Selector de depósito *@
+            <div style="margin-bottom: var(--sp-sm);">
+                <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Depósito (*)</label>
+                <select @bind="stockDepositoId" class="form-select bg-dark text-light border-secondary" @bind:after="OnStockDepositoChanged">
+                    <option value="0">— Seleccionar depósito —</option>
+                    @foreach (var d in depositos)
+                    {
+                        <option value="@d.Id">@d.Nombre</option>
+                    }
+                </select>
+                @if (stockDepositoId > 0)
+                {
+                    var sdInfo = selectedProducto.StocksDepositos?.FirstOrDefault(sd => sd.DepositoId == stockDepositoId);
+                    <small class="text-secondary" style="font-size: 0.78rem;">
+                        Stock en este depósito: <strong style="color: white;">@(sdInfo?.StockActual ?? 0)</strong>
+                    </small>
+                }
+            </div>
 
             <div style="margin-bottom: var(--sp-sm);">
                 <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Movimiento</label>
@@ -224,11 +284,13 @@
     // Filtros
     private int filterCategoria;
     private int filterMarca;
+    private int filterDeposito;
     private string filterEstado = "todos";
     private bool filterStockBajo;
     private List<CategoriaDto> categorias = new();
     private List<MarcaDto> marcas = new();
-    private bool HasActiveFilters => filterCategoria > 0 || filterMarca > 0 || filterEstado != "todos" || filterStockBajo;
+    private List<DepositoDto> depositos = new();
+    private bool HasActiveFilters => filterCategoria > 0 || filterMarca > 0 || filterDeposito > 0 || filterEstado != "todos" || filterStockBajo;
 
     // Stock modal
     private bool showStockModal;
@@ -238,16 +300,19 @@
     private string stockMotivo = string.Empty;
     private string stockError = string.Empty;
     private bool isSavingStock;
+    private int stockDepositoId;
 
     protected override async Task OnInitializedAsync()
     {
         // Cargar catálogos para filtros en paralelo con los datos
         var catTask = CatalogoService.GetCategoriasAsync();
         var marTask = CatalogoService.GetMarcasAsync();
+        var depTask = CatalogoService.GetDepositosAsync();
         var loadTask = LoadDataAsync();
-        await Task.WhenAll(catTask, marTask, loadTask);
+        await Task.WhenAll(catTask, marTask, depTask, loadTask);
         categorias = catTask.Result ?? new();
         marcas = marTask.Result ?? new();
+        depositos = depTask.Result ?? new();
     }
 
     private async Task LoadDataAsync()
@@ -279,6 +344,8 @@
             items = items.Where(p => p.CategoriaId == filterCategoria);
         if (filterMarca > 0)
             items = items.Where(p => p.MarcaId == filterMarca);
+        if (filterDeposito > 0)
+            items = items.Where(p => p.StocksDepositos != null && p.StocksDepositos.Any(sd => sd.DepositoId == filterDeposito));
         if (filterEstado == "activo")
             items = items.Where(p => p.Activo);
         else if (filterEstado == "inactivo")
@@ -295,6 +362,7 @@
     {
         filterCategoria = 0;
         filterMarca = 0;
+        filterDeposito = 0;
         filterEstado = "todos";
         filterStockBajo = false;
         ApplyFiltersInternal();
@@ -339,6 +407,8 @@
         stockCantidad = 1;
         stockMotivo = string.Empty;
         stockError = string.Empty;
+        // Pre-seleccionar el depósito si hay filtro activo
+        stockDepositoId = filterDeposito > 0 ? filterDeposito : 0;
         showStockModal = true;
     }
 
@@ -348,15 +418,26 @@
         selectedProducto = null;
     }
 
+    private void OnStockDepositoChanged()
+    {
+        // Just trigger re-render to show stock info for selected deposit
+    }
+
     private async Task HandleStockMovement()
     {
         if (selectedProducto == null) return;
         if (stockCantidad <= 0) { stockError = "La cantidad debe ser mayor a 0."; return; }
+        if (stockDepositoId <= 0) { stockError = "Debe seleccionar un depósito."; return; }
 
         isSavingStock = true;
         stockError = string.Empty;
 
-        var req = new MovimientoStockRequest { Cantidad = stockCantidad, Motivo = stockMotivo };
+        var req = new MovimientoStockRequest
+        {
+            Cantidad = stockCantidad,
+            Motivo = stockMotivo,
+            DepositoId = stockDepositoId
+        };
         bool ok;
 
         if (stockTipo == "entrada")
@@ -368,7 +449,8 @@
 
         if (ok)
         {
-            successMessage = $"Movimiento de stock ({stockTipo}) registrado correctamente.";
+            var depNombre = depositos.FirstOrDefault(d => d.Id == stockDepositoId)?.Nombre ?? "depósito";
+            successMessage = $"Movimiento de stock ({stockTipo}) en {depNombre} registrado correctamente.";
             CloseStockModal();
             await LoadDataAsync();
             // Auto-clear success after render
@@ -377,7 +459,7 @@
         else
         {
             stockError = stockTipo == "salida"
-                ? "Stock insuficiente o error al procesar la salida."
+                ? "Stock insuficiente en este depósito o error al procesar la salida."
                 : "Error al procesar la entrada de stock.";
         }
     }

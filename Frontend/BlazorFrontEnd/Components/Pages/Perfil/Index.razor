@@ -1,0 +1,640 @@
+@page "/perfil"
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Mi Perfil</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Mi Perfil</h2>
+        <p class="text-secondary" style="margin: 0;">Información personal y configuración de cuenta</p>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="glass-card">
+        <p class="text-secondary">Cargando perfil...</p>
+    </div>
+}
+else if (usuario != null)
+{
+    <!-- Tarjeta principal del perfil -->
+    <div class="glass-card" style="margin-bottom: var(--sp-lg);">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <!-- Avatar grande -->
+            <div style="position: relative;">
+                @if (!string.IsNullOrEmpty(usuario.FotoUrl))
+                {
+                    <img src="@usuario.FotoUrl" alt="Foto de perfil"
+                         style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-primary);" />
+                }
+                else
+                {
+                    <div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 2rem; border: 3px solid var(--accent-primary);">
+                        @(usuario.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
+                    </div>
+                }
+            </div>
+            <div style="flex: 1;">
+                <h3 style="margin: 0; font-weight: 700;">@usuario.NombreCompleto</h3>
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">@@@usuario.NombreUsuario</span>
+                <div style="margin-top: 6px;">
+                    <span style="background: rgba(56, 189, 248, 0.15); color: var(--accent-primary); padding: 3px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                        @usuario.RolNombre
+                    </span>
+                </div>
+            </div>
+            <div style="text-align: right; color: var(--text-secondary); font-size: 0.82rem;">
+                <div>@usuario.Email</div>
+                <div style="margin-top: 4px;">Registrado: @usuario.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                @if (usuario.UltimoLogin.HasValue)
+                {
+                    <div style="margin-top: 4px;">Último acceso: @usuario.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de secciones -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-lg);">
+
+        <!-- Editar datos personales -->
+        <div class="glass-card">
+            <h5 style="margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                Editar Datos Personales
+            </h5>
+
+            <div style="margin-bottom: 12px;">
+                <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Nombre Completo</label>
+                <input type="text" @bind="editNombreCompleto" class="form-control form-control-sm"
+                       style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Email</label>
+                <input type="email" @bind="editEmail" class="form-control form-control-sm"
+                       style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Foto de Perfil (opcional)</label>
+                <InputFile OnChange="OnFileSelected" accept="image/*"
+                           style="color: var(--text-secondary); font-size: 0.85rem;" />
+                @if (!string.IsNullOrEmpty(fotoPreview))
+                {
+                    <div style="margin-top: 8px;">
+                        <img src="@fotoPreview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-primary);" />
+                        <button class="btn btn-sm btn-outline-danger" style="margin-left: 8px; font-size: 0.75rem;" @onclick="RemovePhoto">Quitar</button>
+                    </div>
+                }
+            </div>
+            <button class="btn-primary-glass" style="width: 100%; font-size: 0.85rem;" @onclick="SaveProfile" disabled="@isSavingProfile">
+                @(isSavingProfile ? "Guardando..." : "Guardar Cambios")
+            </button>
+            @if (!string.IsNullOrEmpty(profileMessage))
+            {
+                <div class="mt-2" style="font-size: 0.82rem; color: @(profileSuccess ? "var(--accent-primary)" : "var(--accent-danger)");">@profileMessage</div>
+            }
+        </div>
+
+        <!-- Cambiar contraseña -->
+        <div class="glass-card">
+            <h5 style="margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                Cambiar Contraseña
+            </h5>
+            <div style="margin-bottom: 12px;">
+                <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Contraseña Actual</label>
+                <input type="password" @bind="passwordActual" class="form-control form-control-sm"
+                       style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Nueva Contraseña</label>
+                <input type="password" @bind="passwordNueva" class="form-control form-control-sm"
+                       style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Confirmar Nueva Contraseña</label>
+                <input type="password" @bind="passwordConfirm" class="form-control form-control-sm"
+                       style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+            </div>
+            <button class="btn-primary-glass" style="width: 100%; font-size: 0.85rem;" @onclick="ChangePassword" disabled="@isChangingPassword">
+                @(isChangingPassword ? "Cambiando..." : "Cambiar Contraseña")
+            </button>
+            @if (!string.IsNullOrEmpty(passwordMessage))
+            {
+                <div class="mt-2" style="font-size: 0.82rem; color: @(passwordSuccess ? "var(--accent-primary)" : "var(--accent-danger)");">@passwordMessage</div>
+            }
+        </div>
+    </div>
+
+    <!-- Sección Veterinario (condicional) -->
+    @if (usuario.RolNombre == "Veterinario")
+    {
+        <div class="glass-card" style="margin-top: var(--sp-lg);">
+            <h5 style="margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>
+                Datos Profesionales de Veterinario
+                @if (!string.IsNullOrEmpty(usuario.VeterinarioId))
+                {
+                    <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 2px 10px; border-radius: 10px; font-size: 0.72rem; margin-left: 8px;">Vinculado</span>
+                }
+                else
+                {
+                    <span style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 2px 10px; border-radius: 10px; font-size: 0.72rem; margin-left: 8px;">Pendiente</span>
+                }
+            </h5>
+            <p class="text-secondary" style="font-size: 0.82rem; margin-bottom: 16px;">
+                Completá tus datos profesionales para quedar registrado como veterinario en el sistema y poder ser asignado a turnos.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Nombre</label>
+                    <input type="text" @bind="vetNombre" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div>
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Apellido</label>
+                    <input type="text" @bind="vetApellido" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div>
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Matrícula *</label>
+                    <input type="text" @bind="vetMatricula" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div>
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Teléfono</label>
+                    <input type="text" @bind="vetTelefono" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div>
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Email Profesional</label>
+                    <input type="email" @bind="vetEmail" class="form-control form-control-sm"
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+                <div>
+                    <label class="text-secondary" style="font-size: 0.78rem; display: block; margin-bottom: 4px;">Especialidad</label>
+                    <input type="text" @bind="vetEspecialidad" class="form-control form-control-sm"
+                           placeholder="Ej: Cirugía, Dermatología..."
+                           style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+                </div>
+            </div>
+            <button class="btn-primary-glass" style="margin-top: 16px; font-size: 0.85rem;" @onclick="SaveVeterinario" disabled="@isSavingVet">
+                @(isSavingVet ? "Guardando..." : (string.IsNullOrEmpty(usuario.VeterinarioId) ? "Registrarme como Veterinario" : "Actualizar Datos Profesionales"))
+            </button>
+            @if (!string.IsNullOrEmpty(vetMessage))
+            {
+                <div class="mt-2" style="font-size: 0.82rem; color: @(vetSuccess ? "var(--accent-primary)" : "var(--accent-danger)");">@vetMessage</div>
+            }
+        </div>
+    }
+
+    <!-- Log de actividad -->
+    <div class="glass-card" style="margin-top: var(--sp-lg);">
+        <h5 style="margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+            Actividad Reciente
+        </h5>
+        @if (auditLogs == null || !auditLogs.Any())
+        {
+            <p class="text-secondary" style="font-size: 0.85rem;">No hay actividad registrada.</p>
+        }
+        else
+        {
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-dark table-hover" style="background: transparent; font-size: 0.82rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-glass); position: sticky; top: 0; background: var(--bg-primary);">
+                            <th style="width: 140px;">Fecha</th>
+                            <th>Actividad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in auditLogs)
+                        {
+                            var friendly = GetFriendlyDescription(log);
+                            <tr style="border-bottom: 1px solid var(--border-glass);">
+                                <td style="white-space: nowrap;">@log.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span style="@friendly.Style">@friendly.Text</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private UsuarioDto? usuario;
+    private List<AuditLogDto>? auditLogs;
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    // Edit profile
+    private string editNombreCompleto = string.Empty;
+    private string editEmail = string.Empty;
+    private string? fotoPreview;
+    private string? fotoBase64ToUpload;
+    private bool isSavingProfile;
+    private string profileMessage = string.Empty;
+    private bool profileSuccess;
+
+    // Change password
+    private string passwordActual = string.Empty;
+    private string passwordNueva = string.Empty;
+    private string passwordConfirm = string.Empty;
+    private bool isChangingPassword;
+    private string passwordMessage = string.Empty;
+    private bool passwordSuccess;
+
+    // Veterinario
+    private string vetNombre = string.Empty;
+    private string vetApellido = string.Empty;
+    private string vetMatricula = string.Empty;
+    private string vetTelefono = string.Empty;
+    private string vetEmail = string.Empty;
+    private string vetEspecialidad = string.Empty;
+    private bool isSavingVet;
+    private string vetMessage = string.Empty;
+    private bool vetSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfile();
+    }
+
+    private async Task LoadProfile()
+    {
+        isLoading = true;
+        try
+        {
+            usuario = await AuthService.GetProfileAsync();
+            if (usuario != null)
+            {
+                editNombreCompleto = usuario.NombreCompleto;
+                editEmail = usuario.Email;
+                fotoPreview = usuario.FotoUrl;
+
+                // Load veterinario data if applicable
+                if (usuario.RolNombre == "Veterinario")
+                {
+                    await LoadVeterinarioData();
+                }
+            }
+
+            // Load audit logs
+            auditLogs = await AuthService.GetMyAuditLogsAsync(30);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar perfil: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadVeterinarioData()
+    {
+        try
+        {
+            var vet = await AuthService.GetMyVeterinarioAsync();
+            if (vet != null)
+            {
+                vetNombre = vet.Nombre;
+                vetApellido = vet.Apellido;
+                vetMatricula = vet.Matricula;
+                vetTelefono = vet.Telefono;
+                vetEmail = vet.Email;
+                vetEspecialidad = vet.Especialidad;
+            }
+            else
+            {
+                // Pre-fill from user data
+                var partes = (usuario?.NombreCompleto ?? "").Split(' ', 2);
+                vetNombre = partes.Length > 0 ? partes[0] : "";
+                vetApellido = partes.Length > 1 ? partes[1] : "";
+                vetEmail = usuario?.Email ?? "";
+            }
+        }
+        catch { /* ignore */ }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file.Size > 500_000) // 500KB max
+            {
+                profileMessage = "La imagen no puede superar 500KB";
+                profileSuccess = false;
+                return;
+            }
+
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream(500_000).ReadAsync(buffer);
+            var base64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            fotoPreview = base64;
+            fotoBase64ToUpload = base64;
+            profileMessage = string.Empty;
+        }
+        catch
+        {
+            profileMessage = "Error al cargar la imagen";
+            profileSuccess = false;
+        }
+    }
+
+    private void RemovePhoto()
+    {
+        fotoPreview = null;
+        fotoBase64ToUpload = "REMOVE";
+    }
+
+    private async Task SaveProfile()
+    {
+        isSavingProfile = true;
+        profileMessage = string.Empty;
+        try
+        {
+            // Update profile data
+            var result = await AuthService.UpdateProfileAsync(new UpdateProfileRequest
+            {
+                NombreCompleto = editNombreCompleto,
+                Email = editEmail
+            });
+
+            if (!result.Success)
+            {
+                profileMessage = "Error al actualizar: " + result.Error;
+                profileSuccess = false;
+                return;
+            }
+
+            // Update photo if changed
+            if (fotoBase64ToUpload != null)
+            {
+                var fotoResult = await AuthService.UpdatePhotoAsync(
+                    fotoBase64ToUpload == "REMOVE" ? null : fotoBase64ToUpload);
+                if (!fotoResult.Success)
+                {
+                    profileMessage = "Datos guardados, pero error al actualizar foto";
+                    profileSuccess = false;
+                    return;
+                }
+            }
+
+            profileMessage = "Perfil actualizado correctamente";
+            profileSuccess = true;
+            fotoBase64ToUpload = null;
+            await LoadProfile();
+        }
+        catch (Exception ex)
+        {
+            profileMessage = "Error: " + ex.Message;
+            profileSuccess = false;
+        }
+        finally
+        {
+            isSavingProfile = false;
+        }
+    }
+
+    private async Task ChangePassword()
+    {
+        isChangingPassword = true;
+        passwordMessage = string.Empty;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(passwordNueva))
+            {
+                passwordMessage = "Completá todos los campos";
+                passwordSuccess = false;
+                return;
+            }
+            if (passwordNueva != passwordConfirm)
+            {
+                passwordMessage = "Las contraseñas no coinciden";
+                passwordSuccess = false;
+                return;
+            }
+            if (passwordNueva.Length < 6)
+            {
+                passwordMessage = "La contraseña debe tener al menos 6 caracteres";
+                passwordSuccess = false;
+                return;
+            }
+
+            var result = await AuthService.ChangePasswordAsync(new ChangePasswordRequest
+            {
+                PasswordActual = passwordActual,
+                NuevaPassword = passwordNueva
+            });
+
+            if (result.Success)
+            {
+                passwordMessage = "Contraseña cambiada exitosamente";
+                passwordSuccess = true;
+                passwordActual = passwordNueva = passwordConfirm = string.Empty;
+            }
+            else
+            {
+                passwordMessage = "Error: " + result.Error;
+                passwordSuccess = false;
+            }
+        }
+        finally
+        {
+            isChangingPassword = false;
+        }
+    }
+
+    private async Task SaveVeterinario()
+    {
+        isSavingVet = true;
+        vetMessage = string.Empty;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(vetMatricula))
+            {
+                vetMessage = "La matrícula es obligatoria";
+                vetSuccess = false;
+                return;
+            }
+
+            var result = await AuthService.SaveMyVeterinarioAsync(new SaveVeterinarioRequest
+            {
+                Nombre = vetNombre,
+                Apellido = vetApellido,
+                Matricula = vetMatricula,
+                Telefono = vetTelefono,
+                Email = vetEmail,
+                Especialidad = vetEspecialidad
+            });
+
+            if (result.Success)
+            {
+                vetMessage = "Datos de veterinario guardados correctamente";
+                vetSuccess = true;
+                await LoadProfile(); // Refresh to get VeterinarioId
+            }
+            else
+            {
+                vetMessage = "Error: " + result.Error;
+                vetSuccess = false;
+            }
+        }
+        finally
+        {
+            isSavingVet = false;
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // Traducción de audit logs a lenguaje natural
+    // ═══════════════════════════════════════════
+
+    private record FriendlyLog(string Text, string Style);
+
+    private static readonly Dictionary<string, string> EntityNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Paciente"] = "paciente",
+        ["Propietario"] = "propietario",
+        ["Turno"] = "turno",
+        ["Tratamiento"] = "tratamiento",
+        ["RegistroVacunacion"] = "registro de vacunación",
+        ["Venta"] = "venta",
+        ["Producto"] = "producto",
+        ["Especie"] = "especie",
+        ["Raza"] = "raza",
+        ["Categoria"] = "categoría",
+        ["Marca"] = "marca",
+        ["Proveedor"] = "proveedor",
+        ["Deposito"] = "depósito",
+        ["Servicio"] = "servicio",
+        ["Veterinario"] = "veterinario",
+        ["HistorialClinico"] = "historial clínico",
+        ["Configuracion"] = "configuración",
+        ["Notificacion"] = "notificación",
+        ["auth"] = "sesión",
+        ["Audit"] = "auditoría",
+        ["Paginacion"] = "consulta",
+    };
+
+    private FriendlyLog GetFriendlyDescription(AuditLogDto log)
+    {
+        var desc = log.Descripcion ?? "";
+        var entity = log.Entidad ?? "";
+        var action = log.Accion?.ToUpper() ?? "";
+
+        var entityFriendly = EntityNames.GetValueOrDefault(entity, entity.ToLower());
+
+        // Try to match specific sub-actions from the path
+        var subAction = ExtractSubAction(desc);
+
+        string text;
+        string style;
+
+        if (action == "POST")
+        {
+            style = "color: #22c55e;";
+            text = subAction switch
+            {
+                "login" => "Inició sesión",
+                "register" => "Registró un nuevo usuario",
+                "seed" => "Ejecutó la carga inicial de datos",
+                "entrada" => $"Registró una entrada de stock de {entityFriendly}",
+                "salida" => $"Registró una salida de stock de {entityFriendly}",
+                "facturar" => $"Facturó una {entityFriendly}",
+                "generar" => "Generó notificaciones automáticas",
+                "completo" => "Ejecutó la carga completa de datos",
+                _ => $"Registró un/a {entityFriendly}"
+            };
+        }
+        else if (action == "PUT")
+        {
+            style = "color: #f59e0b;";
+            text = subAction switch
+            {
+                "completar" => $"Marcó un {entityFriendly} como completado",
+                "cancelar" => $"Canceló un {entityFriendly}",
+                "reprogramar" => $"Reprogramó un {entityFriendly}",
+                "confirmar" => $"Confirmó un {entityFriendly}",
+                "encurso" => $"Marcó un {entityFriendly} como en curso",
+                "finalizar" => $"Finalizó un {entityFriendly}",
+                "ausente" => $"Marcó ausente en un {entityFriendly}",
+                "anular" => $"Anuló una {entityFriendly}",
+                "leer" => "Leyó una notificación",
+                "cambiarPassword" => "Cambió su contraseña",
+                "cambiarPropietario" => $"Cambió el propietario de un {entityFriendly}",
+                "perfil" => "Actualizó su perfil",
+                "foto" => "Actualizó su foto de perfil",
+                "veterinario" => "Actualizó sus datos profesionales",
+                _ => $"Modificó un/a {entityFriendly}"
+            };
+        }
+        else if (action == "DELETE")
+        {
+            style = "color: var(--accent-danger);";
+            text = subAction switch
+            {
+                "limpiar" => "Limpió la caché del sistema",
+                "reset" => "Reinició métricas de rendimiento",
+                _ => $"Eliminó un/a {entityFriendly}"
+            };
+        }
+        else
+        {
+            style = "color: var(--text-secondary);";
+            text = desc;
+        }
+
+        return new FriendlyLog(text, style);
+    }
+
+    private static string ExtractSubAction(string descripcion)
+    {
+        // "PUT /api/v1/Turno/abc123/completar" → "completar"
+        // "POST /api/v1/auth/login" → "login"
+        // "POST /api/v1/Paciente" → ""
+        if (string.IsNullOrEmpty(descripcion)) return "";
+
+        var parts = descripcion.Split(' ', 2);
+        var path = parts.Length > 1 ? parts[1] : parts[0];
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        // For paths like /api/v1/Entity/id/action → get last segment if it's not a GUID
+        if (segments.Length >= 5)
+        {
+            var last = segments[^1];
+            if (!Guid.TryParse(last, out _) && !last.All(c => char.IsDigit(c)))
+                return last;
+        }
+        // For /api/v1/auth/login → get "login"
+        if (segments.Length >= 4)
+        {
+            var last = segments[^1];
+            if (!Guid.TryParse(last, out _) && !last.All(c => char.IsDigit(c)))
+                return last;
+        }
+
+        return "";
+    }
+}

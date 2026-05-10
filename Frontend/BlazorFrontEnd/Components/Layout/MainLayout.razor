@@ -14,14 +14,16 @@
             <AuthorizeView>
                 <Authorized>
                     <div class="user-profile" style="display: flex; align-items: center; gap: 10px;">
-                        <div style="text-align: right; line-height: 1.2;">
-                            <span style="color: var(--text-primary); font-weight: 600; font-size: 0.9rem;">@context.User.Identity?.Name</span>
-                            <br/>
-                            <span style="color: var(--accent-primary); font-size: 0.75rem; font-weight: 500;">@GetUserRole(context)</span>
-                        </div>
-                        <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9rem;">
-                            @(context.User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
-                        </div>
+                        <a href="/perfil" style="display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                            <div style="text-align: right; line-height: 1.2;">
+                                <span style="color: var(--text-primary); font-weight: 600; font-size: 0.9rem;">@context.User.Identity?.Name</span>
+                                <br/>
+                                <span style="color: var(--accent-primary); font-size: 0.75rem; font-weight: 500;">@GetUserRole(context)</span>
+                            </div>
+                            <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9rem;">
+                                @(context.User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                            </div>
+                        </a>
                         <button class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; padding: 4px 12px;" @onclick="Logout">
                             Cerrar Sesión
                         </button>
