@@ -70,7 +70,8 @@ namespace Controllers
         IMetodoPagoRepository metodoPagoRepo,
         IProductoRepository productoRepo,
         IMovimientoStockRepository movimientoRepo,
-        IFacturaRepository facturaRepo) : BaseController
+        IFacturaRepository facturaRepo,
+        IProductoDepositoRepository productoDepositoRepo) : BaseController
     {
         private readonly IVentaRepository _ventaRepo = ventaRepo;
         private readonly IDetalleVentaRepository _detalleRepo = detalleRepo;
@@ -79,6 +80,7 @@ namespace Controllers
         private readonly IProductoRepository _productoRepo = productoRepo;
         private readonly IMovimientoStockRepository _movimientoRepo = movimientoRepo;
         private readonly IFacturaRepository _facturaRepo = facturaRepo;
+        private readonly IProductoDepositoRepository _pdRepo = productoDepositoRepo;
 
         [HttpGet("api/v1/[Controller]")]
         public async Task<IActionResult> GetByFecha([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
@@ -138,13 +140,31 @@ namespace Controllers
             decimal totalVenta = 0;
             foreach (var det in request.Detalles)
             {
-                // Validar producto y stock
+                // Validar producto
                 var producto = await _productoRepo.FindOneAsync(det.ProductoId);
                 if (producto == null)
                     return BadRequest($"No existe el producto con Id {det.ProductoId}");
 
-                if (!producto.DescontarStock(det.Cantidad))
-                    return BadRequest($"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}");
+                // Descontar stock por depósito si se especifica
+                if (det.DepositoId.HasValue && det.DepositoId.Value > 0)
+                {
+                    var pd = await _pdRepo.GetByProductoYDepositoAsync(det.ProductoId, det.DepositoId.Value);
+                    if (pd == null)
+                        return BadRequest($"No hay stock del producto '{producto.Nombre}' en el depósito seleccionado");
+                    if (!pd.DescontarStock(det.Cantidad))
+                        return BadRequest($"Stock insuficiente para '{producto.Nombre}' en el depósito. Disponible: {pd.StockActual}");
+                    _pdRepo.Update(pd.Id, pd);
+
+                    // Sincronizar stock total
+                    var allStocks = await _pdRepo.GetByProductoIdAsync(det.ProductoId);
+                    producto.SetStockDirecto(allStocks.Sum(s => s.StockActual));
+                }
+                else
+                {
+                    // Fallback: descontar del stock global
+                    if (!producto.DescontarStock(det.Cantidad))
+                        return BadRequest($"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}");
+                }
 
                 _productoRepo.Update(det.ProductoId, producto);
 
@@ -153,11 +173,11 @@ namespace Controllers
                     det.ProductoId, TipoMovimiento.Salida, det.Cantidad, "Venta", ventaId.ToString());
                 await _movimientoRepo.AddAsync(movimiento);
 
-                // Crear detalle y guardar en DB
+                // Crear detalle y guardar en DB (con depósito para poder revertir al anular)
                 var precioUnit = det.PrecioUnitario > 0 ? det.PrecioUnitario : producto.PrecioVenta;
                 var detalle = new Domain.Entities.DetalleVenta(
                     ventaId, det.ProductoId, det.Descripcion ?? producto.Nombre,
-                    det.Cantidad, precioUnit);
+                    det.Cantidad, precioUnit, det.DepositoId);
 
                 await _detalleRepo.AddAsync(detalle);
                 totalVenta += detalle.Subtotal;
@@ -187,7 +207,32 @@ namespace Controllers
                 var producto = await _productoRepo.FindOneAsync(detalle.ProductoId);
                 if (producto != null)
                 {
-                    producto.AgregarStock(detalle.Cantidad);
+                    // Si el detalle tiene depósito, devolver stock al depósito específico
+                    if (detalle.DepositoId.HasValue && detalle.DepositoId.Value > 0)
+                    {
+                        var pd = await _pdRepo.GetByProductoYDepositoAsync(detalle.ProductoId, detalle.DepositoId.Value);
+                        if (pd != null)
+                        {
+                            pd.AgregarStock(detalle.Cantidad);
+                            _pdRepo.Update(pd.Id, pd);
+                        }
+                        else
+                        {
+                            // El registro de depósito fue eliminado, crearlo de nuevo
+                            var newPd = new ProductoDeposito(detalle.ProductoId, detalle.DepositoId.Value, detalle.Cantidad, 0);
+                            await _pdRepo.AddAsync(newPd);
+                        }
+
+                        // Sincronizar stock total
+                        var allStocks = await _pdRepo.GetByProductoIdAsync(detalle.ProductoId);
+                        producto.SetStockDirecto(allStocks.Sum(s => s.StockActual));
+                    }
+                    else
+                    {
+                        // Fallback: stock global
+                        producto.AgregarStock(detalle.Cantidad);
+                    }
+
                     _productoRepo.Update(detalle.ProductoId, producto);
 
                     var movimiento = new Domain.Entities.MovimientoStock(
@@ -279,6 +324,7 @@ namespace Controllers
         public string Descripcion { get; set; }
         public int Cantidad { get; set; }
         public decimal PrecioUnitario { get; set; }
+        public int? DepositoId { get; set; }
     }
 
     public class FacturarRequest

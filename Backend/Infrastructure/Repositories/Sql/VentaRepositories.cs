@@ -17,15 +17,27 @@ namespace Infrastructure.Repositories.Sql
         public VentaRepository(StoreDbContext context) : base(context) { }
 
         public async Task<IEnumerable<Venta>> GetByPropietarioIdAsync(string propietarioId) =>
-            await Repository.Where(v => v.PropietarioId == propietarioId)
+            await Repository
+                .Include(v => v.Detalles).ThenInclude(d => d.Producto)
+                .Include(v => v.MetodoPago)
+                .Include(v => v.Propietario)
+                .Where(v => v.PropietarioId == propietarioId)
                 .OrderByDescending(v => v.Fecha).ToListAsync();
 
         public async Task<IEnumerable<Venta>> GetByFechaRangoAsync(DateTime desde, DateTime hasta) =>
-            await Repository.Where(v => v.Fecha >= desde && v.Fecha <= hasta)
+            await Repository
+                .Include(v => v.Detalles).ThenInclude(d => d.Producto)
+                .Include(v => v.MetodoPago)
+                .Include(v => v.Propietario)
+                .Where(v => v.Fecha >= desde && v.Fecha <= hasta)
                 .OrderByDescending(v => v.Fecha).ToListAsync();
 
         public async Task<Venta> GetWithDetallesAsync(string id) =>
-            await Repository.Include(v => v.Detalles).FirstOrDefaultAsync(v => v.Id == id);
+            await Repository
+                .Include(v => v.Detalles).ThenInclude(d => d.Producto)
+                .Include(v => v.MetodoPago)
+                .Include(v => v.Propietario)
+                .FirstOrDefaultAsync(v => v.Id == id);
     }
 
     internal class DetalleVentaRepository : BaseRepository<DetalleVenta>, IDetalleVentaRepository

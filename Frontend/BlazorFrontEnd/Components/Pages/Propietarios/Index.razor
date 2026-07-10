@@ -11,12 +11,12 @@
         <h2 style="font-weight: 700; margin: 0;">Directorio de Clientes</h2>
         <p class="text-secondary" style="margin: 0;">Gestión de propietarios de mascotas</p>
     </div>
-    <a href="/propietarios/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button @onclick="OpenClienteModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nuevo Cliente
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -101,6 +101,78 @@
     </div>
 }
 
+@* ═══════ MODAL: Nuevo Cliente ═══════ *@
+@if (showClienteModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseClienteModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nuevo Cliente</h3>
+                <button class="modal-close-btn" @onclick="CloseClienteModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="clienteModel" OnValidSubmit="HandleSaveCliente" FormName="modalClienteForm">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="clienteModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.Nombre)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Apellido (*)</label>
+                        <InputText @bind-Value="clienteModel.Apellido" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.Apellido)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">DNI (*)</label>
+                        <InputText @bind-Value="clienteModel.DNI" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.DNI)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Celular / Teléfono (*)</label>
+                        <InputText @bind-Value="clienteModel.Telefono" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.Telefono)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Correo Electrónico</label>
+                        <InputText @bind-Value="clienteModel.Email" type="email" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Dirección Física</label>
+                        <InputText @bind-Value="clienteModel.Direccion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(clienteErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                        @clienteErrorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseClienteModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingCliente">
+                        @if(isSavingCliente) { <span>Guardando...</span> } else { <span>Guardar Cliente</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private PaginatedList<PropietarioDto>? propietariosResponse;
     private bool isLoading = true;
@@ -109,6 +181,12 @@
     private int currentPage = 1;
     private int pageSize = 10;
     private string searchTerm = string.Empty;
+
+    // ── Modal Nuevo Cliente ──
+    private bool showClienteModal;
+    private PropietarioDto clienteModel = new();
+    private bool isSavingCliente;
+    private string clienteErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -176,6 +254,47 @@
                 await LoadDataAsync();
             else
                 errorMessage = "No se pudo eliminar el cliente.";
+        }
+    }
+
+    // ── Modal Handlers ──
+    private void OpenClienteModal()
+    {
+        clienteModel = new PropietarioDto();
+        clienteErrorMessage = string.Empty;
+        isSavingCliente = false;
+        showClienteModal = true;
+    }
+
+    private void CloseClienteModal()
+    {
+        showClienteModal = false;
+    }
+
+    private async Task HandleSaveCliente()
+    {
+        isSavingCliente = true;
+        clienteErrorMessage = string.Empty;
+        try
+        {
+            var result = await PropietarioService.CreateAsync(clienteModel);
+            if (result)
+            {
+                showClienteModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                clienteErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            clienteErrorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSavingCliente = false;
         }
     }
 }

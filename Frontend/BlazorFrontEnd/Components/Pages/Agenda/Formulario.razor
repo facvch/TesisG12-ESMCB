@@ -1,4 +1,3 @@
-@page "/agenda/nuevo"
 @page "/agenda/editar/{Id}"
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
@@ -79,6 +78,8 @@
                 <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
                     <input type="datetime-local" @bind="model.FechaHora" class="form-control bg-dark text-light border-secondary" />
+                    @if (!string.IsNullOrEmpty(fechaHoraError))
+                    { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@fechaHoraError</div> }
                 </div>
 
                 <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
@@ -133,6 +134,7 @@
     private bool isLoading = true;
     private bool isSaving;
     private string errorMessage = string.Empty;
+    private string fechaHoraError = string.Empty;
 
     private List<PacienteDto> pacientes = new();
     private List<VeterinarioDto> veterinarios = new();
@@ -173,6 +175,15 @@
     {
         isSaving = true;
         errorMessage = string.Empty;
+        fechaHoraError = string.Empty;
+
+        // Validación custom: fecha no puede ser pasada (solo para turnos nuevos/reprogramados)
+        if (model.FechaHora < DateTime.Now && model.Estado != "Completado" && model.Estado != "Cancelado")
+        {
+            fechaHoraError = "La fecha ingresada es inválida (Es una fecha pasada)";
+            isSaving = false;
+            return;
+        }
 
         try
         {
@@ -198,7 +209,7 @@
             }
             else
             {
-                errorMessage = "Verifique la validación de negocio del backend (ej: Turnos superpuestos para el mismo veterinario).";
+                errorMessage = "Ya hay un turno registrado en la fecha/hora ingresada para el mismo veterinario.";
             }
         }
         catch (Exception)

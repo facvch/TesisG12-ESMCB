@@ -1,4 +1,3 @@
-@page "/pacientes/nuevo"
 @page "/pacientes/editar/{Id}"
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
@@ -70,7 +69,7 @@
                 </div>
                 
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza</label>
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
                     <InputSelect @bind-Value="model.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(razas.Count == 0)">
                         <option value="">-- Seleccione Raza --</option>
                         @foreach (var r in razas)
@@ -78,6 +77,7 @@
                             <option value="@r.Id">@r.Nombre</option>
                         }
                     </InputSelect>
+                    <ValidationMessage For="@(() => model.RazaId)" class="text-danger" />
                 </div>
             </div>
 
@@ -88,14 +88,16 @@
                         <option value="">-- Sexo --</option>
                         <option value="M">Macho</option>
                         <option value="H">Hembra</option>
-                        <option value="D">Desconocido</option>
                     </InputSelect>
                     <ValidationMessage For="@(() => model.Sexo)" class="text-danger" />
                 </div>
                 
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nacimiento</label>
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nacimiento (*)</label>
                     <InputDate @bind-Value="model.FechaNacimiento" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => model.FechaNacimiento)" class="text-danger" />
+                    @if (!string.IsNullOrEmpty(fechaNacimientoError))
+                    { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@fechaNacimientoError</div> }
                 </div>
             </div>
 
@@ -132,6 +134,7 @@
     private bool isLoading = true;
     private bool isSaving;
     private string errorMessage = string.Empty;
+    private string fechaNacimientoError = string.Empty;
 
     // Catálogos
     private List<PropietarioDto> propietarios = new();
@@ -198,6 +201,15 @@
     {
         isSaving = true;
         errorMessage = string.Empty;
+        fechaNacimientoError = string.Empty;
+
+        // Validación custom: fecha de nacimiento no puede ser futura
+        if (model.FechaNacimiento.HasValue && model.FechaNacimiento.Value.Date > DateTime.Today)
+        {
+            fechaNacimientoError = "La fecha ingresada es inválida (Es una fecha futura)";
+            isSaving = false;
+            return;
+        }
 
         try
         {

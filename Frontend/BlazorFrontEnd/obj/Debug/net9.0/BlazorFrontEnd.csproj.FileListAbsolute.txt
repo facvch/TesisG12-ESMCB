@@ -1,86 +1,260 @@
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\appsettings.Development.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\appsettings.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.staticwebassets.runtime.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.staticwebassets.endpoints.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.exe
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.deps.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.runtimeconfig.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\BlazorFrontEnd.pdb
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Blazored.LocalStorage.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.csproj.AssemblyReference.cache
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\rpswa.dswa.cache.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.GeneratedMSBuildEditorConfig.editorconfig
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.AssemblyInfoInputs.cache
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.AssemblyInfo.cs
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.csproj.CoreCompileInputs.cache
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.MvcApplicationPartsAssemblyInfo.cache
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\rjimswa.dswa.cache.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\scopedcss\Components\Layout\MainLayout.razor.rz.scp.css
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\scopedcss\Components\Layout\NavMenu.razor.rz.scp.css
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\scopedcss\bundle\BlazorFrontEnd.styles.css
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\scopedcss\projectbundle\BlazorFrontEnd.bundle.scp.css
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\5n8dl8io4h-bqjiyaj88i.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\bnri83pstd-c2jlpeoesf.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\eo6kvmlv1b-erw9l3u2r3.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\9ogukdrmz4-aexeepp0ev.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\x26s1p1hze-d7shbmvgxk.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\1zgvo712v9-ausgxo2sd3.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\q0r05koiqa-k8d9w2qqmf.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\gye6zlnbzk-cosvhxvwiu.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\fhg53wwc4g-ub07r2b239.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\hok1ngo867-fvhpjtyr6v.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\npyj15w2e9-b7pk76d08c.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\fb8fjrfcjj-fsbi9cje9m.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\pd5s5i045l-rzd6atqjts.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\d3yfcuo85w-ee0r1s7dh0.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\qe679eppst-dxx9fxp4il.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\kebt9kad59-jd9uben2k1.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\y6tgxzxxqq-khv3u5hwcm.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\r7wp8jb2c6-r4e9w2rdcm.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\71t8sw7jsd-lcd1t2u6c8.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\0w3ysz51r6-c2oey78nd0.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\jy8twmmwdb-tdbxkamptv.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\lsjckj286k-j5mq2jizvt.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\dwe9tpsfqc-06098lyss8.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\gnkue3zy27-nvvlpmu67g.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\z321i8b903-s35ty4nyc5.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\ls6emxujpn-pj5nd1wqec.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\u16amx384v-46ein0sx1k.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\bpg5to0aw9-v0zj4ognzu.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\hmlyghss5y-37tfw0ft22.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\6wdsbykeup-hrwsygsryq.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\uzmqmip2dm-pk9g2wxc8p.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\nlm67opd4z-ft3s53vfgj.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\ifloobtgwm-6cfz1n2cew.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\zwyjr11mtb-6pdc2jztkx.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\7usozqmm2g-493y06b0oq.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\qu2pddg7sl-iovd86k7lj.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\9jkl89ocbj-vr1egmr9el.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\q5s42j93cw-kbrnm935zg.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\li32elduki-jj8uyg4cgr.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\98997ezw6c-y7v9cxd14o.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\enpp7lo5ee-notf2xhcfb.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\r0hyukbe51-h1s4sie4z3.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\b9b4weozt7-63fj8s7r0e.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\zdrpqcktgw-0j3bgjxly4.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\staticwebassets.build.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\staticwebassets.build.json.cache
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\staticwebassets.development.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\staticwebassets.build.endpoints.json
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFr.B42D5BF5.Up2Date
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\refint\BlazorFrontEnd.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.pdb
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\BlazorFrontEnd.genruntimeconfig.cache
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\ref\BlazorFrontEnd.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\pjjw12ef7k-nn99og1uo3.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\7hk5fo1r0y-nn99og1uo3.gz
-D:\Users\Facundo\Desktop\EDUCACION\UNIVERSIDAD\ESCMB\0_Antigravity\tesis\Base\Frontend\BlazorFrontEnd\obj\Debug\net9.0\compressed\b8u3f361lh-3jrvodhox4.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/appsettings.Development.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/appsettings.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.staticwebassets.runtime.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.staticwebassets.endpoints.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.exe
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.deps.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.runtimeconfig.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.pdb
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Blazored.LocalStorage.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.csproj.AssemblyReference.cache
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rpswa.dswa.cache.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.GeneratedMSBuildEditorConfig.editorconfig
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.AssemblyInfoInputs.cache
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.AssemblyInfo.cs
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.csproj.CoreCompileInputs.cache
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.MvcApplicationPartsAssemblyInfo.cache
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjimswa.dswa.cache.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjsmrazor.dswa.cache.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/Components/Layout/MainLayout.razor.rz.scp.css
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/Components/Layout/NavMenu.razor.rz.scp.css
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/bundle/BlazorFrontEnd.styles.css
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/projectbundle/BlazorFrontEnd.bundle.scp.css
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/5n8dl8io4h-bqjiyaj88i.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/bnri83pstd-c2jlpeoesf.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/eo6kvmlv1b-erw9l3u2r3.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/9ogukdrmz4-aexeepp0ev.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/x26s1p1hze-d7shbmvgxk.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/1zgvo712v9-ausgxo2sd3.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/q0r05koiqa-k8d9w2qqmf.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/gye6zlnbzk-cosvhxvwiu.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/fhg53wwc4g-ub07r2b239.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/hok1ngo867-fvhpjtyr6v.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/npyj15w2e9-b7pk76d08c.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/fb8fjrfcjj-fsbi9cje9m.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/pd5s5i045l-rzd6atqjts.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/d3yfcuo85w-ee0r1s7dh0.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/qe679eppst-dxx9fxp4il.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/kebt9kad59-jd9uben2k1.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/y6tgxzxxqq-khv3u5hwcm.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/r7wp8jb2c6-r4e9w2rdcm.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/71t8sw7jsd-lcd1t2u6c8.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/0w3ysz51r6-c2oey78nd0.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/jy8twmmwdb-tdbxkamptv.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/lsjckj286k-j5mq2jizvt.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/dwe9tpsfqc-06098lyss8.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/gnkue3zy27-nvvlpmu67g.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/z321i8b903-s35ty4nyc5.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/ls6emxujpn-pj5nd1wqec.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/u16amx384v-46ein0sx1k.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/bpg5to0aw9-v0zj4ognzu.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/hmlyghss5y-37tfw0ft22.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/6wdsbykeup-hrwsygsryq.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/uzmqmip2dm-pk9g2wxc8p.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/nlm67opd4z-ft3s53vfgj.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/ifloobtgwm-6cfz1n2cew.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/zwyjr11mtb-6pdc2jztkx.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7usozqmm2g-493y06b0oq.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/qu2pddg7sl-iovd86k7lj.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/9jkl89ocbj-vr1egmr9el.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/q5s42j93cw-kbrnm935zg.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/li32elduki-jj8uyg4cgr.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/98997ezw6c-y7v9cxd14o.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/enpp7lo5ee-notf2xhcfb.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/r0hyukbe51-h1s4sie4z3.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/b9b4weozt7-63fj8s7r0e.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/zdrpqcktgw-0j3bgjxly4.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.json.cache
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.development.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.endpoints.json
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFr.B42D5BF5.Up2Date
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/refint/BlazorFrontEnd.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.pdb
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.genruntimeconfig.cache
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/ref/BlazorFrontEnd.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Abstractions.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Logging.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/pjjw12ef7k-nn99og1uo3.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7hk5fo1r0y-nn99og1uo3.gz
+D:/Users/Facundo/Desktop/EDUCACION/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/b8u3f361lh-3jrvodhox4.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/appsettings.Development.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/appsettings.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.staticwebassets.runtime.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.staticwebassets.endpoints.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.deps.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.runtimeconfig.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.pdb
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Blazored.LocalStorage.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Abstractions.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Logging.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.csproj.AssemblyReference.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rpswa.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.GeneratedMSBuildEditorConfig.editorconfig
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.AssemblyInfoInputs.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.AssemblyInfo.cs
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.csproj.CoreCompileInputs.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.MvcApplicationPartsAssemblyInfo.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjimswa.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjsmrazor.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/Components/Layout/MainLayout.razor.rz.scp.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/Components/Layout/NavMenu.razor.rz.scp.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/bundle/BlazorFrontEnd.styles.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/projectbundle/BlazorFrontEnd.bundle.scp.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/nct0ty9u0o-{0}-3jrvodhox4-3jrvodhox4.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/0u1r91l95w-{0}-bqjiyaj88i-bqjiyaj88i.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/4lic1b0p0d-{0}-c2jlpeoesf-c2jlpeoesf.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/6p0kavwd84-{0}-erw9l3u2r3-erw9l3u2r3.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/2z2arz7u06-{0}-aexeepp0ev-aexeepp0ev.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/h6xmy33erd-{0}-d7shbmvgxk-d7shbmvgxk.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/c8yvumrose-{0}-ausgxo2sd3-ausgxo2sd3.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/4ckmvxvwku-{0}-k8d9w2qqmf-k8d9w2qqmf.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/41p8jzmxuf-{0}-cosvhxvwiu-cosvhxvwiu.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/o7fb10hj1u-{0}-ub07r2b239-ub07r2b239.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/x0syoxex0q-{0}-fvhpjtyr6v-fvhpjtyr6v.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7wsx1hcgxl-{0}-b7pk76d08c-b7pk76d08c.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/pnjldapvxh-{0}-fsbi9cje9m-fsbi9cje9m.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/o41wf8ol71-{0}-rzd6atqjts-rzd6atqjts.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/mwhgh8xrxe-{0}-ee0r1s7dh0-ee0r1s7dh0.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/te8b28stsm-{0}-dxx9fxp4il-dxx9fxp4il.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/xpsdzjpqqw-{0}-jd9uben2k1-jd9uben2k1.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/afobv66sys-{0}-khv3u5hwcm-khv3u5hwcm.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/4v5n5ru5gs-{0}-r4e9w2rdcm-r4e9w2rdcm.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/wiqycsardl-{0}-lcd1t2u6c8-lcd1t2u6c8.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/tp1b93js1i-{0}-c2oey78nd0-c2oey78nd0.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/38jmnf02od-{0}-tdbxkamptv-tdbxkamptv.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/2wpdxualt7-{0}-j5mq2jizvt-j5mq2jizvt.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/fvjxlb5sfk-{0}-06098lyss8-06098lyss8.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/61wsh4k9as-{0}-nvvlpmu67g-nvvlpmu67g.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/w2aq4yc5iv-{0}-s35ty4nyc5-s35ty4nyc5.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/jdezurlgfe-{0}-pj5nd1wqec-pj5nd1wqec.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/xp9kzk7zt5-{0}-46ein0sx1k-46ein0sx1k.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/el2fqo3meb-{0}-v0zj4ognzu-v0zj4ognzu.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/yzo9vzoa9o-{0}-37tfw0ft22-37tfw0ft22.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/wdesl1jh1r-{0}-hrwsygsryq-hrwsygsryq.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/k3d6ezikfd-{0}-pk9g2wxc8p-pk9g2wxc8p.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/21u39vaov6-{0}-ft3s53vfgj-ft3s53vfgj.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/kwc74jy53s-{0}-6cfz1n2cew-6cfz1n2cew.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/t68kt2swpo-{0}-6pdc2jztkx-6pdc2jztkx.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7ycmeg7ru3-{0}-493y06b0oq-493y06b0oq.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/y3b9yfbjkq-{0}-iovd86k7lj-iovd86k7lj.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/m461m7h8ux-{0}-vr1egmr9el-vr1egmr9el.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/s04e0mk56p-{0}-kbrnm935zg-kbrnm935zg.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7ounc5zvca-{0}-jj8uyg4cgr-jj8uyg4cgr.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/h232792vuz-{0}-y7v9cxd14o-y7v9cxd14o.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7cj9l9138j-{0}-notf2xhcfb-notf2xhcfb.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/gzx6fqg767-{0}-h1s4sie4z3-h1s4sie4z3.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/rlth7o1ah2-{0}-63fj8s7r0e-63fj8s7r0e.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/soxx17jp5w-{0}-0j3bgjxly4-0j3bgjxly4.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/b4b4klq2ol-{0}-ce3zdflruv-ce3zdflruv.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/asbn6jetzl-{0}-ce3zdflruv-ce3zdflruv.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.json.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.development.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.endpoints.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/swae.build.ex.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFr.B42D5BF5.Up2Date
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/refint/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.pdb
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.genruntimeconfig.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base/Frontend/BlazorFrontEnd/obj/Debug/net9.0/ref/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/appsettings.Development.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/appsettings.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.staticwebassets.runtime.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.staticwebassets.endpoints.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.deps.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.runtimeconfig.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/BlazorFrontEnd.pdb
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Blazored.LocalStorage.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Abstractions.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Logging.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.csproj.AssemblyReference.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rpswa.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.GeneratedMSBuildEditorConfig.editorconfig
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.AssemblyInfoInputs.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.AssemblyInfo.cs
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.csproj.CoreCompileInputs.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.MvcApplicationPartsAssemblyInfo.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjimswa.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjsmrazor.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/Components/Layout/MainLayout.razor.rz.scp.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/Components/Layout/NavMenu.razor.rz.scp.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/bundle/BlazorFrontEnd.styles.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/scopedcss/projectbundle/BlazorFrontEnd.bundle.scp.css
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/nct0ty9u0o-{0}-2b7z54rojg-2b7z54rojg.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/0u1r91l95w-{0}-bqjiyaj88i-bqjiyaj88i.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/4lic1b0p0d-{0}-c2jlpeoesf-c2jlpeoesf.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/6p0kavwd84-{0}-erw9l3u2r3-erw9l3u2r3.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/2z2arz7u06-{0}-aexeepp0ev-aexeepp0ev.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/h6xmy33erd-{0}-d7shbmvgxk-d7shbmvgxk.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/c8yvumrose-{0}-ausgxo2sd3-ausgxo2sd3.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/4ckmvxvwku-{0}-k8d9w2qqmf-k8d9w2qqmf.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/41p8jzmxuf-{0}-cosvhxvwiu-cosvhxvwiu.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/o7fb10hj1u-{0}-ub07r2b239-ub07r2b239.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/x0syoxex0q-{0}-fvhpjtyr6v-fvhpjtyr6v.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7wsx1hcgxl-{0}-b7pk76d08c-b7pk76d08c.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/pnjldapvxh-{0}-fsbi9cje9m-fsbi9cje9m.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/o41wf8ol71-{0}-rzd6atqjts-rzd6atqjts.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/mwhgh8xrxe-{0}-ee0r1s7dh0-ee0r1s7dh0.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/te8b28stsm-{0}-dxx9fxp4il-dxx9fxp4il.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/xpsdzjpqqw-{0}-jd9uben2k1-jd9uben2k1.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/afobv66sys-{0}-khv3u5hwcm-khv3u5hwcm.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/4v5n5ru5gs-{0}-r4e9w2rdcm-r4e9w2rdcm.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/wiqycsardl-{0}-lcd1t2u6c8-lcd1t2u6c8.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/tp1b93js1i-{0}-c2oey78nd0-c2oey78nd0.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/38jmnf02od-{0}-tdbxkamptv-tdbxkamptv.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/2wpdxualt7-{0}-j5mq2jizvt-j5mq2jizvt.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/fvjxlb5sfk-{0}-06098lyss8-06098lyss8.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/61wsh4k9as-{0}-nvvlpmu67g-nvvlpmu67g.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/w2aq4yc5iv-{0}-s35ty4nyc5-s35ty4nyc5.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/jdezurlgfe-{0}-pj5nd1wqec-pj5nd1wqec.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/xp9kzk7zt5-{0}-46ein0sx1k-46ein0sx1k.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/el2fqo3meb-{0}-v0zj4ognzu-v0zj4ognzu.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/yzo9vzoa9o-{0}-37tfw0ft22-37tfw0ft22.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/wdesl1jh1r-{0}-hrwsygsryq-hrwsygsryq.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/k3d6ezikfd-{0}-pk9g2wxc8p-pk9g2wxc8p.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/21u39vaov6-{0}-ft3s53vfgj-ft3s53vfgj.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/kwc74jy53s-{0}-6cfz1n2cew-6cfz1n2cew.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/t68kt2swpo-{0}-6pdc2jztkx-6pdc2jztkx.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7ycmeg7ru3-{0}-493y06b0oq-493y06b0oq.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/y3b9yfbjkq-{0}-iovd86k7lj-iovd86k7lj.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/m461m7h8ux-{0}-vr1egmr9el-vr1egmr9el.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/s04e0mk56p-{0}-kbrnm935zg-kbrnm935zg.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7ounc5zvca-{0}-jj8uyg4cgr-jj8uyg4cgr.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/h232792vuz-{0}-y7v9cxd14o-y7v9cxd14o.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/7cj9l9138j-{0}-notf2xhcfb-notf2xhcfb.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/gzx6fqg767-{0}-h1s4sie4z3-h1s4sie4z3.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/rlth7o1ah2-{0}-63fj8s7r0e-63fj8s7r0e.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/soxx17jp5w-{0}-0j3bgjxly4-0j3bgjxly4.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/b4b4klq2ol-{0}-ce3zdflruv-ce3zdflruv.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/compressed/asbn6jetzl-{0}-ce3zdflruv-ce3zdflruv.gz
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.json.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.development.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/staticwebassets.build.endpoints.json
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/swae.build.ex.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFr.B42D5BF5.Up2Date
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/refint/BlazorFrontEnd.dll
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.pdb
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/BlazorFrontEnd.genruntimeconfig.cache
+/home/facundoa/Documentos/educacion/UNIVERSIDAD/ESCMB/0_Antigravity/tesis/Base 100v2/Frontend/BlazorFrontEnd/obj/Debug/net9.0/ref/BlazorFrontEnd.dll

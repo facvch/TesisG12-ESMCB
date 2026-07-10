@@ -19,7 +19,7 @@ namespace BlazorFrontEnd.Models
         public int ServicioId { get; set; }
         public string ServicioNombre { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "La fecha y hora del turno son requeridas")]
+        [Required(ErrorMessage = "Debe ingresar una fecha para el turno")]
         public DateTime FechaHora { get; set; } = DateTime.Today.AddHours(9);
         public DateTime FechaHoraFin { get; set; }
         public int DuracionMinutos { get; set; }

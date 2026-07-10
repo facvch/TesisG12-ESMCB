@@ -15,13 +15,18 @@ namespace Domain.Entities
         public decimal PrecioUnitario { get; private set; }
         public decimal Subtotal => Cantidad * PrecioUnitario;
 
+        /// <summary>
+        /// Depósito del cual se descontó el stock (nullable para compatibilidad con ventas viejas)
+        /// </summary>
+        public int? DepositoId { get; private set; }
+
         // Navegación
         public virtual Producto Producto { get; private set; }
 
         protected DetalleVenta() { }
 
         public DetalleVenta(string ventaId, string productoId, string descripcion,
-            int cantidad, decimal precioUnitario) : this()
+            int cantidad, decimal precioUnitario, int? depositoId = null) : this()
         {
             Id = Guid.NewGuid().ToString();
             VentaId = ventaId;
@@ -29,6 +34,7 @@ namespace Domain.Entities
             Descripcion = descripcion;
             Cantidad = cantidad;
             PrecioUnitario = precioUnitario;
+            DepositoId = depositoId;
         }
     }
 }

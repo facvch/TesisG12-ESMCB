@@ -17,6 +17,7 @@ namespace BlazorFrontEnd.Models
         [Required(ErrorMessage = "El DNI es requerido")]
         public string DNI { get; set; } = string.Empty;
         
+        [Required(ErrorMessage = "El número de celular / teléfono es requerido")]
         public string Telefono { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Direccion { get; set; } = string.Empty;
@@ -32,16 +33,18 @@ namespace BlazorFrontEnd.Models
         [Required(ErrorMessage = "El nombre es requerido")]
         public string Nombre { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "Seleccione una especie")]
+        [Required(ErrorMessage = "La especie debe ser seleccionada")]
         public int EspecieId { get; set; }
         public string EspecieNombre { get; set; } = string.Empty;
         
+        [Required(ErrorMessage = "La raza debe ser seleccionada")]
         public int? RazaId { get; set; }
         public string RazaNombre { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Especifique el sexo")]
         public string Sexo { get; set; } = string.Empty;
         
+        [Required(ErrorMessage = "Debe ingresar una fecha de nacimiento")]
         public DateTime? FechaNacimiento { get; set; }
         public int? EdadEnAnios { get; set; }
         

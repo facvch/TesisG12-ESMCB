@@ -2,6 +2,7 @@
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject PacienteService PacienteService
+@inject PropietarioService PropietarioService
 @inject CatalogoService CatalogoService
 @inject NavigationManager Navigation
 
@@ -12,12 +13,12 @@
         <h2 style="font-weight: 700; margin: 0;">Registro de Pacientes</h2>
         <p class="text-secondary" style="margin: 0;">Gestión de mascotas y su historial clínico</p>
     </div>
-    <a href="/pacientes/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button @onclick="OpenPacienteModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nuevo Paciente
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -140,6 +141,198 @@
     </div>
 }
 
+@* ═══════ MODAL 1: Nuevo Paciente ═══════ *@
+@if (showPacienteModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="ClosePacienteModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nuevo Paciente</h3>
+                <button class="modal-close-btn" @onclick="ClosePacienteModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            @if (isLoadingPacienteModal)
+            {
+                <p class="text-secondary">Cargando catálogos...</p>
+            }
+            else
+            {
+                <EditForm Model="pacienteModel" OnValidSubmit="HandleSavePaciente" FormName="modalPacienteForm">
+                    <DataAnnotationsValidator />
+
+                    <div class="row">
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre de mascota (*)</label>
+                            <InputText @bind-Value="pacienteModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                            <ValidationMessage For="@(() => pacienteModel.Nombre)" class="text-danger" />
+                        </div>
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Propietario / Dueño (*)</label>
+                            <div class="d-flex gap-2">
+                                <InputSelect @bind-Value="pacienteModel.PropietarioId" class="form-select bg-dark text-light border-secondary">
+                                    <option value="">-- Seleccione un Dueño --</option>
+                                    @foreach (var p in modalPropietarios)
+                                    {
+                                        <option value="@p.Id">@p.NombreCompleto - @p.DNI</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" @onclick="OpenClienteModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nuevo cliente">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Nuevo
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => pacienteModel.PropietarioId)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
+                            <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
+                                <option value="0">-- Seleccione Especie --</option>
+                                @foreach (var e in modalEspecies)
+                                {
+                                    <option value="@e.Id">@e.Nombre</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => pacienteModel.EspecieId)" class="text-danger" />
+                        </div>
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
+                            <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(modalRazas.Count == 0)">
+                                <option value="">-- Seleccione Raza --</option>
+                                @foreach (var r in modalRazas)
+                                {
+                                    <option value="@r.Id">@r.Nombre</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => pacienteModel.RazaId)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Sexo (*)</label>
+                            <InputSelect @bind-Value="pacienteModel.Sexo" class="form-select bg-dark text-light border-secondary">
+                                <option value="">-- Sexo --</option>
+                                <option value="M">Macho</option>
+                                <option value="H">Hembra</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => pacienteModel.Sexo)" class="text-danger" />
+                        </div>
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nacimiento (*)</label>
+                            <InputDate @bind-Value="pacienteModel.FechaNacimiento" class="form-control bg-dark text-light border-secondary" />
+                            <ValidationMessage For="@(() => pacienteModel.FechaNacimiento)" class="text-danger" />
+                            @if (!string.IsNullOrEmpty(pacienteFechaError))
+                            { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@pacienteFechaError</div> }
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom: var(--sp-sm);">
+                        <div class="col-12">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones (Alergias, Condiciones previas...)</label>
+                            <InputTextArea @bind-Value="pacienteModel.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(pacienteErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                            @pacienteErrorMessage
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                        <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePacienteModal">Cancelar</button>
+                        <button type="submit" class="btn-primary-glass" disabled="@isSavingPaciente">
+                            @if(isSavingPaciente) { <span>Guardando...</span> } else { <span>Guardar Paciente</span> }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 2: Nuevo Cliente (desde Paciente) ═══════ *@
+@if (showClienteModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="CloseClienteModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nuevo Cliente</h3>
+                <button class="modal-close-btn" @onclick="CloseClienteModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="clienteModel" OnValidSubmit="HandleSaveCliente" FormName="modalClienteFormFromPac">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="clienteModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.Nombre)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Apellido (*)</label>
+                        <InputText @bind-Value="clienteModel.Apellido" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.Apellido)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">DNI (*)</label>
+                        <InputText @bind-Value="clienteModel.DNI" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.DNI)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Celular / Teléfono (*)</label>
+                        <InputText @bind-Value="clienteModel.Telefono" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => clienteModel.Telefono)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Correo Electrónico</label>
+                        <InputText @bind-Value="clienteModel.Email" type="email" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                    <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Dirección Física</label>
+                        <InputText @bind-Value="clienteModel.Direccion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(clienteErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                        @clienteErrorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseClienteModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingCliente">
+                        @if(isSavingCliente) { <span>Guardando...</span> } else { <span>Guardar Cliente</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private PaginatedList<PacienteDto>? pacientesResponse;
     private List<PacienteDto>? filteredItems;
@@ -152,6 +345,23 @@
     private string searchTerm = string.Empty;
     private string filtroEspecie = string.Empty;
     private string filtroEstado = "Activo"; // Default: only active
+
+    // ── Modal Nuevo Paciente ──
+    private bool showPacienteModal;
+    private bool isLoadingPacienteModal;
+    private PacienteDto pacienteModel = new();
+    private bool isSavingPaciente;
+    private string pacienteErrorMessage = string.Empty;
+    private string pacienteFechaError = string.Empty;
+    private List<PropietarioDto> modalPropietarios = new();
+    private List<EspecieDto> modalEspecies = new();
+    private List<RazaDto> modalRazas = new();
+
+    // ── Modal Nuevo Cliente (anidado) ──
+    private bool showClienteModal;
+    private PropietarioDto clienteModel = new();
+    private bool isSavingCliente;
+    private string clienteErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -251,6 +461,143 @@
             var result = await PacienteService.DeleteAsync(id);
             if (result) await LoadDataAsync();
             else errorMessage = "No se pudo eliminar el paciente.";
+        }
+    }
+
+    // ── Modal Paciente Handlers ──
+    private async Task OpenPacienteModal()
+    {
+        pacienteModel = new PacienteDto();
+        pacienteErrorMessage = string.Empty;
+        isSavingPaciente = false;
+        isLoadingPacienteModal = true;
+        showPacienteModal = true;
+
+        try
+        {
+            var props = await PropietarioService.GetAllActivosAsync();
+            if (props != null) modalPropietarios = props;
+
+            var esp = await CatalogoService.GetEspeciesActivasAsync();
+            if (esp != null) modalEspecies = esp;
+
+            modalRazas = new List<RazaDto>();
+        }
+        catch
+        {
+            pacienteErrorMessage = "Error al cargar catálogos.";
+        }
+        finally
+        {
+            isLoadingPacienteModal = false;
+        }
+    }
+
+    private void ClosePacienteModal()
+    {
+        showPacienteModal = false;
+    }
+
+    private async Task OnModalEspecieChanged(int newEspecieId)
+    {
+        pacienteModel.EspecieId = newEspecieId;
+        pacienteModel.RazaId = null;
+        try
+        {
+            var r = await CatalogoService.GetRazasPorEspecieAsync(newEspecieId);
+            modalRazas = r ?? new List<RazaDto>();
+        }
+        catch
+        {
+            modalRazas = new List<RazaDto>();
+        }
+    }
+
+    private async Task HandleSavePaciente()
+    {
+        isSavingPaciente = true;
+        pacienteErrorMessage = string.Empty;
+        pacienteFechaError = string.Empty;
+
+        // Validación custom: fecha de nacimiento no puede ser futura
+        if (pacienteModel.FechaNacimiento.HasValue && pacienteModel.FechaNacimiento.Value.Date > DateTime.Today)
+        {
+            pacienteFechaError = "La fecha ingresada es inválida (Es una fecha futura)";
+            isSavingPaciente = false;
+            return;
+        }
+        try
+        {
+            var result = await PacienteService.CreateAsync(pacienteModel);
+            if (result.Success)
+            {
+                showPacienteModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                pacienteErrorMessage = $"Ocurrió un error al guardar: {result.ErrorMessage}";
+            }
+        }
+        catch (Exception)
+        {
+            pacienteErrorMessage = "Excepción al guardar los datos.";
+        }
+        finally
+        {
+            isSavingPaciente = false;
+        }
+    }
+
+    // ── Modal Cliente (anidado desde Paciente) ──
+    private void OpenClienteModalFromPaciente()
+    {
+        clienteModel = new PropietarioDto();
+        clienteErrorMessage = string.Empty;
+        isSavingCliente = false;
+        showClienteModal = true;
+    }
+
+    private void CloseClienteModal()
+    {
+        showClienteModal = false;
+    }
+
+    private async Task HandleSaveCliente()
+    {
+        isSavingCliente = true;
+        clienteErrorMessage = string.Empty;
+        try
+        {
+            var result = await PropietarioService.CreateAsync(clienteModel);
+            if (result)
+            {
+                // Recargar propietarios y auto-seleccionar el nuevo
+                var props = await PropietarioService.GetAllActivosAsync();
+                if (props != null)
+                {
+                    modalPropietarios = props;
+                    // Seleccionar el último creado (el nuevo) buscando por DNI
+                    var nuevo = props.FirstOrDefault(p => p.DNI == clienteModel.DNI);
+                    if (nuevo != null)
+                    {
+                        pacienteModel.PropietarioId = nuevo.Id;
+                    }
+                }
+                showClienteModal = false;
+            }
+            else
+            {
+                clienteErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            clienteErrorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSavingCliente = false;
         }
     }
 }
