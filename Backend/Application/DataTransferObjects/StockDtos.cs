@@ -35,6 +35,8 @@ namespace Application.DataTransferObjects
         public string Nombre { get; set; }
         public string Ubicacion { get; set; }
         public bool Activo { get; set; }
+        public int? SucursalId { get; set; }
+        public string? SucursalNombre { get; set; }
     }
 
     public class ProductoDto

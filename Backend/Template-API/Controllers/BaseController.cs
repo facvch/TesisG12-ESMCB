@@ -1,9 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
 {
     public class BaseController : ControllerBase
     {
+        protected int? UserSucursalId
+        {
+            get
+            {
+                var claim = User.FindFirst("sucursalId")?.Value;
+                return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
+            }
+        }
+
+        protected bool IsAdmin => User.IsInRole("Admin");
+
         public override OkResult Ok()
         {
             return base.Ok();

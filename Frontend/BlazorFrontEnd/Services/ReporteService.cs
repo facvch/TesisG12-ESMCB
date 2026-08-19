@@ -9,7 +9,7 @@ namespace BlazorFrontEnd.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IJSRuntime _jsRuntime;
-        private const string BaseApiUrl = "https://localhost:7204/api/v1"; // Or configured BaseURL for exports
+        private const string BaseApiUrl = "https://localhost:7204/"; // Or configured BaseURL for exports
 
         public ReporteService(HttpClient httpClient, IJSRuntime jsRuntime)
         {
@@ -81,7 +81,7 @@ namespace BlazorFrontEnd.Services
 
         public async Task TriggerCsvDownloadAsync(string endpointUrl)
         {
-            var absoluteUrl = $"{_httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "https://localhost:7204"}/{endpointUrl.TrimStart('/')}";
+            var absoluteUrl = $"{_httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "https://veterinarianandubay.qd.je"}/{endpointUrl.TrimStart('/')}";
             // Oculta la complejidad de descargar BLOB y fuerza al navegador a bajarse el CSV.
             await _jsRuntime.InvokeVoidAsync("open", absoluteUrl, "_blank");
         }

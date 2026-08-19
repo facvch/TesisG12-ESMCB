@@ -5,20 +5,25 @@
 @inject PropietarioService PropietarioService
 @inject CatalogoService CatalogoService
 @inject NavigationManager Navigation
+@inject TurnoService TurnoService
 
 <PageTitle>Mascotas / Pacientes</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
     <div>
         <h2 style="font-weight: 700; margin: 0;">Registro de Pacientes</h2>
-        <p class="text-secondary" style="margin: 0;">Gestión de mascotas y su historial clínico</p>
+        <p class="text-secondary" style="margin: 0;">Gestión de mascotas e información del paciente</p>
     </div>
-    <button @onclick="OpenPacienteModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Nuevo Paciente
-    </button>
+    <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
+        <Authorized>
+            <button @onclick="OpenPacienteModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Nuevo Paciente
+            </button>
+        </Authorized>
+    </AuthorizeView>
 </div>
 
 <div class="glass-card">
@@ -29,7 +34,7 @@
         <div class="d-flex flex-wrap align-items-end gap-3" style="margin-bottom: 12px;">
             <div style="flex: 1; min-width: 200px;">
                 <label class="text-secondary" style="font-size: 0.78rem; margin-bottom: 4px; display: block;">Nombre de mascota o dueño</label>
-                <input type="text" @bind-value="searchTerm" @bind-value:after="OnFilterChanged" class="form-control form-control-sm"
+                <input type="text" @bind-value="searchTerm" @bind-value:event="oninput" @bind-value:after="OnFilterChanged" class="form-control form-control-sm"
                        placeholder="Buscar..."
                        style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
             </div>
@@ -92,25 +97,32 @@
                     {
                         <tr style="border-bottom: 1px solid var(--border-glass);">
                             <td>
-                                <strong>@pac.Nombre</strong>
+                                <strong><button type="button" class="btn btn-link p-0 text-start fw-bold" style="color: var(--text-primary); text-decoration: none; border: none; background: transparent; cursor: pointer;" @onclick="() => OpenPacienteDetailModal(pac.Id)">@pac.Nombre</button></strong>
                             </td>
                             <td>
                                 @pac.EspecieNombre
                                 @if(!string.IsNullOrEmpty(pac.RazaNombre)) { <br/><small class="text-secondary">@pac.RazaNombre</small> }
                             </td>
                             <td>
-                                <a href="/propietarios/editar/@pac.PropietarioId" style="color: var(--accent-primary); text-decoration: none;">@pac.PropietarioNombre</a>
+                                <button type="button" class="btn btn-link p-0 text-start" style="color: var(--accent-primary); text-decoration: none; border: none; background: transparent; cursor: pointer;" @onclick="() => OpenPropietarioDetailModal(pac.PropietarioId)">@pac.PropietarioNombre</button>
                             </td>
                             <td>
-                                @pac.EdadEnAnios años <br/> <small class="text-secondary">@(pac.Sexo == "M" ? "Macho" : pac.Sexo == "H" ? "Hembra" : "Desconocido")</small>
+                                @GetEdadFormateada(pac.FechaNacimiento, pac.EdadEnAnios) <br/> <small class="text-secondary">@(pac.Sexo == "M" ? "Macho" : pac.Sexo == "H" ? "Hembra" : "Desconocido")</small>
                             </td>
                             <td>
                                 @if(pac.Activo) { <span style="color: var(--accent-primary);">Activo</span> }
                                 else { <span style="color: var(--accent-danger);">Inactivo</span> }
                             </td>
                             <td class="text-end">
-                                <a href="/pacientes/editar/@pac.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
-                                <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(pac.Id)">Eliminar</button>
+                                <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
+                                    <Authorized>
+                                        <button type="button" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenPacienteModalForEdit(pac)">Editar</button>
+                                        <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(pac.Id)">Eliminar</button>
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        <span class="badge bg-secondary">Solo Lectura</span>
+                                    </NotAuthorized>
+                                </AuthorizeView>
                             </td>
                         </tr>
                     }
@@ -138,6 +150,48 @@
 {
     <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
         @errorMessage
+    </div>
+}
+
+@if (showDeleteConfirmationModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseDeleteConfirmationModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Confirmar Eliminación</h3>
+                <button class="modal-close-btn" @onclick="CloseDeleteConfirmationModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div style="margin-top: 15px; margin-bottom: 25px;">
+                <p>Está a punto de eliminar a <strong>@pacienteToDelete?.Nombre</strong>, ¿confirmar?</p>
+                @if (pendingTurnosToDelete != null && pendingTurnosToDelete.Any())
+                {
+                    <div class="alert alert-warning" style="background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-warning); color: white; font-size: 0.9rem; margin-top: 15px; border-radius: 8px; padding: 12px;">
+                        <strong>Turno(s) pendiente(s) detectado(s):</strong>
+                        <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 0.85rem;">
+                            @foreach (var t in pendingTurnosToDelete)
+                            {
+                                <li>
+                                    '<strong>@pacienteToDelete?.Nombre</strong>' tiene un turno pendiente con '<strong>@t.VeterinarioNombre</strong>' el '<strong>@t.FechaHora.ToString("dd/MM/yyyy")</strong>' a las '<strong>@t.FechaHora.ToString("HH:mm")</strong>'
+                                </li>
+                            }
+                        </ul>
+                        <p style="margin: 10px 0 0 0; font-size: 0.8rem; color: #fcd34d;">
+                            * Si continúa, el turno se eliminará también.
+                        </p>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex justify-content-end" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseDeleteConfirmationModal">No</button>
+                <button type="button" class="btn btn-danger" style="background: var(--accent-danger); border: none;" @onclick="ExecuteDelete">Si</button>
+            </div>
+        </div>
     </div>
 }
 
@@ -194,24 +248,40 @@
                     <div class="row">
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
-                            <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
-                                <option value="0">-- Seleccione Especie --</option>
-                                @foreach (var e in modalEspecies)
-                                {
-                                    <option value="@e.Id">@e.Nombre</option>
-                                }
-                            </InputSelect>
+                            <div class="d-flex gap-2">
+                                <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
+                                    <option value="0">-- Seleccione Especie --</option>
+                                    @foreach (var e in modalEspecies)
+                                    {
+                                        <option value="@e.Id">@e.Nombre</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" @onclick="OpenEspecieModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva especie">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Nuevo
+                                </button>
+                            </div>
                             <ValidationMessage For="@(() => pacienteModel.EspecieId)" class="text-danger" />
                         </div>
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
-                            <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(modalRazas.Count == 0)">
-                                <option value="">-- Seleccione Raza --</option>
-                                @foreach (var r in modalRazas)
-                                {
-                                    <option value="@r.Id">@r.Nombre</option>
-                                }
-                            </InputSelect>
+                            <div class="d-flex gap-2">
+                                <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(pacienteModel.EspecieId == 0)">
+                                    <option value="">-- Seleccione Raza --</option>
+                                    @foreach (var r in modalRazas)
+                                    {
+                                        <option value="@r.Id">@r.Nombre</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" @onclick="OpenRazaModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva raza" disabled="@(pacienteModel.EspecieId == 0)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Nuevo
+                                </button>
+                            </div>
                             <ValidationMessage For="@(() => pacienteModel.RazaId)" class="text-danger" />
                         </div>
                     </div>
@@ -252,7 +322,7 @@
                     <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
                         <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePacienteModal">Cancelar</button>
                         <button type="submit" class="btn-primary-glass" disabled="@isSavingPaciente">
-                            @if(isSavingPaciente) { <span>Guardando...</span> } else { <span>Guardar Paciente</span> }
+                            @if(isSavingPaciente) { <span>Guardando...</span> } else { <span>@(string.IsNullOrEmpty(pacienteModel.Id) ? "Guardar Paciente" : "Guardar Cambios")</span> }
                         </button>
                     </div>
                 </EditForm>
@@ -333,9 +403,226 @@
     </div>
 }
 
+@* ═══════ MODAL 3: Nueva Especie (desde Paciente) ═══════ *@
+@if (showEspecieModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="CloseEspecieModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nueva Especie</h3>
+                <button class="modal-close-btn" @onclick="CloseEspecieModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="especieModel" OnValidSubmit="HandleSaveEspecie" FormName="modalEspecieFormFromPac">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="especieModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => especieModel.Nombre)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                        <InputText @bind-Value="especieModel.Descripcion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(especieErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                        @especieErrorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseEspecieModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingEspecie">
+                        @if(isSavingEspecie) { <span>Guardando...</span> } else { <span>Guardar Especie</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 4: Nueva Raza (desde Paciente) ═══════ *@
+@if (showRazaModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="CloseRazaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nueva Raza</h3>
+                <button class="modal-close-btn" @onclick="CloseRazaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="razaModel" OnValidSubmit="HandleSaveRaza" FormName="modalRazaFormFromPac">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
+                        <InputSelect @bind-Value="razaModel.EspecieId" class="form-select bg-dark text-light border-secondary" disabled="true">
+                            @foreach (var e in modalEspecies)
+                            {
+                                <option value="@e.Id">@e.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="razaModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => razaModel.Nombre)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                        <InputText @bind-Value="razaModel.Descripcion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(razaErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                        @razaErrorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseRazaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingRaza">
+                        @if(isSavingRaza) { <span>Guardando...</span> } else { <span>Guardar Raza</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 5: Detalle Paciente ═══════ *@
+@if (showPacienteDetailModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="ClosePacienteDetailModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Detalle de Paciente</h3>
+                <button class="modal-close-btn" @onclick="ClosePacienteDetailModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            @if (selectedPacienteDetail == null)
+            {
+                <p class="text-secondary">Cargando...</p>
+            }
+            else
+            {
+                <div class="mt-3">
+                    <p><strong>Nombre:</strong> @selectedPacienteDetail.Nombre</p>
+                    <p><strong>Especie:</strong> @selectedPacienteDetail.EspecieNombre</p>
+                    <p><strong>Raza:</strong> @selectedPacienteDetail.RazaNombre</p>
+                    <p><strong>Sexo:</strong> @(selectedPacienteDetail.Sexo == "M" ? "Macho" : "Hembra")</p>
+                    <p><strong>Nacimiento:</strong> @(selectedPacienteDetail.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "—")</p>
+                    <p><strong>Observaciones:</strong> @(string.IsNullOrEmpty(selectedPacienteDetail.Observaciones) ? "Ninguna" : selectedPacienteDetail.Observaciones)</p>
+                </div>
+            }
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePacienteDetailModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 6: Detalle Propietario ═══════ *@
+@if (showPropietarioDetailModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="ClosePropietarioDetailModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Detalle de Dueño</h3>
+                <button class="modal-close-btn" @onclick="ClosePropietarioDetailModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            @if (selectedPropietarioDetail == null)
+            {
+                <p class="text-secondary">Cargando...</p>
+            }
+            else
+            {
+                <div class="mt-3">
+                    <p><strong>Nombre Completo:</strong> @selectedPropietarioDetail.NombreCompleto</p>
+                    <p><strong>DNI:</strong> @selectedPropietarioDetail.DNI</p>
+                    <p><strong>Teléfono:</strong> @selectedPropietarioDetail.Telefono</p>
+                    <p><strong>Email:</strong> @selectedPropietarioDetail.Email</p>
+                    <p><strong>Dirección:</strong> @(string.IsNullOrEmpty(selectedPropietarioDetail.Direccion) ? "Sin dirección" : selectedPropietarioDetail.Direccion)</p>
+                    <div class="d-flex gap-2 mt-3 mb-3">
+                        <a href="https://wa.me/@FormatWhatsApp(selectedPropietarioDetail.Telefono)" target="_blank" class="btn btn-success btn-sm d-flex align-items-center gap-2" style="background-color: #25D366; border: none; font-weight: 600; color: white;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
+                                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.949h.004c4.368 0 7.926-3.562 7.928-7.929a7.89 7.89 0 0 0-2.33-5.69m-5.61 10.744h-.01a6.5 6.5 0 0 1-3.3-1.02l-.242-.144-2.454.644.656-2.387-.156-.25a6.5 6.5 0 0 1-1.007-3.5C.029 4.348 3.52 1.052 7.99 1.052a6.5 6.5 0 0 1 4.59 1.93(6.5 6.5 0 0 1 1.922 4.6c-.004 4.475-3.498 7.969-7.965 7.969m3.636-4.708c-.18-.089-1.08-.534-1.25-.597-.17-.061-.29-.092-.41.09-.12.18-.46.597-.56.711-.1.115-.2.13-.38.041-1.81-.9-3.236-2.225-4.088-3.727-.12-.206-.013-.319.09-.422.09-.09.18-.21.28-.31.09-.1.12-.17.18-.29.06-.12.03-.22-.01-.31-.04-.09-.41-1.005-.56-1.373-.15-.356-.3-.3-.41-.3-.1-.005-.22-.005-.34-.005-.12 0-.32.045-.49.23-.17.19-.66.645-.66 1.57s.68 1.835.77 1.962c.09.13 1.34 2.044 3.25 2.87.45.2 1.01.32 1.37.43.46.15.88.13 1.21.08.37-.06 1.08-.44 1.23-.863.15-.42.15-.78.1-.863-.05-.08-.18-.12-.36-.21"/>
+                            </svg> WhatsApp
+                        </a>
+                        @if (!string.IsNullOrEmpty(selectedPropietarioDetail.Email))
+                        {
+                            <a href="mailto:@selectedPropietarioDetail.Email" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn btn-outline-info btn-sm d-flex align-items-center gap-2" style="color: white; border-color: var(--border-glass);">
+                                Enviar Correo
+                            </a>
+                        }
+                    </div>
+                    <p><strong>Mascotas:</strong></p>
+                    @if (selectedPropietarioMascotas == null)
+                    {
+                        <span class="text-secondary">Cargando mascotas...</span>
+                    }
+                    else if (!selectedPropietarioMascotas.Any())
+                    {
+                        <span class="text-secondary">Sin mascotas registradas.</span>
+                    }
+                    else
+                    {
+                        <ul>
+                            @foreach (var m in selectedPropietarioMascotas)
+                            {
+                                <li>@m.Nombre (@m.EspecieNombre - @m.RazaNombre)</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePropietarioDetailModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private PaginatedList<PacienteDto>? pacientesResponse;
     private List<PacienteDto>? filteredItems;
+    
+    // ── Confirmación de Eliminación ──
+    private bool showDeleteConfirmationModal;
+    private PacienteDto? pacienteToDelete;
+    private List<TurnoDto>? pendingTurnosToDelete;
     private List<EspecieDto>? especiesDisponibles;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
@@ -362,6 +649,18 @@
     private PropietarioDto clienteModel = new();
     private bool isSavingCliente;
     private string clienteErrorMessage = string.Empty;
+
+    // ── Modal Especie (anidado) ──
+    private bool showEspecieModal;
+    private EspecieDto especieModel = new();
+    private bool isSavingEspecie;
+    private string especieErrorMessage = string.Empty;
+
+    // ── Modal Raza (anidado) ──
+    private bool showRazaModal;
+    private RazaDto razaModel = new();
+    private bool isSavingRaza;
+    private string razaErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -455,12 +754,92 @@
 
     private async Task ConfirmDelete(string id)
     {
-        bool confirmed = true; 
-        if (confirmed)
+        pacienteToDelete = filteredItems?.FirstOrDefault(p => p.Id == id);
+        if (pacienteToDelete == null) return;
+
+        pendingTurnosToDelete = new List<TurnoDto>();
+        try
         {
-            var result = await PacienteService.DeleteAsync(id);
-            if (result) await LoadDataAsync();
-            else errorMessage = "No se pudo eliminar el paciente.";
+            var turnos = await TurnoService.GetByPacienteIdAsync(id);
+            if (turnos != null)
+            {
+                pendingTurnosToDelete = turnos.Where(t => 
+                    t.Estado == "Programado" || 
+                    t.Estado == "Confirmado" || 
+                    t.Estado == "Reprogramado" || 
+                    t.Estado == "EnCurso"
+                ).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al buscar turnos del paciente: {ex.Message}");
+        }
+
+        showDeleteConfirmationModal = true;
+    }
+
+    private void CloseDeleteConfirmationModal()
+    {
+        showDeleteConfirmationModal = false;
+        pacienteToDelete = null;
+        pendingTurnosToDelete = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (pacienteToDelete == null) return;
+
+        try
+        {
+            var result = await PacienteService.DeleteAsync(pacienteToDelete.Id);
+            if (result)
+            {
+                await LoadDataAsync();
+            }
+            else
+            {
+                errorMessage = "No se pudo eliminar el paciente.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error al intentar eliminar el paciente.";
+        }
+        finally
+        {
+            CloseDeleteConfirmationModal();
+        }
+    }
+
+    private string GetEdadFormateada(DateTime? fechaNacimiento, int? edadEnAnios)
+    {
+        if (!fechaNacimiento.HasValue) return "Desconocida";
+        var nacimiento = fechaNacimiento.Value.Date;
+        var hoy = DateTime.Today;
+
+        if (nacimiento > hoy) return "0 meses";
+
+        int años = hoy.Year - nacimiento.Year;
+        int meses = hoy.Month - nacimiento.Month;
+        if (hoy.Day < nacimiento.Day)
+        {
+            meses--;
+        }
+
+        if (meses < 0)
+        {
+            años--;
+            meses += 12;
+        }
+
+        if (años > 0)
+        {
+            return $"{años} {(años == 1 ? "año" : "años")}";
+        }
+        else
+        {
+            return $"{meses} {(meses == 1 ? "mes" : "meses")}";
         }
     }
 
@@ -528,7 +907,16 @@
         }
         try
         {
-            var result = await PacienteService.CreateAsync(pacienteModel);
+            (bool Success, string ErrorMessage) result;
+            if (string.IsNullOrEmpty(pacienteModel.Id))
+            {
+                result = await PacienteService.CreateAsync(pacienteModel);
+            }
+            else
+            {
+                result = await PacienteService.UpdateAsync(pacienteModel.Id, pacienteModel);
+            }
+
             if (result.Success)
             {
                 showPacienteModal = false;
@@ -547,6 +935,110 @@
         {
             isSavingPaciente = false;
         }
+    }
+
+    private async Task OpenPacienteModalForEdit(PacienteDto pac)
+    {
+        pacienteErrorMessage = string.Empty;
+        isSavingPaciente = false;
+        isLoadingPacienteModal = true;
+        showPacienteModal = true;
+
+        try
+        {
+            var props = await PropietarioService.GetAllActivosAsync();
+            if (props != null) modalPropietarios = props;
+
+            var esp = await CatalogoService.GetEspeciesActivasAsync();
+            if (esp != null) modalEspecies = esp;
+
+            pacienteModel = new PacienteDto
+            {
+                Id = pac.Id,
+                Nombre = pac.Nombre,
+                EspecieId = pac.EspecieId,
+                RazaId = pac.RazaId,
+                PropietarioId = pac.PropietarioId,
+                FechaNacimiento = pac.FechaNacimiento,
+                Sexo = pac.Sexo,
+                Observaciones = pac.Observaciones,
+                Activo = pac.Activo
+            };
+
+            if (pac.EspecieId > 0)
+            {
+                var r = await CatalogoService.GetRazasPorEspecieAsync(pac.EspecieId);
+                modalRazas = r ?? new List<RazaDto>();
+            }
+            else
+            {
+                modalRazas = new List<RazaDto>();
+            }
+        }
+        catch
+        {
+            pacienteErrorMessage = "Error al cargar catálogos.";
+        }
+        finally
+        {
+            isLoadingPacienteModal = false;
+        }
+    }
+
+    // Detail popover states
+    private bool showPacienteDetailModal;
+    private PacienteDto? selectedPacienteDetail;
+    private bool showPropietarioDetailModal;
+    private PropietarioDto? selectedPropietarioDetail;
+    private List<PacienteDto>? selectedPropietarioMascotas;
+
+    private void ClosePacienteDetailModal()
+    {
+        showPacienteDetailModal = false;
+        selectedPacienteDetail = null;
+    }
+
+    private void ClosePropietarioDetailModal()
+    {
+        showPropietarioDetailModal = false;
+        selectedPropietarioDetail = null;
+        selectedPropietarioMascotas = null;
+    }
+
+    private async Task OpenPacienteDetailModal(string pacienteId)
+    {
+        selectedPacienteDetail = null;
+        showPacienteDetailModal = true;
+        try
+        {
+            var pac = await PacienteService.GetByIdAsync(pacienteId);
+            if (pac != null) selectedPacienteDetail = pac;
+        }
+        catch {}
+    }
+
+    private async Task OpenPropietarioDetailModal(string propietarioId)
+    {
+        selectedPropietarioDetail = null;
+        selectedPropietarioMascotas = null;
+        showPropietarioDetailModal = true;
+        try
+        {
+            var prop = await PropietarioService.GetByIdAsync(propietarioId);
+            if (prop != null)
+            {
+                selectedPropietarioDetail = prop;
+                selectedPropietarioMascotas = await PacienteService.GetByPropietarioIdAsync(prop.Id) ?? new List<PacienteDto>();
+            }
+        }
+        catch {}
+    }
+
+    private string FormatWhatsApp(string telefono)
+    {
+        if (string.IsNullOrEmpty(telefono)) return string.Empty;
+        var clean = new string(telefono.Where(char.IsDigit).ToArray());
+        return clean;
     }
 
     // ── Modal Cliente (anidado desde Paciente) ──
@@ -598,6 +1090,107 @@
         finally
         {
             isSavingCliente = false;
+        }
+    }
+
+    // ── Modal Especie Handlers ──
+    private void OpenEspecieModalFromPaciente()
+    {
+        especieModel = new EspecieDto();
+        especieErrorMessage = string.Empty;
+        isSavingEspecie = false;
+        showEspecieModal = true;
+    }
+
+    private void CloseEspecieModal()
+    {
+        showEspecieModal = false;
+    }
+
+    private async Task HandleSaveEspecie()
+    {
+        isSavingEspecie = true;
+        especieErrorMessage = string.Empty;
+        try
+        {
+            var result = await CatalogoService.CreateEspecieAsync(especieModel);
+            if (result)
+            {
+                var esp = await CatalogoService.GetEspeciesActivasAsync();
+                if (esp != null)
+                {
+                    modalEspecies = esp;
+                    especiesDisponibles = esp; // update filters species list too
+
+                    var nuevo = esp.FirstOrDefault(e => e.Nombre.Equals(especieModel.Nombre, StringComparison.OrdinalIgnoreCase));
+                    if (nuevo != null)
+                    {
+                        await OnModalEspecieChanged(nuevo.Id);
+                    }
+                }
+                showEspecieModal = false;
+            }
+            else
+            {
+                especieErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            especieErrorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSavingEspecie = false;
+        }
+    }
+
+    // ── Modal Raza Handlers ──
+    private void OpenRazaModalFromPaciente()
+    {
+        if (pacienteModel.EspecieId == 0) return;
+        razaModel = new RazaDto { EspecieId = pacienteModel.EspecieId };
+        razaErrorMessage = string.Empty;
+        isSavingRaza = false;
+        showRazaModal = true;
+    }
+
+    private void CloseRazaModal()
+    {
+        showRazaModal = false;
+    }
+
+    private async Task HandleSaveRaza()
+    {
+        isSavingRaza = true;
+        razaErrorMessage = string.Empty;
+        try
+        {
+            var result = await CatalogoService.CreateRazaAsync(razaModel);
+            if (result)
+            {
+                var r = await CatalogoService.GetRazasPorEspecieAsync(pacienteModel.EspecieId);
+                modalRazas = r ?? new List<RazaDto>();
+
+                var nuevo = modalRazas.FirstOrDefault(ra => ra.Nombre.Equals(razaModel.Nombre, StringComparison.OrdinalIgnoreCase));
+                if (nuevo != null)
+                {
+                    pacienteModel.RazaId = nuevo.Id;
+                }
+                showRazaModal = false;
+            }
+            else
+            {
+                razaErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            razaErrorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSavingRaza = false;
         }
     }
 }

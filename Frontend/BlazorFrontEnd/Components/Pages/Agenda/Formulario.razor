@@ -1,4 +1,5 @@
 @page "/agenda/editar/{Id}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario,Recepcionista")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject TurnoService TurnoService
@@ -18,110 +19,169 @@
     <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Detalle del Turno" : "Asignación de Turno")</h2>
 </div>
 
-<div class="glass-card" style="max-width: 900px;">
+<div class="glass-card" style="max-width: 1050px;">
     @if (isLoading)
     {
         <p class="text-secondary">Cargando disponibilidad y pacientes...</p>
     }
     else
     {
-        <EditForm Model="model" OnValidSubmit="HandleSave" FormName="turnoForm">
-            <DataAnnotationsValidator />
-            
-            <div class="row">
-                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Paciente (*)</label>
-                    <div class="d-flex gap-2">
-                        <InputSelect @bind-Value="model.PacienteId" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Seleccione un Paciente --</option>
-                            @foreach (var p in pacientes)
-                            {
-                                <option value="@p.Id">@p.Nombre (@p.EspecieNombre)</option>
-                            }
-                        </InputSelect>
-                        <a href="/pacientes/nuevo" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nuevo paciente">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            Nuevo
-                        </a>
+        <div class="row g-3 align-items-stretch">
+            <!-- 2/3 ancho: Formulario -->
+            <div class="col-lg-8">
+                <EditForm Model="model" OnValidSubmit="HandleSave" FormName="turnoForm">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="row">
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Paciente (*)</label>
+                            <div class="d-flex gap-2">
+                                <InputSelect @bind-Value="model.PacienteId" class="form-select bg-dark text-light border-secondary">
+                                    <option value="">-- Seleccione un Paciente --</option>
+                                    @foreach (var p in pacientes)
+                                    {
+                                        <option value="@p.Id">@p.Nombre (@p.EspecieNombre)</option>
+                                    }
+                                </InputSelect>
+                                @if (!isEdit)
+                                {
+                                    <a href="/pacientes/nuevo" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nuevo paciente">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        Nuevo
+                                    </a>
+                                }
+                            </div>
+                            <ValidationMessage For="@(() => model.PacienteId)" class="text-danger" />
+                        </div>
+                        
+                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
+                            <InputSelect @bind-Value="model.VeterinarioId" class="form-select bg-dark text-light border-secondary">
+                                <option value="">-- Médico Veterinario --</option>
+                                @foreach (var v in veterinarios)
+                                {
+                                    <option value="@v.Id">@v.NombreCompleto - @v.Especialidad</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => model.VeterinarioId)" class="text-danger" />
+                        </div>
                     </div>
-                    <ValidationMessage For="@(() => model.PacienteId)" class="text-danger" />
-                </div>
-                
-                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
-                    <InputSelect @bind-Value="model.VeterinarioId" class="form-select bg-dark text-light border-secondary">
-                        <option value="">-- Médico Veterinario --</option>
-                        @foreach (var v in veterinarios)
-                        {
-                            <option value="@v.Id">@v.NombreCompleto - @v.Especialidad</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => model.VeterinarioId)" class="text-danger" />
-                </div>
+
+                    <div class="row">
+                        <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Servicio (*)</label>
+                            <InputSelect @bind-Value="model.ServicioId" class="form-select bg-dark text-light border-secondary">
+                                <option value="0">-- Servicio Clínico --</option>
+                                @foreach (var s in servicios)
+                                {
+                                    <option value="@s.Id">@s.Nombre</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => model.ServicioId)" class="text-danger" />
+                        </div>
+                        
+                        <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
+                            <input type="datetime-local" @bind="model.FechaHora" class="form-control bg-dark text-light border-secondary" />
+                            @if (!string.IsNullOrEmpty(fechaHoraError))
+                            { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@fechaHoraError</div> }
+                        </div>
+
+                        <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Estado Operativo</label>
+                            <InputSelect @bind-Value="model.Estado" class="form-select bg-dark text-light border-secondary">
+                                <option value="Programado">Programado</option>
+                                <option value="Completado">Completado</option>
+                                <option value="Cancelado">Cancelado</option>
+                                <option value="Reprogramado">Reprogramado</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Motivo del Turno (*)</label>
+                            <InputText @bind-Value="model.Motivo" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Control general anual, Vacuna Sextuple" />
+                            <ValidationMessage For="@(() => model.Motivo)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones Previas / Receta</label>
+                            <InputTextArea @bind-Value="model.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                            @errorMessage
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                        <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Retornar a Agenda</button>
+                        <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                            @if(isSaving) { <span>Guardando Turno...</span> } else { <span>Confirmar Turno</span> }
+                        </button>
+                    </div>
+                </EditForm>
             </div>
 
-            <div class="row">
-                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Servicio (*)</label>
-                    <InputSelect @bind-Value="model.ServicioId" class="form-select bg-dark text-light border-secondary">
-                        <option value="0">-- Servicio Clínico --</option>
-                        @foreach (var s in servicios)
-                        {
-                            <option value="@s.Id">@s.Nombre</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => model.ServicioId)" class="text-danger" />
-                </div>
-                
-                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
-                    <input type="datetime-local" @bind="model.FechaHora" class="form-control bg-dark text-light border-secondary" />
-                    @if (!string.IsNullOrEmpty(fechaHoraError))
-                    { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@fechaHoraError</div> }
-                </div>
+            <!-- 1/3 ancho: Panel Lateral de Horarios del Veterinario -->
+            <div class="col-lg-4">
+                <div class="p-3 rounded h-100 d-flex flex-column" style="background: #FAFAFA !important; color: #333333 !important; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                        <span style="font-size: 1.1rem;">🗓️</span>
+                        <h5 class="m-0 fw-bold" style="font-size: 0.92rem; color: #0284c7;">
+                            Horarios de Atención
+                        </h5>
+                    </div>
 
-                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Estado Operativo</label>
-                    <InputSelect @bind-Value="model.Estado" class="form-select bg-dark text-light border-secondary">
-                        <option value="Programado">Programado</option>
-                        <option value="Completado">Completado</option>
-                        <option value="Cancelado">Cancelado</option>
-                        <option value="Reprogramado">Reprogramado</option>
-                    </InputSelect>
+                    @if (selectedVetForModel != null)
+                    {
+                        <div class="small fw-bold mb-2" style="color: #333333;">
+                             👨‍⚕️ @selectedVetForModel.NombreCompleto
+                        </div>
+                        <div class="d-flex flex-column gap-2 overflow-auto flex-grow-1 pe-1" style="max-height: 360px;">
+                            @for (int dia = 1; dia <= 7; dia++)
+                            {
+                                var diaNombre = GetDiaNombre(dia);
+                                var horariosDia = selectedVetForModel.Horarios?.Where(h => h.Activo && h.DiaSemana == dia).ToList();
+                                
+                                <div class="p-2 rounded" style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid @(horariosDia != null && horariosDia.Any() ? "#0284c7" : "#cbd5e1"); font-size: 0.78rem; color: #333333;">
+                                    @if (horariosDia == null || !horariosDia.Any())
+                                    {
+                                        <div><strong style="color: #333333;">@diaNombre:</strong> <span style="color: #64748b; font-style: italic;">Sin atención</span></div>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var h in horariosDia)
+                                        {
+                                            <div>
+                                                <strong style="color: #333333;">@diaNombre:</strong> <span style="color: #333333;">@FormatHorarioText(h)</span>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-3" style="font-size: 0.85rem; min-height: 220px; color: #475569;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 38px; height: 38px; margin-bottom: 10px; opacity: 0.7; color: #475569;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                            Seleccione un médico veterinario para ver sus días y horarios de atención disponibles.
+                        </div>
+                    }
                 </div>
             </div>
-
-            <div class="row">
-                <div class="col-12" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Motivo del Turno (*)</label>
-                    <InputText @bind-Value="model.Motivo" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Control general anual, Vacuna Sextuple" />
-                    <ValidationMessage For="@(() => model.Motivo)" class="text-danger" />
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12" style="margin-bottom: var(--sp-sm);">
-                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones Previas / Receta</label>
-                    <InputTextArea @bind-Value="model.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
-                </div>
-            </div>
-
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
-                    @errorMessage
-                </div>
-            }
-
-            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
-                <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Retornar a Agenda</button>
-                <button type="submit" class="btn-primary-glass" disabled="@isSaving">
-                    @if(isSaving) { <span>Guardando Turno...</span> } else { <span>Confirmar Turno</span> }
-                </button>
-            </div>
-        </EditForm>
+        </div>
     }
 </div>
 
@@ -139,6 +199,44 @@
     private List<PacienteDto> pacientes = new();
     private List<VeterinarioDto> veterinarios = new();
     private List<ServicioDto> servicios = new();
+
+    private VeterinarioDto? selectedVetForModel =>
+        veterinarios?.FirstOrDefault(v => v.Id == model.VeterinarioId);
+
+    private string GetDiaNombre(int dia) => dia switch
+    {
+        1 => "Lunes",
+        2 => "Martes",
+        3 => "Miércoles",
+        4 => "Jueves",
+        5 => "Viernes",
+        6 => "Sábado",
+        7 => "Domingo",
+        _ => ""
+    };
+
+    private string FormatHorarioText(HorarioDto h)
+    {
+        string inicioStr = h.HoraInicio;
+        string finStr = h.HoraFin;
+
+        if (TimeSpan.TryParse(h.HoraInicio, out var tsStart))
+        {
+            var dtStart = DateTime.Today.Add(tsStart);
+            inicioStr = dtStart.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLower();
+        }
+
+        if (TimeSpan.TryParse(h.HoraFin, out var tsEnd))
+        {
+            var dtEnd = DateTime.Today.Add(tsEnd);
+            finStr = dtEnd.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLower();
+        }
+
+        bool isGuardia = h.TipoHorarioId == 2 || string.Equals(h.TipoHorarioNombre, "Guardia", StringComparison.OrdinalIgnoreCase);
+        string tipoStr = isGuardia ? "Turno guardia" : "Turno normal";
+
+        return $"{inicioStr} a {finStr} | {tipoStr}";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -188,6 +286,8 @@
         try
         {
             bool result;
+            string serverMsg = string.Empty;
+
             if (isEdit)
             {
                 // Dispatch based on selected Estado
@@ -196,11 +296,17 @@
                 else if (model.Estado == "Cancelado")
                     result = await TurnoService.ChangeStatusAsync(Id!, "Cancelado");
                 else
-                    result = await TurnoService.UpdateAsync(Id!, model);
+                {
+                    var resUpdate = await TurnoService.UpdateWithResultAsync(Id!, model);
+                    result = resUpdate.Success;
+                    serverMsg = resUpdate.ErrorMessage;
+                }
             }
             else
             {
-                result = await TurnoService.CreateAsync(model);
+                var resCreate = await TurnoService.CreateWithResultAsync(model);
+                result = resCreate.Success;
+                serverMsg = resCreate.ErrorMessage;
             }
 
             if (result)
@@ -209,7 +315,7 @@
             }
             else
             {
-                errorMessage = "Ya hay un turno registrado en la fecha/hora ingresada para el mismo veterinario.";
+                errorMessage = !string.IsNullOrEmpty(serverMsg) ? serverMsg : "Ya hay un turno registrado en la fecha/hora ingresada para el mismo veterinario.";
             }
         }
         catch (Exception)

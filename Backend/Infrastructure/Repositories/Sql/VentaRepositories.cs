@@ -21,6 +21,7 @@ namespace Infrastructure.Repositories.Sql
                 .Include(v => v.Detalles).ThenInclude(d => d.Producto)
                 .Include(v => v.MetodoPago)
                 .Include(v => v.Propietario)
+                .Include(v => v.Sucursal)
                 .Where(v => v.PropietarioId == propietarioId)
                 .OrderByDescending(v => v.Fecha).ToListAsync();
 
@@ -29,6 +30,7 @@ namespace Infrastructure.Repositories.Sql
                 .Include(v => v.Detalles).ThenInclude(d => d.Producto)
                 .Include(v => v.MetodoPago)
                 .Include(v => v.Propietario)
+                .Include(v => v.Sucursal)
                 .Where(v => v.Fecha >= desde && v.Fecha <= hasta)
                 .OrderByDescending(v => v.Fecha).ToListAsync();
 
@@ -37,6 +39,7 @@ namespace Infrastructure.Repositories.Sql
                 .Include(v => v.Detalles).ThenInclude(d => d.Producto)
                 .Include(v => v.MetodoPago)
                 .Include(v => v.Propietario)
+                .Include(v => v.Sucursal)
                 .FirstOrDefaultAsync(v => v.Id == id);
     }
 

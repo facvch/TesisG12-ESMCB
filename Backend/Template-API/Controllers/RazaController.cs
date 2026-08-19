@@ -2,6 +2,7 @@ using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
 using Application.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -10,6 +11,7 @@ namespace Controllers
     /// Controller para gestionar las Razas de animales
     /// </summary>
     [ApiController]
+    [Authorize]
     public class RazaController(IRazaRepository razaRepository, IEspecieRepository especieRepository) : BaseController
     {
         private readonly IRazaRepository _razaRepository = razaRepository 
@@ -21,6 +23,7 @@ namespace Controllers
         /// Obtiene todas las razas
         /// </summary>
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetAll(bool soloActivas = true)
         {
             var entities = soloActivas 
@@ -44,6 +47,7 @@ namespace Controllers
         /// Obtiene razas por especie
         /// </summary>
         [HttpGet("api/v1/[Controller]/byEspecie/{especieId}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetByEspecie(int especieId)
         {
             if (especieId <= 0) return BadRequest("El ID de especie debe ser mayor a 0");
@@ -66,6 +70,7 @@ namespace Controllers
         /// Obtiene una raza por su ID
         /// </summary>
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest("El ID debe ser mayor a 0");
@@ -87,6 +92,7 @@ namespace Controllers
         /// Crea una nueva raza
         /// </summary>
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreateRazaRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -107,6 +113,7 @@ namespace Controllers
         /// Actualiza una raza existente
         /// </summary>
         [HttpPut("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Update([FromBody] UpdateRazaRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -128,6 +135,7 @@ namespace Controllers
         /// Elimina (desactiva) una raza
         /// </summary>
         [HttpDelete("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0) return BadRequest("El ID debe ser mayor a 0");

@@ -1,9 +1,18 @@
 @page "/veterinarios/nuevo"
 @page "/veterinarios/editar/{Id}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Gerente")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject VeterinarioService VeterinarioService
+@inject HorarioService HorarioService
 @inject NavigationManager Navigation
+
+<style>
+    .bg-light-hover:hover {
+        background-color: #EAEAEA !important;
+        color: #000000 !important;
+    }
+</style>
 
 <PageTitle>@(isEdit ? "Editar Médico" : "Nuevo Médico")</PageTitle>
 
@@ -16,7 +25,7 @@
     <h2 style="font-weight: 700; margin: 0;">@(isEdit ? "Editar Profesional" : "Nuevo Profesional")</h2>
 </div>
 
-<div class="glass-card" style="max-width: 800px;">
+<div class="glass-card" style="max-width: 850px;">
     @if (isLoading && isEdit)
     {
         <p class="text-secondary">Cargando datos del médico...</p>
@@ -25,6 +34,8 @@
     {
         <EditForm Model="model" OnValidSubmit="HandleSave">
             <DataAnnotationsValidator />
+
+            <h4 style="font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px;">Información Personal y Profesional</h4>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -41,14 +52,29 @@
 
             <div class="mb-3">
                 <label>Número de Matrícula (M.P o M.N) (*)</label>
-                <InputText @bind-Value="model.Matricula" class="form-control bg-dark text-light border-secondary" disabled="@isEdit" />
+                <InputText @bind-Value="model.Matricula" class="form-control bg-dark text-light border-secondary" />
                 <ValidationMessage For="@(() => model.Matricula)" class="text-danger" />
-                @if(isEdit) { <small class="text-secondary">La matrícula no puede modificarse tras el alta.</small> }
             </div>
 
-            <div class="mb-3">
-                <label>Especialidad</label>
-                <InputText @bind-Value="model.Especialidad" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Traumatología, Dermatología..." />
+            <div class="mb-3 position-relative">
+                <label>Especialidad (*)</label>
+                <input type="text" value="@model.Especialidad" @oninput="OnEspecialidadInput" @onfocus="OnEspecialidadFocus" class="form-control bg-dark text-light border-secondary" placeholder="Escriba para buscar especialidad..." autocomplete="off" />
+                @if (showEspecialidadesDropdown)
+                {
+                    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999; background: transparent;" @onclick="CerrarDropdown"></div>
+                    <ul class="dropdown-menu show w-100" style="position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; background-color: #FFFFFF !important; border: 1px solid #CCCCCC;">
+                        @foreach (var esp in filteredEspecialidades)
+                        {
+                            <li>
+                                <button type="button" class="dropdown-item bg-light-hover" style="font-size: 0.9rem; color: #333333 !important; background-color: #FFFFFF !important;" @onclick="() => SeleccionarEspecialidad(esp)">@esp</button>
+                            </li>
+                        }
+                        @if (!filteredEspecialidades.Any())
+                        {
+                            <li class="dropdown-item text-muted disabled" style="font-size: 0.9rem; background-color: #FFFFFF !important; color: #999999 !important;">No se encontraron especialidades</li>
+                        }
+                    </ul>
+                }
             </div>
 
             <div class="row mb-3">
@@ -63,9 +89,117 @@
                 </div>
             </div>
 
+            <!-- SECCIÓN DE DISPONIBILIDAD Y HORARIOS DE TRABAJO -->
+            <div class="mt-4 pt-3" style="border-top: 1px solid var(--border-glass);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 style="font-weight: 600; margin: 0;">Disponibilidad y Horarios de Trabajo</h4>
+                        <p class="text-secondary small mb-0">Asigne los días y rangos horarios en los que el profesional estará disponible o de guardia.</p>
+                    </div>
+                </div>
+
+                <div class="row g-2 align-items-end p-3 rounded mb-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass);">
+                    <div class="col-md-3">
+                        <label class="small text-secondary mb-1">Día de la Semana</label>
+                        <select class="form-select bg-dark text-light border-secondary" @bind="nuevoDia">
+                            <option value="1">Lunes</option>
+                            <option value="2">Martes</option>
+                            <option value="3">Miércoles</option>
+                            <option value="4">Jueves</option>
+                            <option value="5">Viernes</option>
+                            <option value="6">Sábado</option>
+                            <option value="7">Domingo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-secondary mb-1">Hora Inicio</label>
+                        <input type="time" class="form-control bg-dark text-light border-secondary" @bind="nuevaHoraInicio" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-secondary mb-1">Hora Fin</label>
+                        <input type="time" class="form-control bg-dark text-light border-secondary" @bind="nuevaHoraFin" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small text-secondary mb-1">Tipo Horario</label>
+                        <select class="form-select bg-dark text-light border-secondary" @bind="nuevoTipoId">
+                            <option value="1">Normal</option>
+                            <option value="2">Guardia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-primary w-100" @onclick="AgregarHorario" title="Agregar Franja Horaria">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(horarioErrorMsg))
+                {
+                    <div class="alert alert-warning p-2 small mb-3">@horarioErrorMsg</div>
+                }
+
+                @if (model.Horarios == null || !model.Horarios.Any())
+                {
+                    <p class="text-secondary small fst-italic">No hay horarios configurados para este profesional.</p>
+                }
+                else
+                {
+                    <div class="table-responsive mb-3">
+                        <table class="table table-dark table-sm align-middle" style="background: transparent;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-glass);">
+                                    <th>Día</th>
+                                    <th>Hora Inicio</th>
+                                    <th>Hora Fin</th>
+                                    <th>Tipo</th>
+                                    <th class="text-end">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var h in model.Horarios.OrderBy(x => x.DiaSemana).ThenBy(x => x.HoraInicio))
+                                {
+                                    <tr>
+                                        <td><strong>@h.DiaSemanaNombre</strong></td>
+                                        <td>@h.HoraInicio</td>
+                                        <td>@h.HoraFin</td>
+                                        <td>
+                                            @if (h.TipoHorarioId == 2 || h.TipoHorarioNombre.Equals("Guardia", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <span class="badge bg-primary">Guardia</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Normal</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" @onclick="() => RemoverHorario(h)">
+                                                &times;
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="alert alert-danger p-2">@errorMessage</div>
+                <div class="alert alert-danger p-2 mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@errorMessage</div>
+            }
+
+            @if (validationErrors.Any())
+            {
+                <div class="alert alert-danger p-3 mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                    <ul class="mb-0 ps-3">
+                        @foreach (var err in validationErrors)
+                        {
+                            <li>@err</li>
+                        }
+                    </ul>
+                </div>
             }
 
             <div class="d-flex justify-content-end mt-4 gap-2">
@@ -87,6 +221,36 @@
     private bool isLoading = true;
     private bool isSaving;
     private string errorMessage = string.Empty;
+    private List<string> validationErrors = new();
+
+    // Campos temporales para añadir horario
+    private int nuevoDia = 1;
+    private DateTime nuevaHoraInicio = DateTime.Today.AddHours(8);
+    private DateTime nuevaHoraFin = DateTime.Today.AddHours(16);
+    private int nuevoTipoId = 1;
+    private string horarioErrorMsg = string.Empty;
+
+    // Autocomplete especialidad
+    private bool showEspecialidadesDropdown;
+    private List<string> filteredEspecialidades = new();
+    private readonly List<string> especialidadesDisponibles = new()
+    {
+        "Clínica General",
+        "Cirugía",
+        "Cirugía General",
+        "Cirugía Plástica",
+        "Dermatología",
+        "Traumatología",
+        "Cardiología",
+        "Oftalmología",
+        "Neurología",
+        "Oncología",
+        "Anestesiología",
+        "Fisioterapia",
+        "Pediatría",
+        "Obstetricia",
+        "Nutrición"
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,28 +262,253 @@
             else errorMessage = "No se encontró el Veterinario con ese Registro.";
             isLoading = false;
         }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnEspecialidadFocus()
+    {
+        FiltrarEspecialidades(model.Especialidad);
+        showEspecialidadesDropdown = true;
+    }
+
+    private void OnEspecialidadInput(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString() ?? "";
+        model.Especialidad = val;
+        FiltrarEspecialidades(val);
+        showEspecialidadesDropdown = true;
+    }
+
+    private void FiltrarEspecialidades(string val)
+    {
+        if (string.IsNullOrWhiteSpace(val))
+        {
+            filteredEspecialidades = especialidadesDisponibles.ToList();
+        }
+        else
+        {
+            filteredEspecialidades = especialidadesDisponibles
+                .Where(x => x.Contains(val, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void SeleccionarEspecialidad(string esp)
+    {
+        model.Especialidad = esp;
+        showEspecialidadesDropdown = false;
+    }
+
+    private void CerrarDropdown()
+    {
+        showEspecialidadesDropdown = false;
+    }
+
+    private void AgregarHorario()
+    {
+        horarioErrorMsg = "";
+        var inicioStr = nuevaHoraInicio.ToString("HH:mm");
+        var finStr = nuevaHoraFin.ToString("HH:mm");
+
+        if (TimeSpan.TryParse(inicioStr, out var tInicio) && TimeSpan.TryParse(finStr, out var tFin))
+        {
+            if (tFin <= tInicio)
+            {
+                horarioErrorMsg = "La hora de fin debe ser posterior a la hora de inicio.";
+                return;
+            }
+        }
+
+        var nuevo = new HorarioDto
+        {
+            DiaSemana = nuevoDia,
+            HoraInicio = inicioStr,
+            HoraFin = finStr,
+            TipoHorarioId = nuevoTipoId,
+            TipoHorarioNombre = nuevoTipoId == 2 ? "Guardia" : "Normal",
+            Activo = true
+        };
+
+        // Validar límites de carga de horas
+        var tempHorarios = model.Horarios.ToList();
+        tempHorarios.Add(nuevo);
+        var limitError = ValidarHorariosLaboralesFrontend(tempHorarios);
+        if (limitError != null)
+        {
+            horarioErrorMsg = limitError;
+            return;
+        }
+
+        model.Horarios.Add(nuevo);
+    }
+
+    private string? ValidarHorariosLaboralesFrontend(List<HorarioDto>? horarios)
+    {
+        if (horarios == null || !horarios.Any()) return null;
+
+        double totalHorasSemanales = 0;
+        var horasPorDia = new Dictionary<int, double>();
+
+        foreach (var h in horarios)
+        {
+            // Solo validar horarios normales
+            bool isNormal = h.TipoHorarioId == 1 || (h.TipoHorarioNombre != null && h.TipoHorarioNombre.Equals("Normal", StringComparison.OrdinalIgnoreCase));
+            if (!isNormal) continue;
+
+            if (TimeSpan.TryParse(h.HoraInicio, out var inicio) &&
+                TimeSpan.TryParse(h.HoraFin, out var fin))
+            {
+                if (fin <= inicio) continue;
+
+                var diff = (fin - inicio).TotalHours;
+                totalHorasSemanales += diff;
+
+                if (!horasPorDia.ContainsKey(h.DiaSemana))
+                {
+                    horasPorDia[h.DiaSemana] = 0;
+                }
+                horasPorDia[h.DiaSemana] += diff;
+            }
+        }
+
+        // Validar límite diario
+        foreach (var kv in horasPorDia)
+        {
+            if (kv.Value > 8.0)
+            {
+                return "El profesional solo puede trabajar 8 horas al dia";
+            }
+        }
+
+        // Validar límite semanal
+        if (totalHorasSemanales > 48.0)
+        {
+            return "El profesional solo puede trabajar 48 horas semanales";
+        }
+
+        return null;
+    }
+
+    private void RemoverHorario(HorarioDto h)
+    {
+        model.Horarios.Remove(h);
     }
 
     private async Task HandleSave()
     {
         isSaving = true;
         errorMessage = "";
+        validationErrors.Clear();
 
-        if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido) || string.IsNullOrWhiteSpace(model.Matricula) || string.IsNullOrWhiteSpace(model.Telefono))
+        // Validaciones del lado del cliente
+        if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
         {
-            errorMessage = "Debe completar todos los campos requeridos (*).";
+            validationErrors.Add("Nombre y Apellido son obligatorios.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Telefono))
+        {
+            validationErrors.Add("Debe ingresar un número de teléfono válido.");
+        }
+        else
+        {
+            string cleanPhone = System.Text.RegularExpressions.Regex.Replace(model.Telefono, @"[() \-\.]", "");
+            var phoneRegex = new System.Text.RegularExpressions.Regex(@"^(?:0?[1-9]\d{1,3})(?:15)?\d{6,8}$");
+            if (!phoneRegex.IsMatch(cleanPhone))
+            {
+                validationErrors.Add("El número ingresado debe ser válido en Argentina.");
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Matricula))
+        {
+            validationErrors.Add("Debe ingresar la matrícula profesional del veterinario.");
+        }
+        else
+        {
+            int digitsCount = model.Matricula.Count(char.IsDigit);
+            if (digitsCount < 3)
+            {
+                validationErrors.Add("La cantidad de dígitos ingresados es menor a la válida (3 a 5).");
+            }
+            else if (digitsCount > 5)
+            {
+                validationErrors.Add("La cantidad de dígitos ingresados es mayor a la válida (3 a 5).");
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Especialidad))
+        {
+            validationErrors.Add("Debe elegir una especialidad.");
+        }
+        else if (!especialidadesDisponibles.Any(e => e.Equals(model.Especialidad, StringComparison.OrdinalIgnoreCase)))
+        {
+            validationErrors.Add("Debe elegir una especialidad.");
+        }
+
+        if (!string.IsNullOrEmpty(model.Email))
+        {
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+            if (!emailRegex.IsMatch(model.Email))
+            {
+                validationErrors.Add("El formato del email no es válido.");
+            }
+        }
+
+        // Límite de horarios
+        var limitError = ValidarHorariosLaboralesFrontend(model.Horarios);
+        if (limitError != null)
+        {
+            validationErrors.Add(limitError);
+        }
+
+        if (validationErrors.Any())
+        {
             isSaving = false;
             return;
         }
 
         try
         {
-            bool success;
-            if (isEdit) success = await VeterinarioService.UpdateAsync(Id!, model);
-            else success = await VeterinarioService.CreateAsync(model);
+            (bool Success, string ErrorMessage) result;
+            if (isEdit) result = await VeterinarioService.UpdateAsync(Id!, model);
+            else result = await VeterinarioService.CreateAsync(model);
 
-            if (success) Navigation.NavigateTo("/veterinarios");
-            else errorMessage = "Se ha producido un error al enviar el formulario. Puede que la Matrícula ya esté en uso.";
+            if (result.Success)
+            {
+                Navigation.NavigateTo("/veterinarios");
+            }
+            else
+            {
+                // Parse backend error
+                var rawErr = result.ErrorMessage;
+                if (!string.IsNullOrWhiteSpace(rawErr) && rawErr.TrimStart().StartsWith("["))
+                {
+                    try
+                    {
+                        var errList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(rawErr);
+                        if (errList != null)
+                        {
+                            validationErrors.AddRange(errList);
+                        }
+                        else
+                        {
+                            validationErrors.Add(rawErr);
+                        }
+                    }
+                    catch
+                    {
+                        validationErrors.Add(rawErr);
+                    }
+                }
+                else
+                {
+                    validationErrors.Add(rawErr);
+                }
+            }
         }
         catch(Exception)
         {

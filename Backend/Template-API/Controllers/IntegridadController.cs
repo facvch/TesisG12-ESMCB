@@ -1,5 +1,6 @@
 using Application.Repositories;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -8,6 +9,7 @@ namespace Controllers
     /// Controller de integridad del sistema, health check y validaciones
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class IntegridadController(
         IPacienteRepository pacienteRepo,
         IPropietarioRepository propietarioRepo,
@@ -27,6 +29,7 @@ namespace Controllers
         /// Health check del sistema - verifica DB y servicios
         /// </summary>
         [HttpGet("api/v1/health")]
+        [AllowAnonymous]
         public async Task<IActionResult> HealthCheck()
         {
             try

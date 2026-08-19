@@ -2,16 +2,19 @@ using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
 {
     [ApiController]
+    [Authorize]
     public class MetodoPagoController(IMetodoPagoRepository repo) : BaseController
     {
         private readonly IMetodoPagoRepository _repo = repo ?? throw new ArgumentNullException(nameof(repo));
 
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetAll(bool soloActivos = true)
         {
             var entities = soloActivos ? await _repo.GetActivosAsync() : await _repo.FindAllAsync();
@@ -20,6 +23,7 @@ namespace Controllers
         }
 
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(int id)
         {
             var e = await _repo.FindOneAsync(id);
@@ -28,6 +32,7 @@ namespace Controllers
         }
 
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreateMetodoPagoRequest r)
         {
             var entity = new Domain.Entities.MetodoPago(r.Nombre);
@@ -37,6 +42,7 @@ namespace Controllers
         }
 
         [HttpPut("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Update([FromBody] UpdateMetodoPagoRequest r)
         {
             var e = await _repo.FindOneAsync(r.Id);
@@ -47,6 +53,7 @@ namespace Controllers
         }
 
         [HttpDelete("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Delete(int id)
         {
             var e = await _repo.FindOneAsync(id);
@@ -63,6 +70,7 @@ namespace Controllers
     /// Controller para gestionar Ventas con descuento automático de stock
     /// </summary>
     [ApiController]
+    [Authorize]
     public class VentaController(
         IVentaRepository ventaRepo,
         IDetalleVentaRepository detalleRepo,
@@ -83,33 +91,46 @@ namespace Controllers
         private readonly IProductoDepositoRepository _pdRepo = productoDepositoRepo;
 
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetByFecha([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
         {
             var d = desde ?? DateTime.Today;
             var h = hasta ?? DateTime.Today.AddDays(1);
             var entities = await _ventaRepo.GetByFechaRangoAsync(d, h);
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                entities = entities.Where(v => v.SucursalId == UserSucursalId.Value).ToList();
+            }
             return Ok(entities.Select(MapToDto).ToList());
         }
 
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(string id)
         {
             var entity = await _ventaRepo.GetWithDetallesAsync(id);
             if (entity == null) return NotFound();
+            if (!IsAdmin && UserSucursalId.HasValue && entity.SucursalId != UserSucursalId.Value)
+            {
+                return StatusCode(403, "No tiene permisos para ver esta venta de otra sucursal");
+            }
             return Ok(MapToDto(entity));
         }
 
         [HttpGet("api/v1/[Controller]/byPropietario/{propietarioId}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetByPropietario(string propietarioId)
         {
             var entities = await _ventaRepo.GetByPropietarioIdAsync(propietarioId);
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                entities = entities.Where(v => v.SucursalId == UserSucursalId.Value).ToList();
+            }
             return Ok(entities.Select(MapToDto).ToList());
         }
 
-        /// <summary>
-        /// Crea una venta con sus detalles y descuenta stock automáticamente
-        /// </summary>
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreateVentaRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -132,6 +153,26 @@ namespace Controllers
             var venta = new Domain.Entities.Venta(
                 propId, request.MetodoPagoId, request.Observaciones ?? "");
 
+            // Determinar Sucursal
+            int sucursalId = 1; // default fallback (Sucursal Central)
+            if (UserSucursalId.HasValue)
+            {
+                sucursalId = UserSucursalId.Value;
+            }
+            else
+            {
+                var primerDetalle = request.Detalles.FirstOrDefault();
+                if (primerDetalle != null && primerDetalle.DepositoId.HasValue && primerDetalle.DepositoId.Value > 0)
+                {
+                    var pd = await _pdRepo.GetByProductoYDepositoAsync(primerDetalle.ProductoId, primerDetalle.DepositoId.Value);
+                    if (pd?.Deposito != null)
+                    {
+                        sucursalId = pd.Deposito.SucursalId;
+                    }
+                }
+            }
+            venta.AsignarSucursal(sucursalId);
+
             if (!venta.IsValid) return BadRequest(venta.GetErrors().Select(e => e.ErrorMessage));
 
             var ventaId = (await _ventaRepo.AddAsync(venta)).ToString();
@@ -151,6 +192,12 @@ namespace Controllers
                     var pd = await _pdRepo.GetByProductoYDepositoAsync(det.ProductoId, det.DepositoId.Value);
                     if (pd == null)
                         return BadRequest($"No hay stock del producto '{producto.Nombre}' en el depósito seleccionado");
+                    
+                    if (!IsAdmin && UserSucursalId.HasValue && pd.Deposito?.SucursalId != UserSucursalId.Value)
+                    {
+                        return BadRequest($"El depósito '{pd.Deposito?.Nombre}' no pertenece a su sucursal");
+                    }
+
                     if (!pd.DescontarStock(det.Cantidad))
                         return BadRequest($"Stock insuficiente para '{producto.Nombre}' en el depósito. Disponible: {pd.StockActual}");
                     _pdRepo.Update(pd.Id, pd);
@@ -195,10 +242,17 @@ namespace Controllers
         /// Anula una venta y revierte el stock
         /// </summary>
         [HttpPut("api/v1/[Controller]/{id}/anular")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Anular(string id, [FromBody] string motivo = "")
         {
             var venta = await _ventaRepo.GetWithDetallesAsync(id);
             if (venta == null) return NotFound();
+            
+            if (!IsAdmin && UserSucursalId.HasValue && venta.SucursalId != UserSucursalId.Value)
+            {
+                return StatusCode(403, "No tiene permisos para anular una venta de otra sucursal");
+            }
+
             if (venta.Estado == EstadoVenta.Anulada) return BadRequest("La venta ya está anulada");
 
             // Revertir stock
@@ -251,10 +305,17 @@ namespace Controllers
         /// Genera una factura para una venta
         /// </summary>
         [HttpPost("api/v1/[Controller]/{id}/facturar")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Facturar(string id, [FromBody] FacturarRequest request)
         {
             var venta = await _ventaRepo.GetWithDetallesAsync(id);
             if (venta == null) return NotFound();
+            
+            if (!IsAdmin && UserSucursalId.HasValue && venta.SucursalId != UserSucursalId.Value)
+            {
+                return StatusCode(403, "No tiene permisos para facturar una venta de otra sucursal");
+            }
+
             if (venta.Estado == EstadoVenta.Anulada) return BadRequest("No se puede facturar una venta anulada");
 
             var existingFactura = await _facturaRepo.GetByVentaIdAsync(id);
@@ -279,10 +340,21 @@ namespace Controllers
         /// Obtiene una factura por número
         /// </summary>
         [HttpGet("api/v1/Factura/byNumero/{numero}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetFacturaByNumero(string numero)
         {
             var f = await _facturaRepo.GetByNumeroAsync(numero);
             if (f == null) return NotFound();
+
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                var venta = await _ventaRepo.FindOneAsync(f.VentaId);
+                if (venta == null || venta.SucursalId != UserSucursalId.Value)
+                {
+                    return StatusCode(403, "No tiene permisos para acceder a esta factura");
+                }
+            }
+
             return Ok(new FacturaDto
             {
                 Id = f.Id, VentaId = f.VentaId, Numero = f.Numero,
@@ -300,6 +372,8 @@ namespace Controllers
             MetodoPagoNombre = v.MetodoPago?.Nombre ?? "",
             Total = v.Total, Estado = v.Estado.ToString(),
             Observaciones = v.Observaciones,
+            SucursalId = v.SucursalId,
+            SucursalNombre = v.Sucursal?.Nombre ?? "",
             Detalles = v.Detalles?.Select(d => new DetalleVentaDto
             {
                 Id = d.Id, ProductoId = d.ProductoId,

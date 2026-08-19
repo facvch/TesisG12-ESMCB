@@ -1,6 +1,7 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -9,6 +10,7 @@ namespace Controllers
     /// Controller para gestionar las Vacunas disponibles
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin,Veterinario")]
     public class VacunaController(IVacunaRepository vacunaRepository) : BaseController
     {
         private readonly IVacunaRepository _repository = vacunaRepository
@@ -81,6 +83,11 @@ namespace Controllers
 
             entity.Actualizar(request.Nombre, request.Descripcion ?? "", request.Laboratorio ?? "", request.IntervaloDosisDias);
 
+            if (request.Activo)
+                entity.Activar();
+            else
+                entity.Desactivar();
+
             if (!entity.IsValid)
                 return BadRequest(entity.GetErrors().Select(e => e.ErrorMessage));
 
@@ -117,5 +124,6 @@ namespace Controllers
         public string Descripcion { get; set; }
         public string Laboratorio { get; set; }
         public int? IntervaloDosisDias { get; set; }
+        public bool Activo { get; set; }
     }
 }

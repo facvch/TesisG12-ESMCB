@@ -15,9 +15,12 @@ namespace Domain.Entities
         public EstadoVenta Estado { get; private set; }
         public string Observaciones { get; private set; }
 
+        public int SucursalId { get; private set; }
+
         // Navegación
         public virtual Propietario Propietario { get; private set; }
         public virtual MetodoPago MetodoPago { get; private set; }
+        public virtual Sucursal Sucursal { get; private set; }
         public virtual ICollection<DetalleVenta> Detalles { get; private set; }
 
         protected Venta()
@@ -25,7 +28,7 @@ namespace Domain.Entities
             Detalles = new List<DetalleVenta>();
         }
 
-        public Venta(string? propietarioId, int metodoPagoId, string observaciones = "") : this()
+        public Venta(string? propietarioId, int metodoPagoId, string observaciones = "", int sucursalId = 0) : this()
         {
             Id = Guid.NewGuid().ToString();
             Fecha = DateTime.Now;
@@ -33,8 +36,11 @@ namespace Domain.Entities
             MetodoPagoId = metodoPagoId;
             Total = 0;
             Estado = EstadoVenta.Pendiente;
+            SucursalId = sucursalId;
             Observaciones = observaciones;
         }
+
+        public void AsignarSucursal(int sucursalId) => SucursalId = sucursalId;
 
         public void AgregarDetalle(DetalleVenta detalle)
         {

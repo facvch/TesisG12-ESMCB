@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Controllers
 {
     [ApiController]
+    [Authorize]
     public class AuditController(
         IAuditLogRepository auditRepo,
         INotificacionRepository notificacionRepo,
@@ -29,7 +30,7 @@ namespace Controllers
         /// Últimas acciones del sistema
         /// </summary>
         [HttpGet("api/v1/Audit/logs")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Gerente")]
         public async Task<IActionResult> GetLogs([FromQuery] int cantidad = 50)
         {
             var logs = await _auditRepo.GetUltimosAsync(Math.Min(cantidad, 200));
@@ -40,7 +41,7 @@ namespace Controllers
         /// Logs por rango de fechas
         /// </summary>
         [HttpGet("api/v1/Audit/logs/fecha")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Gerente")]
         public async Task<IActionResult> GetLogsByFecha(
             [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
         {
@@ -54,7 +55,7 @@ namespace Controllers
         /// Logs de un usuario específico
         /// </summary>
         [HttpGet("api/v1/Audit/logs/usuario/{usuarioId}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Gerente")]
         public async Task<IActionResult> GetLogsByUsuario(string usuarioId)
         {
             var logs = await _auditRepo.GetByUsuarioIdAsync(usuarioId);
@@ -65,7 +66,7 @@ namespace Controllers
         /// Logs de una entidad específica
         /// </summary>
         [HttpGet("api/v1/Audit/logs/entidad/{entidad}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Gerente")]
         public async Task<IActionResult> GetLogsByEntidad(string entidad)
         {
             var logs = await _auditRepo.GetByEntidadAsync(entidad);

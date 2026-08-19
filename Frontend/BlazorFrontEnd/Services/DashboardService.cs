@@ -22,6 +22,12 @@ namespace BlazorFrontEnd.Services
             return await _httpClient.GetUnwrappedAsync<DashboardAlertasResponse>("api/v1/Recordatorio/dashboard");
         }
 
+        public async Task<List<VacunaPendienteDto>?> GetVacunasPendientesAsync(int diasAntelacion = 30)
+        {
+            var response = await _httpClient.GetUnwrappedAsync<VacunasPendientesResponse>($"api/v1/Recordatorio/vacunas/pendientes?diasAntelacion={diasAntelacion}");
+            return response?.Items;
+        }
+
         public async Task<List<IngresoDiarioDto>?> GetIngresosDiariosAsync(int dias = 7)
         {
             var desde = DateTime.Today.AddDays(-dias).ToString("yyyy-MM-dd");

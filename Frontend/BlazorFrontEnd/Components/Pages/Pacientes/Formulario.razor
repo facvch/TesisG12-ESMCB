@@ -1,4 +1,6 @@
+@page "/pacientes/nuevo"
 @page "/pacientes/editar/{Id}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario,Recepcionista")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject PacienteService PacienteService
@@ -58,25 +60,41 @@
             <div class="row">
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
-                    <InputSelect Value="model.EspecieId" ValueExpression="()=>model.EspecieId" ValueChanged="((int v) => OnEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
-                        <option value="0">-- Seleccione Especie --</option>
-                        @foreach (var e in especies)
-                        {
-                            <option value="@e.Id">@e.Nombre</option>
-                        }
-                    </InputSelect>
+                    <div class="d-flex gap-2">
+                        <InputSelect Value="model.EspecieId" ValueExpression="()=>model.EspecieId" ValueChanged="((int v) => OnEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
+                            <option value="0">-- Seleccione Especie --</option>
+                            @foreach (var e in especies)
+                            {
+                                <option value="@e.Id">@e.Nombre</option>
+                            }
+                        </InputSelect>
+                        <button type="button" @onclick="OpenEspecieModal" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva especie">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Nuevo
+                        </button>
+                    </div>
                     <ValidationMessage For="@(() => model.EspecieId)" class="text-danger" />
                 </div>
                 
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
-                    <InputSelect @bind-Value="model.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(razas.Count == 0)">
-                        <option value="">-- Seleccione Raza --</option>
-                        @foreach (var r in razas)
-                        {
-                            <option value="@r.Id">@r.Nombre</option>
-                        }
-                    </InputSelect>
+                    <div class="d-flex gap-2">
+                        <InputSelect @bind-Value="model.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(model.EspecieId == 0)">
+                            <option value="">-- Seleccione Raza --</option>
+                            @foreach (var r in razas)
+                            {
+                                <option value="@r.Id">@r.Nombre</option>
+                            }
+                        </InputSelect>
+                        <button type="button" @onclick="OpenRazaModal" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva raza" disabled="@(model.EspecieId == 0)">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Nuevo
+                        </button>
+                    </div>
                     <ValidationMessage For="@(() => model.RazaId)" class="text-danger" />
                 </div>
             </div>
@@ -125,6 +143,118 @@
     }
 </div>
 
+@* ═══════ MODAL: Nueva Especie ═══════ *@
+@if (showEspecieModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseEspecieModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nueva Especie</h3>
+                <button class="modal-close-btn" @onclick="CloseEspecieModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="especieModel" OnValidSubmit="HandleSaveEspecie" FormName="modalEspecieForm">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="especieModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => especieModel.Nombre)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                        <InputText @bind-Value="especieModel.Descripcion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(especieErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                        @especieErrorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseEspecieModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingEspecie">
+                        @if(isSavingEspecie) { <span>Guardando...</span> } else { <span>Guardar Especie</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL: Nueva Raza ═══════ *@
+@if (showRazaModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseRazaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nueva Raza</h3>
+                <button class="modal-close-btn" @onclick="CloseRazaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="razaModel" OnValidSubmit="HandleSaveRaza" FormName="modalRazaForm">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
+                        <InputSelect @bind-Value="razaModel.EspecieId" class="form-select bg-dark text-light border-secondary" disabled="true">
+                            @foreach (var e in especies)
+                            {
+                                <option value="@e.Id">@e.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="razaModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => razaModel.Nombre)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                        <InputText @bind-Value="razaModel.Descripcion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(razaErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+                        @razaErrorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseRazaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingRaza">
+                        @if(isSavingRaza) { <span>Guardando...</span> } else { <span>Guardar Raza</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter]
     public string? Id { get; set; }
@@ -140,6 +270,18 @@
     private List<PropietarioDto> propietarios = new();
     private List<EspecieDto> especies = new();
     private List<RazaDto> razas = new();
+
+    // ── Modal Especie ──
+    private bool showEspecieModal;
+    private EspecieDto especieModel = new();
+    private bool isSavingEspecie;
+    private string especieErrorMessage = string.Empty;
+
+    // ── Modal Raza ──
+    private bool showRazaModal;
+    private RazaDto razaModel = new();
+    private bool isSavingRaza;
+    private string razaErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -239,4 +381,100 @@
     }
 
     private void GoBack() => Navigation.NavigateTo("/pacientes");
+
+    // ── Modal Especie Handlers ──
+    private void OpenEspecieModal()
+    {
+        especieModel = new EspecieDto();
+        especieErrorMessage = string.Empty;
+        isSavingEspecie = false;
+        showEspecieModal = true;
+    }
+
+    private void CloseEspecieModal()
+    {
+        showEspecieModal = false;
+    }
+
+    private async Task HandleSaveEspecie()
+    {
+        isSavingEspecie = true;
+        especieErrorMessage = string.Empty;
+        try
+        {
+            var result = await CatalogoService.CreateEspecieAsync(especieModel);
+            if (result)
+            {
+                var esp = await CatalogoService.GetEspeciesActivasAsync();
+                if (esp != null) especies = esp;
+
+                var nuevo = especies.FirstOrDefault(e => e.Nombre.Equals(especieModel.Nombre, StringComparison.OrdinalIgnoreCase));
+                if (nuevo != null)
+                {
+                    await OnEspecieChanged(nuevo.Id);
+                }
+                showEspecieModal = false;
+            }
+            else
+            {
+                especieErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            especieErrorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSavingEspecie = false;
+        }
+    }
+
+    // ── Modal Raza Handlers ──
+    private void OpenRazaModal()
+    {
+        if (model.EspecieId == 0) return;
+        razaModel = new RazaDto { EspecieId = model.EspecieId };
+        razaErrorMessage = string.Empty;
+        isSavingRaza = false;
+        showRazaModal = true;
+    }
+
+    private void CloseRazaModal()
+    {
+        showRazaModal = false;
+    }
+
+    private async Task HandleSaveRaza()
+    {
+        isSavingRaza = true;
+        razaErrorMessage = string.Empty;
+        try
+        {
+            var result = await CatalogoService.CreateRazaAsync(razaModel);
+            if (result)
+            {
+                await CargarRazas(model.EspecieId);
+
+                var nuevo = razas.FirstOrDefault(r => r.Nombre.Equals(razaModel.Nombre, StringComparison.OrdinalIgnoreCase));
+                if (nuevo != null)
+                {
+                    model.RazaId = nuevo.Id;
+                }
+                showRazaModal = false;
+            }
+            else
+            {
+                razaErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception)
+        {
+            razaErrorMessage = "Error de conexión al guardar los datos.";
+        }
+        finally
+        {
+            isSavingRaza = false;
+        }
+    }
 }

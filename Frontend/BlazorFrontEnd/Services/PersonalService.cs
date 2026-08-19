@@ -17,7 +17,7 @@ namespace BlazorFrontEnd.Services
         {
             try
             {
-                var url = $"api/v1/Paginado/veterinarios?page=1&pageSize=1000";
+                var url = $"api/v1/Veterinario?soloActivos=true";
                 var res = await _httpClient.GetUnwrappedAsync<PaginatedList<VeterinarioDto>>(url);
                 return res?.Items.Where(v => v.Activo).ToList() ?? new List<VeterinarioDto>();
             }

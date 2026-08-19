@@ -37,21 +37,21 @@ namespace Controllers
 
             // Alertas críticas (rojo)
             foreach (var s in stockBajo.Where(x => x.StockActual == 0))
-                alertas.Add(new AlertaDto("CRITICA", "Stock", $"⛔ SIN STOCK: {s.Producto}", s.Detalle));
+                alertas.Add(new AlertaDto("CRITICA", "Stock", $"⛔ SIN STOCK: {s.Producto}", s.Detalle) { EntidadId = s.ProductoId });
 
             foreach (var t in turnosVencidos)
-                alertas.Add(new AlertaDto("CRITICA", "Turno", $"⏰ Turno no atendido: {t.Paciente}", t.Detalle));
+                alertas.Add(new AlertaDto("CRITICA", "Turno", $"⏰ Turno no atendido: {t.Paciente}", t.Detalle) { EntidadId = t.TurnoId });
 
             // Alertas importantes (naranja)
             foreach (var v in vacPendientes.Where(x => x.DiasRestantes <= 0))
-                alertas.Add(new AlertaDto("IMPORTANTE", "Vacunación", $"💉 Vacuna vencida: {v.Paciente}", v.Detalle));
+                alertas.Add(new AlertaDto("IMPORTANTE", "Vacunación", $"💉 Vacuna vencida: {v.Paciente}", v.Detalle) { EntidadId = v.PacienteId });
 
             foreach (var s in stockBajo.Where(x => x.StockActual > 0))
-                alertas.Add(new AlertaDto("IMPORTANTE", "Stock", $"📦 Stock bajo: {s.Producto}", s.Detalle));
+                alertas.Add(new AlertaDto("IMPORTANTE", "Stock", $"📦 Stock bajo: {s.Producto}", s.Detalle) { EntidadId = s.ProductoId });
 
             // Alertas informativas (amarillo)
             foreach (var v in vacPendientes.Where(x => x.DiasRestantes > 0 && x.DiasRestantes <= 14))
-                alertas.Add(new AlertaDto("INFO", "Vacunación", $"💉 Vacuna próxima: {v.Paciente}", v.Detalle));
+                alertas.Add(new AlertaDto("INFO", "Vacunación", $"💉 Vacuna próxima: {v.Paciente}", v.Detalle) { EntidadId = v.PacienteId });
 
             return Ok(new
             {
@@ -216,7 +216,8 @@ namespace Controllers
         private async Task<List<VacunaPendienteDto>> GetVacunacionesPendientesInternal(int diasAntelacion)
         {
             var vacunaciones = await vacunacionRepo.FindAllAsync();
-            var pacientes = await pacienteRepo.FindAllAsync();
+            var pacientes = await pacienteRepo.GetPacientesExpandidosAsync();
+            var vacunas = await vacunaRepo.FindAllAsync();
             var hoy = DateTime.Today;
 
             return vacunaciones
@@ -224,6 +225,7 @@ namespace Controllers
                 .Select(v =>
                 {
                     var pac = pacientes.FirstOrDefault(p => p.Id == v.PacienteId);
+                    var vac = vacunas.FirstOrDefault(va => va.Id == v.VacunaId);
                     var dias = (v.FechaProximaDosis!.Value - hoy).Days;
                     return new VacunaPendienteDto
                     {
@@ -231,12 +233,12 @@ namespace Controllers
                         Paciente = pac?.Nombre ?? "",
                         Propietario = pac?.Propietario != null ? $"{pac.Propietario.Nombre} {pac.Propietario.Apellido}" : "",
                         Telefono = pac?.Propietario?.Telefono ?? "",
-                        Vacuna = v.Vacuna?.Nombre ?? "",
+                        Vacuna = vac?.Nombre ?? "",
                         FechaProximaDosis = v.FechaProximaDosis!.Value,
                         DiasRestantes = dias,
                         Detalle = dias <= 0
-                            ? $"VENCIDA hace {Math.Abs(dias)} días - {v.Vacuna?.Nombre ?? ""}"
-                            : $"Vence en {dias} días - {v.Vacuna?.Nombre ?? ""}"
+                            ? $"VENCIDA hace {Math.Abs(dias)} días - {vac?.Nombre ?? ""}"
+                            : $"Vence en {dias} días - {vac?.Nombre ?? ""}"
                     };
                 })
                 .OrderBy(x => x.DiasRestantes)
@@ -335,6 +337,7 @@ namespace Controllers
         public string Tipo { get; set; }
         public string Titulo { get; set; }
         public string Detalle { get; set; }
+        public string EntidadId { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.Now;
         public AlertaDto(string nivel, string tipo, string titulo, string detalle)
         { Nivel = nivel; Tipo = tipo; Titulo = titulo; Detalle = detalle; }

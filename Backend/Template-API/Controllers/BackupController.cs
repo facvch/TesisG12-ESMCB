@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 
@@ -7,6 +8,7 @@ namespace Controllers
     /// Controller para backup y restauración de la base de datos SQLite
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class BackupController(IWebHostEnvironment env) : BaseController
     {
         private string BackupDir => Path.Combine(env.ContentRootPath, "Backups");

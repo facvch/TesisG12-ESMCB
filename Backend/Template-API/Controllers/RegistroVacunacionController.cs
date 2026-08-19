@@ -1,6 +1,7 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -9,6 +10,7 @@ namespace Controllers
     /// Controller para gestionar los registros de vacunación
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin,Veterinario")]
     public class RegistroVacunacionController(
         IRegistroVacunacionRepository registroRepository,
         IPacienteRepository pacienteRepository,

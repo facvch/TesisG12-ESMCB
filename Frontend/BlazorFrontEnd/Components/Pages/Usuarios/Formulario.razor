@@ -1,7 +1,9 @@
 @page "/usuarios/nuevo"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject UsuarioService UsuarioService
+@inject SucursalService SucursalService
 @inject NavigationManager Navigation
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject BlazorFrontEnd.Auth.TokenStorageService TokenStorage
@@ -53,6 +55,18 @@
             </div>
 
             <div class="mb-3">
+                <label>Sucursal Asignada</label>
+                <select class="form-select bg-dark text-light border-secondary" @bind="SelectedSucursalId">
+                    <option value="">Global / Sin sucursal (Administrador)</option>
+                    @foreach(var s in sucursales)
+                    {
+                        <option value="@s.Id">@s.Nombre</option>
+                    }
+                </select>
+                <small class="text-secondary mb-2 d-block">Los administradores pueden no tener sucursal asignada (acceso global). Los demás cargos requieren sucursal.</small>
+            </div>
+
+            <div class="mb-3">
                 <label>Correo Electrónico (*)</label>
                 <InputText @bind-Value="model.Email" class="form-control bg-dark text-light border-secondary" type="email" placeholder="jperez@veterinaria.com" />
                 <ValidationMessage For="@(() => model.Email)" class="text-danger" />
@@ -83,9 +97,16 @@
 @code {
     private RegisterRequest model = new();
     private List<RolDto> roles = new();
+    private List<SucursalDto> sucursales = new();
     private bool isLoading = true;
     private bool isSaving = false;
     private string errorMessage = string.Empty;
+
+    private string SelectedSucursalId
+    {
+        get => model.SucursalId?.ToString() ?? "";
+        set => model.SucursalId = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -96,6 +117,8 @@
             StateHasChanged();
             var r = await UsuarioService.GetRolesAsync();
             if(r != null) roles = r;
+            var s = await SucursalService.GetAllAsync(soloActivos: true);
+            if(s != null) sucursales = s;
             isLoading = false;
             StateHasChanged();
         }
@@ -117,6 +140,13 @@
         if(model.RolId == 0) {
             errorMessage = "Debe asignar un Rol válido al usuario para continuar.";
             return; 
+        }
+
+        var selectedRol = roles.FirstOrDefault(r => r.Id == model.RolId);
+        if (selectedRol != null && selectedRol.Nombre.ToUpper() != "ADMIN" && !model.SucursalId.HasValue)
+        {
+            errorMessage = "Debe asignar una sucursal para cargos que no sean Administrador.";
+            return;
         }
 
         isSaving = true;

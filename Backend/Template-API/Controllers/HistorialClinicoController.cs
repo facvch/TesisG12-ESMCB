@@ -1,6 +1,7 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -9,6 +10,7 @@ namespace Controllers
     /// Controller para gestionar el Historial Clínico de los pacientes
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin,Veterinario")]
     public class HistorialClinicoController(
         IHistorialClinicoRepository historialRepository,
         IPacienteRepository pacienteRepository) : BaseController

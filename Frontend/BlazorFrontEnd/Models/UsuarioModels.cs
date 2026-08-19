@@ -28,5 +28,7 @@ namespace BlazorFrontEnd.Models
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un Rol")]
         public int RolId { get; set; }
+
+        public int? SucursalId { get; set; }
     }
 }

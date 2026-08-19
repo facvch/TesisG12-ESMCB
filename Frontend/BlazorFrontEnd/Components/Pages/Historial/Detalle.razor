@@ -1,4 +1,5 @@
 @page "/historial-clinico/paciente/{PacienteId}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject PacienteService PacienteService
@@ -6,8 +7,10 @@
 @inject VacunacionService VacunacionService
 @inject TratamientoService TratamientoService
 @inject NavigationManager Navigation
+@inject PropietarioService PropietarioService
+@inject PersonalService PersonalService
 
-<PageTitle>Ficha Clínica: @(paciente?.Nombre ?? "Cargando...")</PageTitle>
+<PageTitle>Información del paciente: @(paciente?.Nombre ?? "Cargando...")</PageTitle>
 
 @if (isLoading)
 {
@@ -26,10 +29,41 @@ else
             </svg>
         </button>
         <div>
-            <h2 style="font-weight: 700; margin: 0;">Ficha Clínica Integral</h2>
+            <h2 style="font-weight: 700; margin: 0;">Información detallada del paciente</h2>
             <p class="text-secondary" style="margin: 0;">Paciente: <strong class="text-primary">@paciente.Nombre</strong> (@paciente.EspecieNombre/ @paciente.RazaNombre)</p>
         </div>
     </div>
+
+    @if (propietario != null)
+    {
+        <div class="glass-card mb-3 p-3" style="border: 1px solid var(--border-glass); background: rgba(255,255,255,0.02); border-radius: 8px;">
+            <div class="row align-items-center">
+                <div class="col-md-3 border-end" style="border-color: var(--border-glass) !important;">
+                    <span class="text-secondary small d-block" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Dueño / Propietario</span>
+                    <strong style="font-size: 1.1rem; color: var(--accent-primary);">👤 @propietario.NombreCompleto</strong>
+                    <span class="text-secondary d-block" style="font-size: 0.85rem;">DNI: @propietario.DNI</span>
+                </div>
+                <div class="col-md-3 border-end" style="border-color: var(--border-glass) !important; padding-left: 20px;">
+                    <span class="text-secondary small d-block" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Contacto</span>
+                    <strong style="color: var(--text-primary); font-size: 1rem;">📞 @propietario.Telefono</strong>
+                    <span class="text-secondary d-block" style="font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@propietario.Email</span>
+                </div>
+                <div class="col-md-3 border-end" style="border-color: var(--border-glass) !important; padding-left: 20px;">
+                    <span class="text-secondary small d-block" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Dirección</span>
+                    <span class="text-light" style="font-size: 0.9rem; font-weight: 500;">📍 @(string.IsNullOrEmpty(propietario.Direccion) ? "Sin dirección" : propietario.Direccion)</span>
+                </div>
+                <div class="col-md-3 d-flex align-items-center justify-content-md-end mt-2 mt-md-0" style="padding-left: 20px;">
+                    <a href="https://wa.me/@FormatWhatsApp(propietario.Telefono)?text=@Uri.EscapeDataString($"Hola {propietario.Nombre}, te contactamos de la Veterinaria. Queríamos recordarte que {paciente.Nombre} tiene una vacuna pendiente de aplicación. Por favor, coordiná un turno a la brevedad.")" 
+                       target="_blank" class="btn btn-success btn-sm d-flex align-items-center gap-2" style="background-color: #25D366; border: none; font-weight: 600; padding: 8px 16px; border-radius: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
+                          <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.949h.004c4.368 0 7.926-3.562 7.928-7.929a7.89 7.89 0 0 0-2.33-5.69m-5.61 10.744h-.01a6.5 6.5 0 0 1-3.3-1.02l-.242-.144-2.454.644.656-2.387-.156-.25a6.5 6.5 0 0 1-1.007-3.5C.029 4.348 3.52 1.052 7.99 1.052a6.5 6.5 0 0 1 4.59 1.93 6.5 6.5 0 0 1 1.922 4.6c-.004 4.475-3.498 7.969-7.965 7.969m3.636-4.708c-.18-.089-1.08-.534-1.25-.597-.17-.061-.29-.092-.41.09-.12.18-.46.597-.56.711-.1.115-.2.13-.38.041-1.81-.9-3.236-2.225-4.088-3.727-.12-.206-.013-.319.09-.422.09-.09.18-.21.28-.31.09-.1.12-.17.18-.29.06-.12.03-.22-.01-.31-.04-.09-.41-1.005-.56-1.373-.15-.356-.3-.3-.41-.3-.1-.005-.22-.005-.34-.005-.12 0-.32.045-.49.23-.17.19-.66.645-.66 1.57s.68 1.835.77 1.962c.09.13 1.34 2.044 3.25 2.87.45.2 1.01.32 1.37.43.46.15.88.13 1.21.08.37-.06 1.08-.44 1.23-.863.15-.42.15-.78.1-.863-.05-.08-.18-.12-.36-.21"/>
+                        </svg>
+                        Notificar por WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- TABS -->
     <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist" style="border-bottom: 2px solid var(--border-glass); padding-bottom: 10px;">
@@ -69,16 +103,21 @@ else
                         {
                             <div class="accordion-item" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); margin-bottom: 5px;">
                                 <h2 class="accordion-header">
-                                  <button class="accordion-button collapsed text-light" type="button" data-bs-toggle="collapse" data-bs-target="#col_@c.Id" style="background: transparent; box-shadow: none;">
-                                    <strong>@c.Fecha.ToString("dd/MM/yyyy")</strong>: @c.Motivo (Vet: @c.Veterinario)
+                                  <button class="accordion-button @(expandedConsultas.Contains(c.Id) ? "" : "collapsed") text-light" type="button" @onclick="() => ToggleConsulta(c.Id)" style="background: transparent; box-shadow: none;">
+                                    <strong>@(c.Fecha?.ToString("dd/MM/yyyy") ?? "")</strong>: @c.Motivo (Vet: @c.Veterinario)
                                   </button>
                                 </h2>
-                                <div id="col_@c.Id" class="accordion-collapse collapse" data-bs-parent="#accConsultas">
+                                <div class="accordion-collapse collapse @(expandedConsultas.Contains(c.Id) ? "show" : "")">
                                   <div class="accordion-body text-secondary">
                                     <p><strong>Síntomas:</strong> @c.Sintomas</p>
                                     <p><strong>Diagnóstico:</strong> <span class="text-light">@c.Diagnostico</span></p>
                                     <p><strong>Indicaciones:</strong> @c.Indicaciones</p>
                                     <p style="font-size: 0.85em; margin-top:10px;">Peso: @c.Peso kg | Temp: @c.Temperatura °C</p>
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <button class="btn btn-sm btn-outline-info" @onclick="() => EditarConsulta(c.Id)">
+                                            Editar Consulta
+                                        </button>
+                                    </div>
                                   </div>
                                 </div>
                             </div>
@@ -112,6 +151,7 @@ else
                                 <th>Vacuna</th>
                                 <th>Próxima Dosis</th>
                                 <th>Lote / Vet</th>
+                                <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -129,6 +169,11 @@ else
                                         else { <span class="text-secondary">-</span> }
                                     </td>
                                     <td class="text-secondary" style="font-size:0.85rem;">@v.NroLote <br/> @v.Veterinario</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-info" @onclick="() => EditarVacuna(v.Id)" title="Editar registro de vacuna">
+                                            Editar
+                                        </button>
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -186,6 +231,9 @@ else
                                         }
                                     </td>
                                     <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-info" style="margin-right: 5px;" @onclick="() => EditarTratamiento(t.Id)" title="Editar tratamiento">
+                                            Editar
+                                        </button>
                                         @if(!t.Finalizado)
                                         {
                                             <button class="btn btn-sm btn-outline-success" @onclick="() => FinalizarTratamiento(t.Id)" title="Marcar como finalizado">
@@ -204,17 +252,311 @@ else
     </div>
 }
 
+@* ═══════ MODAL: Consulta ═══════ *@
+@if (showConsultaModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseConsultaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(string.IsNullOrEmpty(consultaModel.Id) ? "Nueva Consulta" : "Editar Consulta")</h3>
+                <button class="modal-close-btn" @onclick="CloseConsultaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="consultaModel" OnValidSubmit="HandleSaveConsulta" FormName="modalConsultaForm">
+                <DataAnnotationsValidator />
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha (*)</label>
+                        <InputDate @bind-Value="consultaModel.Fecha" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => consultaModel.Fecha)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Tratante (*)</label>
+                        <InputSelect @bind-Value="consultaModel.Veterinario" class="form-select bg-dark text-light border-secondary">
+                            <option value="">Seleccione...</option>
+                            @foreach (var v in vets)
+                            {
+                                <option value="@v.NombreCompleto">@v.NombreCompleto</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => consultaModel.Veterinario)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Peso (kg) (*)</label>
+                        <InputNumber @bind-Value="consultaModel.Peso" class="form-control bg-dark text-light border-secondary" TValue="decimal?" />
+                        <ValidationMessage For="@(() => consultaModel.Peso)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Temp (°C)</label>
+                        <InputNumber @bind-Value="consultaModel.Temperatura" class="form-control bg-dark text-light border-secondary" TValue="decimal?" />
+                        <ValidationMessage For="@(() => consultaModel.Temperatura)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Motivo de Consulta (*)</label>
+                    <InputText @bind-Value="consultaModel.Motivo" class="form-control bg-dark text-light border-secondary" />
+                    <ValidationMessage For="@(() => consultaModel.Motivo)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Síntomas reportados (*)</label>
+                    <InputTextArea @bind-Value="consultaModel.Sintomas" class="form-control bg-dark text-light border-secondary" rows="2" />
+                    <ValidationMessage For="@(() => consultaModel.Sintomas)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Diagnóstico (*)</label>
+                    <InputTextArea @bind-Value="consultaModel.Diagnostico" class="form-control bg-dark text-light border-secondary" rows="2" />
+                    <ValidationMessage For="@(() => consultaModel.Diagnostico)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Indicaciones (*)</label>
+                    <InputTextArea @bind-Value="consultaModel.Indicaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                    <ValidationMessage For="@(() => consultaModel.Indicaciones)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones adicionales</label>
+                    <InputTextArea @bind-Value="consultaModel.Observaciones" class="form-control bg-dark text-light border-secondary" rows="2" />
+                    <ValidationMessage For="@(() => consultaModel.Observaciones)" class="text-danger" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(consultaErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@consultaErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseConsultaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingConsulta">
+                        @if(isSavingConsulta) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL: Vacunación ═══════ *@
+@if (showVacunaModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseVacunaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(string.IsNullOrEmpty(vacunaModel.Id) ? "Nueva Vacunación" : "Editar Vacunación")</h3>
+                <button class="modal-close-btn" @onclick="CloseVacunaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="vacunaModel" OnValidSubmit="HandleSaveVacuna" FormName="modalVacunaForm">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Vacuna Aplicada (*)</label>
+                    <InputSelect @bind-Value="vacunaModel.VacunaId" class="form-select bg-dark text-light border-secondary">
+                        <option value="0">Seleccione vacuna...</option>
+                        @foreach (var vac in catalogoVacunas)
+                        {
+                            <option value="@vac.Id">@vac.Nombre (@vac.Laboratorio)</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => vacunaModel.VacunaId)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario (*)</label>
+                    <InputSelect @bind-Value="vacunaModel.Veterinario" class="form-select bg-dark text-light border-secondary">
+                        <option value="">Seleccione Médico...</option>
+                        @foreach (var v in vets)
+                        {
+                            <option value="@v.NombreCompleto">@v.NombreCompleto</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => vacunaModel.Veterinario)" class="text-danger" />
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha Aplicación (*)</label>
+                        <InputDate @bind-Value="vacunaModel.FechaAplicacion" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => vacunaModel.FechaAplicacion)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Próxima Dosis</label>
+                        <InputDate @bind-Value="vacunaModel.FechaProximaDosis" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => vacunaModel.FechaProximaDosis)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Número de Lote / Etiqueta</label>
+                    <InputText @bind-Value="vacunaModel.NroLote" class="form-control bg-dark text-light border-secondary" placeholder="Lote de la ampolla" />
+                    <ValidationMessage For="@(() => vacunaModel.NroLote)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones</label>
+                    <InputTextArea @bind-Value="vacunaModel.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                    <ValidationMessage For="@(() => vacunaModel.Observaciones)" class="text-danger" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(vacunaErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@vacunaErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseVacunaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingVacuna">
+                        @if(isSavingVacuna) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL: Tratamiento ═══════ *@
+@if (showTratamientoModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseTratamientoModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(string.IsNullOrEmpty(tratamientoModel.Id) ? "Nuevo Tratamiento" : "Editar Tratamiento")</h3>
+                <button class="modal-close-btn" @onclick="CloseTratamientoModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="tratamientoModel" OnValidSubmit="HandleSaveTratamiento" FormName="modalTratamientoForm">
+                <DataAnnotationsValidator />
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha de Inicio (*)</label>
+                        <InputDate @bind-Value="tratamientoModel.Fecha" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => tratamientoModel.Fecha)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario a Cargo (*)</label>
+                        <InputSelect @bind-Value="tratamientoModel.Veterinario" class="form-select bg-dark text-light border-secondary">
+                            <option value="">Seleccione Médico...</option>
+                            @foreach (var v in vets)
+                            {
+                                <option value="@v.NombreCompleto">@v.NombreCompleto</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => tratamientoModel.Veterinario)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Diagnóstico (*)</label>
+                    <InputText @bind-Value="tratamientoModel.Diagnostico" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Otitis Externa Bilateral" />
+                    <ValidationMessage For="@(() => tratamientoModel.Diagnostico)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción (*)</label>
+                    <InputTextArea @bind-Value="tratamientoModel.Descripcion" class="form-control bg-dark text-light border-secondary" rows="2" placeholder="Ej: Limpieza ótica + aplicación tópica..." />
+                    <ValidationMessage For="@(() => tratamientoModel.Descripcion)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Medicación Recetada</label>
+                    <InputTextArea @bind-Value="tratamientoModel.Medicacion" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="Ej: Amoxicilina 500mg cada 12hs por 7 días..." />
+                    <ValidationMessage For="@(() => tratamientoModel.Medicacion)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones</label>
+                    <InputTextArea @bind-Value="tratamientoModel.Observaciones" class="form-control bg-dark text-light border-secondary" rows="2" />
+                    <ValidationMessage For="@(() => tratamientoModel.Observaciones)" class="text-danger" />
+                </div>
+
+                <div class="mb-3 form-check" style="margin-top: 20px;">
+                    <InputCheckbox @bind-Value="tratamientoModel.Finalizado" class="form-check-input bg-dark border-secondary" id="chkFinalizado" />
+                    <label class="form-check-label text-light" for="chkFinalizado">Marcar como Finalizado / Alta médica</label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(tratamientoErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@tratamientoErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseTratamientoModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingTratamiento">
+                        @if(isSavingTratamiento) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter]
     public string PacienteId { get; set; } = string.Empty;
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? QueryTab { get; set; }
+
     private bool isLoading = true;
     private PacienteDto? paciente;
+    private PropietarioDto? propietario;
     private string activeTab = "consultas"; // consultas | vacunas | tratamientos
 
     private List<HistorialClinicoDto> consultas = new();
     private List<RegistroVacunacionDto> vacunas = new();
     private List<TratamientoDto> tratamientos = new();
+
+    private HashSet<string> expandedConsultas = new();
+
+    private List<VeterinarioDto> vets = new();
+    private List<VacunaDto> catalogoVacunas = new();
+
+    // Consulta Modal States
+    private bool showConsultaModal;
+    private HistorialClinicoDto consultaModel = new();
+    private bool isSavingConsulta;
+    private string consultaErrorMessage = string.Empty;
+
+    // Vacuna Modal States
+    private bool showVacunaModal;
+    private RegistroVacunacionDto vacunaModel = new();
+    private bool isSavingVacuna;
+    private string vacunaErrorMessage = string.Empty;
+
+    // Tratamiento Modal States
+    private bool showTratamientoModal;
+    private TratamientoDto tratamientoModel = new();
+    private bool isSavingTratamiento;
+    private string tratamientoErrorMessage = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(QueryTab))
+        {
+            activeTab = QueryTab;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,12 +571,23 @@ else
             var clTask = HistorialService.GetByPacienteIdAsync(PacienteId);
             var vcTask = VacunacionService.GetByPacienteIdAsync(PacienteId);
             var trTask = TratamientoService.GetByPacienteIdAsync(PacienteId);
+            var prTask = PropietarioService.GetByIdAsync(paciente.PropietarioId);
+            var vtTask = PersonalService.GetVeterinariosActivosAsync();
+            var vaTask = VacunacionService.GetCatalogoVacunasAsync();
 
-            await Task.WhenAll(clTask, vcTask, trTask);
+            await Task.WhenAll(clTask, vcTask, trTask, prTask, vtTask, vaTask);
 
             consultas = clTask.Result ?? new();
             vacunas = vcTask.Result ?? new();
             tratamientos = trTask.Result ?? new();
+            propietario = prTask.Result;
+            vets = vtTask.Result ?? new();
+            
+            var vacs = vaTask.Result;
+            if (vacs != null)
+            {
+                catalogoVacunas = vacs.Where(v => v.Activo).ToList();
+            }
         }
 
         isLoading = false;
@@ -243,10 +596,361 @@ else
     private void SetTab(string tab) => activeTab = tab;
     private void GoBack() => Navigation.NavigateTo("/historial-clinico");
 
-    // Navegaciones a nuevos Forms
-    private void NuevaConsulta() => Navigation.NavigateTo($"/historial-clinico/nueva-consulta/{PacienteId}");
-    private void NuevaVacuna() => Navigation.NavigateTo($"/historial-clinico/nueva-vacuna/{PacienteId}");
-    private void NuevoTratamiento() => Navigation.NavigateTo($"/historial-clinico/nuevo-tratamiento/{PacienteId}");
+    private void ToggleConsulta(string id)
+    {
+        if (expandedConsultas.Contains(id))
+            expandedConsultas.Remove(id);
+        else
+            expandedConsultas.Add(id);
+    }
+
+    // Modal Consultation Handlers
+    private void NuevaConsulta()
+    {
+        consultaModel = new HistorialClinicoDto
+        {
+            PacienteId = PacienteId,
+            PacienteNombre = paciente?.Nombre ?? string.Empty,
+            Fecha = DateTime.Today
+        };
+        consultaErrorMessage = string.Empty;
+        isSavingConsulta = false;
+        showConsultaModal = true;
+    }
+
+    private async Task EditarConsulta(string consultaId)
+    {
+        consultaErrorMessage = string.Empty;
+        isSavingConsulta = false;
+        showConsultaModal = true;
+        try
+        {
+            var existing = await HistorialService.GetByIdAsync(consultaId);
+            if (existing != null)
+            {
+                consultaModel = new HistorialClinicoDto
+                {
+                    Id = existing.Id,
+                    PacienteId = existing.PacienteId,
+                    PacienteNombre = existing.PacienteNombre,
+                    Fecha = existing.Fecha,
+                    Motivo = existing.Motivo,
+                    Sintomas = existing.Sintomas,
+                    Diagnostico = existing.Diagnostico,
+                    Indicaciones = existing.Indicaciones,
+                    Veterinario = existing.Veterinario,
+                    Peso = existing.Peso,
+                    Temperatura = existing.Temperatura,
+                    Observaciones = existing.Observaciones
+                };
+            }
+            else
+            {
+                consultaErrorMessage = "No se encontró la consulta a editar.";
+            }
+        }
+        catch (Exception ex)
+        {
+            consultaErrorMessage = $"Error de conexión: {ex.Message}";
+        }
+    }
+
+    private void CloseConsultaModal()
+    {
+        showConsultaModal = false;
+    }
+
+    private async Task HandleSaveConsulta()
+    {
+        if (consultaModel.Fecha == null)
+        {
+            consultaErrorMessage = "La fecha es obligatoria";
+            return;
+        }
+        if (consultaModel.Fecha.Value.Date > DateTime.Today)
+        {
+            consultaErrorMessage = "Las consultas ya deben haber sido realizadas (no puede ser fecha futura)";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(consultaModel.Veterinario))
+        {
+            consultaErrorMessage = "Seleccionar un veterinario es obligatorio";
+            return;
+        }
+        if (consultaModel.Peso == null)
+        {
+            consultaErrorMessage = "Ingresar el peso de la mascota es obligatorio";
+            return;
+        }
+        if (consultaModel.Peso < 0)
+        {
+            consultaErrorMessage = "No se puede ingresar un peso negativo";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(consultaModel.Motivo))
+        {
+            consultaErrorMessage = "El motivo de consulta es obligatorio";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(consultaModel.Sintomas))
+        {
+            consultaErrorMessage = "Los síntomas reportados son obligatorios";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(consultaModel.Diagnostico))
+        {
+            consultaErrorMessage = "El diagnóstico es obligatorio";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(consultaModel.Indicaciones))
+        {
+            consultaErrorMessage = "Las indicaciones al propietario son obligatorias";
+            return;
+        }
+
+        isSavingConsulta = true;
+        consultaErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (string.IsNullOrEmpty(consultaModel.Id))
+            {
+                success = await HistorialService.CreateAsync(consultaModel);
+            }
+            else
+            {
+                success = await HistorialService.UpdateAsync(consultaModel.Id, consultaModel);
+            }
+
+            if (success)
+            {
+                showConsultaModal = false;
+                consultas = await HistorialService.GetByPacienteIdAsync(PacienteId) ?? new();
+                StateHasChanged();
+            }
+            else
+            {
+                consultaErrorMessage = "Error al intentar guardar la consulta.";
+            }
+        }
+        catch (Exception ex)
+        {
+            consultaErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingConsulta = false;
+        }
+    }
+
+    // Modal Vaccination Handlers
+    private void NuevaVacuna()
+    {
+        vacunaModel = new RegistroVacunacionDto
+        {
+            PacienteId = PacienteId,
+            PacienteNombre = paciente?.Nombre ?? string.Empty,
+            FechaAplicacion = DateTime.Today
+        };
+        vacunaErrorMessage = string.Empty;
+        isSavingVacuna = false;
+        showVacunaModal = true;
+    }
+
+    private async Task EditarVacuna(string registroId)
+    {
+        vacunaErrorMessage = string.Empty;
+        isSavingVacuna = false;
+        showVacunaModal = true;
+        try
+        {
+            var existing = await VacunacionService.GetByIdAsync(registroId);
+            if (existing != null)
+            {
+                vacunaModel = new RegistroVacunacionDto
+                {
+                    Id = existing.Id,
+                    PacienteId = existing.PacienteId,
+                    PacienteNombre = existing.PacienteNombre,
+                    VacunaId = existing.VacunaId,
+                    VacunaNombre = existing.VacunaNombre,
+                    FechaAplicacion = existing.FechaAplicacion,
+                    FechaProximaDosis = existing.FechaProximaDosis,
+                    Veterinario = existing.Veterinario,
+                    NroLote = existing.NroLote,
+                    Observaciones = existing.Observaciones
+                };
+            }
+            else
+            {
+                vacunaErrorMessage = "No se encontró el registro de vacunación a editar.";
+            }
+        }
+        catch (Exception ex)
+        {
+            vacunaErrorMessage = $"Error de conexión: {ex.Message}";
+        }
+    }
+
+    private void CloseVacunaModal()
+    {
+        showVacunaModal = false;
+    }
+
+    private async Task HandleSaveVacuna()
+    {
+        if (vacunaModel.VacunaId == 0)
+        {
+            vacunaErrorMessage = "Debe seleccionar una vacuna válida del catálogo.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(vacunaModel.Veterinario))
+        {
+            vacunaErrorMessage = "Debe seleccionar un veterinario.";
+            return;
+        }
+
+        isSavingVacuna = true;
+        vacunaErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (string.IsNullOrEmpty(vacunaModel.Id))
+            {
+                success = await VacunacionService.CreateAsync(vacunaModel);
+            }
+            else
+            {
+                success = await VacunacionService.UpdateAsync(vacunaModel.Id, vacunaModel);
+            }
+
+            if (success)
+            {
+                showVacunaModal = false;
+                vacunas = await VacunacionService.GetByPacienteIdAsync(PacienteId) ?? new();
+                StateHasChanged();
+            }
+            else
+            {
+                vacunaErrorMessage = "Error al intentar guardar el registro de vacunación.";
+            }
+        }
+        catch (Exception ex)
+        {
+            vacunaErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingVacuna = false;
+        }
+    }
+
+    // Modal Treatment Handlers
+    private void NuevoTratamiento()
+    {
+        tratamientoModel = new TratamientoDto
+        {
+            PacienteId = PacienteId,
+            PacienteNombre = paciente?.Nombre ?? string.Empty,
+            Fecha = DateTime.Today
+        };
+        tratamientoErrorMessage = string.Empty;
+        isSavingTratamiento = false;
+        showTratamientoModal = true;
+    }
+
+    private async Task EditarTratamiento(string tratamientoId)
+    {
+        tratamientoErrorMessage = string.Empty;
+        isSavingTratamiento = false;
+        showTratamientoModal = true;
+        try
+        {
+            var existing = await TratamientoService.GetByIdAsync(tratamientoId);
+            if (existing != null)
+            {
+                tratamientoModel = new TratamientoDto
+                {
+                    Id = existing.Id,
+                    PacienteId = existing.PacienteId,
+                    PacienteNombre = existing.PacienteNombre,
+                    Fecha = existing.Fecha,
+                    Diagnostico = existing.Diagnostico,
+                    Descripcion = existing.Descripcion,
+                    Medicacion = existing.Medicacion,
+                    Veterinario = existing.Veterinario,
+                    Observaciones = existing.Observaciones,
+                    Finalizado = existing.Finalizado
+                };
+            }
+            else
+            {
+                tratamientoErrorMessage = "No se encontró el tratamiento a editar.";
+            }
+        }
+        catch (Exception ex)
+        {
+            tratamientoErrorMessage = $"Error de conexión: {ex.Message}";
+        }
+    }
+
+    private void CloseTratamientoModal()
+    {
+        showTratamientoModal = false;
+    }
+
+    private async Task HandleSaveTratamiento()
+    {
+        if (string.IsNullOrEmpty(tratamientoModel.Diagnostico))
+        {
+            tratamientoErrorMessage = "El campo Diagnóstico es requerido.";
+            return;
+        }
+        if (string.IsNullOrEmpty(tratamientoModel.Descripcion))
+        {
+            tratamientoErrorMessage = "El campo Descripción es requerido.";
+            return;
+        }
+        if (string.IsNullOrEmpty(tratamientoModel.Veterinario))
+        {
+            tratamientoErrorMessage = "Debe seleccionar un veterinario.";
+            return;
+        }
+
+        isSavingTratamiento = true;
+        tratamientoErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (string.IsNullOrEmpty(tratamientoModel.Id))
+            {
+                success = await TratamientoService.CreateAsync(tratamientoModel);
+            }
+            else
+            {
+                success = await TratamientoService.UpdateAsync(tratamientoModel.Id, tratamientoModel);
+            }
+
+            if (success)
+            {
+                showTratamientoModal = false;
+                tratamientos = await TratamientoService.GetByPacienteIdAsync(PacienteId) ?? new();
+                StateHasChanged();
+            }
+            else
+            {
+                tratamientoErrorMessage = "Error al intentar guardar el tratamiento.";
+            }
+        }
+        catch (Exception ex)
+        {
+            tratamientoErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingTratamiento = false;
+        }
+    }
 
     private async Task FinalizarTratamiento(string tratamientoId)
     {
@@ -256,5 +960,12 @@ else
             tratamientos = await TratamientoService.GetByPacienteIdAsync(PacienteId) ?? new();
             StateHasChanged();
         }
+    }
+
+    private string FormatWhatsApp(string telefono)
+    {
+        if (string.IsNullOrEmpty(telefono)) return string.Empty;
+        var clean = new string(telefono.Where(char.IsDigit).ToArray());
+        return clean;
     }
 }

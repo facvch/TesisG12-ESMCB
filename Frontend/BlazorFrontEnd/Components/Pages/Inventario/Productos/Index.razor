@@ -19,12 +19,12 @@
             <p class="text-secondary" style="margin: 0;">Inventario general con control de stock</p>
         </div>
     </div>
-    <a href="/inventario/productos/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button class="btn-primary-glass" @onclick="OpenProductModalForCreate" style="display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nuevo Producto
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -174,7 +174,7 @@
                                 else { <span style="color: var(--accent-danger);">Inactivo</span> }
                             </td>
                             <td class="text-end" style="white-space: nowrap;">
-                                <a href="/inventario/productos/editar/@p.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
+                                <button class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenProductModalForEdit(p.Id)">Editar</button>
                                 <button class="btn btn-sm btn-outline-success" style="margin-left: 4px;" @onclick="() => ShowStockModal(p)">Stock</button>
                                 <button class="btn btn-sm btn-outline-danger" style="margin-left: 4px;" @onclick="() => ConfirmDelete(p.Id)">Eliminar</button>
                             </td>
@@ -270,7 +270,158 @@
     </div>
 }
 
+@* ── Modal de Producto (Nuevo/Editar) ── *@
+@if (showProductModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseProductModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 800px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(string.IsNullOrEmpty(productModel.Id) ? "Nuevo Producto" : "Editar Producto")</h3>
+                <button class="modal-close-btn" @onclick="CloseProductModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="productModel" OnValidSubmit="HandleSaveProduct" FormName="modalProductoForm">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre del Producto (*)</label>
+                        <InputText @bind-Value="productModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => productModel.Nombre)" class="text-danger" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Código de Barras (*)</label>
+                        <InputText @bind-Value="productModel.CodigoBarras" class="form-control bg-dark text-light border-secondary" placeholder="Ej: 7790001234" disabled="@(!string.IsNullOrEmpty(productModel.Id))" />
+                        <ValidationMessage For="@(() => productModel.CodigoBarras)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Categoría (*)</label>
+                        <InputSelect @bind-Value="productModel.CategoriaId" class="form-select bg-dark text-light border-secondary">
+                            <option value="0">-- Seleccione Categoría --</option>
+                            @foreach (var c in categorias)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => productModel.CategoriaId)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Marca</label>
+                        <InputSelect @bind-Value="productModel.MarcaId" class="form-select bg-dark text-light border-secondary">
+                            <option value="">-- Sin Marca --</option>
+                            @foreach (var m in marcas)
+                            {
+                                <option value="@m.Id">@m.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Proveedor</label>
+                        <InputSelect @bind-Value="productModel.ProveedorId" class="form-select bg-dark text-light border-secondary">
+                            <option value="">-- Sin Proveedor --</option>
+                            @foreach (var p in proveedores)
+                            {
+                                <option value="@p.Id">@p.RazonSocial</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Depósito</label>
+                        <InputSelect @bind-Value="productModel.DepositoId" class="form-select bg-dark text-light border-secondary">
+                            <option value="">-- Sin Depósito --</option>
+                            @foreach (var d in depositos)
+                            {
+                                <option value="@d.Id">@d.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Precio de Compra (*)</label>
+                        <InputNumber @bind-Value="productModel.PrecioCompra" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => productModel.PrecioCompra)" class="text-danger" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Precio de Venta (*)</label>
+                        <InputNumber @bind-Value="productModel.PrecioVenta" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => productModel.PrecioVenta)" class="text-danger" />
+                    </div>
+                </div>
+
+                @if (string.IsNullOrEmpty(productModel.Id))
+                {
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Inicial</label>
+                            <InputNumber @bind-Value="productModel.StockActual" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Mínimo (alerta)</label>
+                            <InputNumber @bind-Value="productModel.StockMinimo" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Mínimo (alerta)</label>
+                            <InputNumber @bind-Value="productModel.StockMinimo" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Stock Actual</label>
+                            <p class="form-control bg-dark text-light border-secondary" style="line-height: 2.2; margin: 0;">@productModel.StockActual <small class="text-secondary">(use el botón "Stock" de la grilla para modificar)</small></p>
+                        </div>
+                    </div>
+                }
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check" style="margin-top: 10px;">
+                            <InputCheckbox @bind-Value="productModel.Activo" class="form-check-input bg-dark border-secondary" id="chkProductActivo" />
+                            <label class="form-check-label text-light" for="chkProductActivo">Producto Activo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                    <InputTextArea @bind-Value="productModel.Descripcion" class="form-control bg-dark text-light border-secondary" rows="2" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(productErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@productErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseProductModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingProduct">
+                        @if(isSavingProduct) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "productoId")]
+    public string? QueryProductoId { get; set; }
+
     private PaginatedList<ProductoDto>? productosResponse;
     private List<ProductoDto>? filteredItems;
     private bool isLoading = true;
@@ -302,17 +453,46 @@
     private bool isSavingStock;
     private int stockDepositoId;
 
+    // Product Modal States
+    private bool showProductModal;
+    private ProductoDto productModel = new() { Activo = true };
+    private bool isSavingProduct;
+    private string productErrorMessage = string.Empty;
+    private List<ProveedorDto> proveedores = new();
+
     protected override async Task OnInitializedAsync()
     {
         // Cargar catálogos para filtros en paralelo con los datos
         var catTask = CatalogoService.GetCategoriasAsync();
         var marTask = CatalogoService.GetMarcasAsync();
         var depTask = CatalogoService.GetDepositosAsync();
+        var proTask = CatalogoService.GetProveedoresAsync();
         var loadTask = LoadDataAsync();
-        await Task.WhenAll(catTask, marTask, depTask, loadTask);
+        await Task.WhenAll(catTask, marTask, depTask, proTask, loadTask);
         categorias = catTask.Result ?? new();
         marcas = marTask.Result ?? new();
         depositos = depTask.Result ?? new();
+        proveedores = proTask.Result ?? new();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(QueryProductoId))
+        {
+            try
+            {
+                var prod = await ProductoService.GetByIdAsync(QueryProductoId);
+                if (prod != null)
+                {
+                    searchTerm = prod.Nombre;
+                    currentPage = 1;
+                    await LoadDataAsync();
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 
     private async Task LoadDataAsync()
@@ -365,7 +545,16 @@
         filterDeposito = 0;
         filterEstado = "todos";
         filterStockBajo = false;
-        ApplyFiltersInternal();
+        searchTerm = string.Empty;
+        if (!string.IsNullOrEmpty(QueryProductoId))
+        {
+            QueryProductoId = null;
+            Navigation.NavigateTo("/inventario/productos");
+        }
+        else
+        {
+            await LoadDataAsync();
+        }
     }
 
     private async Task OnSearchChanged()
@@ -461,6 +650,95 @@
             stockError = stockTipo == "salida"
                 ? "Stock insuficiente en este depósito o error al procesar la salida."
                 : "Error al procesar la entrada de stock.";
+        }
+    }
+
+    // ── Product Modal Handlers ──
+    private void OpenProductModalForCreate()
+    {
+        productModel = new ProductoDto { Activo = true };
+        productErrorMessage = string.Empty;
+        isSavingProduct = false;
+        showProductModal = true;
+    }
+
+    private async Task OpenProductModalForEdit(string id)
+    {
+        productErrorMessage = string.Empty;
+        isSavingProduct = false;
+        showProductModal = true;
+        try
+        {
+            var p = await ProductoService.GetByIdAsync(id);
+            if (p != null)
+            {
+                productModel = p;
+            }
+            else
+            {
+                productErrorMessage = "No se encontró el producto solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            productErrorMessage = "Error al intentar obtener el producto.";
+        }
+    }
+
+    private void CloseProductModal()
+    {
+        showProductModal = false;
+    }
+
+    private async Task HandleSaveProduct()
+    {
+        if (string.IsNullOrWhiteSpace(productModel.Nombre))
+        {
+            productErrorMessage = "El nombre del producto es requerido.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(productModel.CodigoBarras))
+        {
+            productErrorMessage = "El código de barras es requerido.";
+            return;
+        }
+        if (productModel.CategoriaId == 0)
+        {
+            productErrorMessage = "Debe asignar una categoría.";
+            return;
+        }
+
+        isSavingProduct = true;
+        productErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (string.IsNullOrEmpty(productModel.Id))
+            {
+                success = await ProductoService.CreateAsync(productModel);
+            }
+            else
+            {
+                success = await ProductoService.UpdateAsync(productModel.Id, productModel);
+            }
+
+            if (success)
+            {
+                showProductModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                productErrorMessage = "Error al guardar el producto. Revise que todos los campos requeridos estén correctos o que el código de barras no esté duplicado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            productErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingProduct = false;
         }
     }
 

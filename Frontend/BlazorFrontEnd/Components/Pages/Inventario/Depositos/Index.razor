@@ -18,12 +18,12 @@
             <p class="text-secondary" style="margin: 0;">Ubicaciones físicas de almacenamiento de inventario</p>
         </div>
     </div>
-    <a href="/inventario/depositos/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button class="btn-primary-glass" @onclick="OpenDepositoModalForCreate" style="display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nuevo Depósito
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -60,7 +60,7 @@
                                 else { <span class="badge bg-danger">No</span> }
                             </td>
                             <td class="text-end">
-                                <a href="/inventario/depositos/editar/@i.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
+                                <button class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenDepositoModalForEdit(i.Id)">Editar</button>
                                 <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(i.Id)">Eliminar</button>
                             </td>
                         </tr>
@@ -78,10 +78,65 @@
     </div>
 }
 
+
+@* ── Modal de Depósito (Nuevo/Editar) ── *@
+@if (showDepositoModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseDepositoModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 600px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(depositoModel.Id == 0 ? "Nuevo Depósito" : "Editar Depósito")</h3>
+                <button class="modal-close-btn" @onclick="CloseDepositoModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="depositoModel" OnValidSubmit="HandleSaveDeposito" FormName="modalDepositoForm">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre del Depósito (*)</label>
+                    <InputText @bind-Value="depositoModel.Nombre" class="form-control bg-dark text-light border-secondary" placeholder="Ej. Depósito Central, Vitrina Secundaria" />
+                    <ValidationMessage For="@(() => depositoModel.Nombre)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Ubicación / Nro de Estante</label>
+                    <InputText @bind-Value="depositoModel.Ubicacion" class="form-control bg-dark text-light border-secondary" placeholder="Ej. Pasillo A, Estante 3" />
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <InputCheckbox @bind-Value="depositoModel.Activo" class="form-check-input" id="modalDepositoActivoSw" />
+                    <label class="form-check-label" for="modalDepositoActivoSw" style="color: var(--text-secondary);">Depósito Operativo</label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(depositoErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@depositoErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseDepositoModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingDeposito">
+                        @if(isSavingDeposito) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private List<DepositoDto>? Items;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+
+    private bool showDepositoModal;
+    private DepositoDto depositoModel = new() { Activo = true };
+    private bool isSavingDeposito;
+    private string depositoErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +158,85 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    // ── Deposito Modal Handlers ──
+    private void OpenDepositoModalForCreate()
+    {
+        depositoModel = new DepositoDto { Activo = true };
+        depositoErrorMessage = string.Empty;
+        isSavingDeposito = false;
+        showDepositoModal = true;
+    }
+
+    private async Task OpenDepositoModalForEdit(int id)
+    {
+        depositoErrorMessage = string.Empty;
+        isSavingDeposito = false;
+        showDepositoModal = true;
+        try
+        {
+            var d = await CatalogoService.GetDepositoByIdAsync(id);
+            if (d != null)
+            {
+                depositoModel = d;
+            }
+            else
+            {
+                depositoErrorMessage = "No se encontró el elemento solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            depositoErrorMessage = "Error al intentar obtener la información del depósito.";
+        }
+    }
+
+    private void CloseDepositoModal()
+    {
+        showDepositoModal = false;
+    }
+
+    private async Task HandleSaveDeposito()
+    {
+        if (string.IsNullOrWhiteSpace(depositoModel.Nombre))
+        {
+            depositoErrorMessage = "El nombre es requerido.";
+            return;
+        }
+
+        isSavingDeposito = true;
+        depositoErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (depositoModel.Id == 0)
+            {
+                success = await CatalogoService.CreateDepositoAsync(depositoModel);
+            }
+            else
+            {
+                success = await CatalogoService.UpdateDepositoAsync(depositoModel.Id, depositoModel);
+            }
+
+            if (success)
+            {
+                showDepositoModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                depositoErrorMessage = "Error al guardar el depósito.";
+            }
+        }
+        catch (Exception ex)
+        {
+            depositoErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingDeposito = false;
         }
     }
 

@@ -16,12 +16,14 @@ namespace Domain.Entities
         public EstadoTurno Estado { get; private set; }
         public string Motivo { get; private set; }
         public string Observaciones { get; private set; }
+        public int SucursalId { get; private set; }
         public DateTime FechaCreacion { get; private set; }
 
         // Navegación
         public virtual Paciente Paciente { get; private set; }
         public virtual Veterinario Veterinario { get; private set; }
         public virtual Servicio Servicio { get; private set; }
+        public virtual Sucursal Sucursal { get; private set; }
 
         /// <summary>
         /// Hora de finalización calculada
@@ -37,7 +39,8 @@ namespace Domain.Entities
             DateTime fechaHora,
             int duracionMinutos,
             string motivo = "",
-            string observaciones = "") : this()
+            string observaciones = "",
+            int sucursalId = 0) : this()
         {
             Id = Guid.NewGuid().ToString();
             PacienteId = pacienteId;
@@ -48,7 +51,21 @@ namespace Domain.Entities
             Motivo = motivo;
             Observaciones = observaciones;
             Estado = EstadoTurno.Programado;
+            SucursalId = sucursalId;
             FechaCreacion = DateTime.Now;
+        }
+
+        public void AsignarSucursal(int sucursalId) => SucursalId = sucursalId;
+
+        public void Actualizar(string pacienteId, string veterinarioId, int servicioId, DateTime fechaHora, int duracionMinutos, string motivo = "", string observaciones = "")
+        {
+            PacienteId = pacienteId;
+            VeterinarioId = veterinarioId;
+            ServicioId = servicioId;
+            FechaHora = fechaHora;
+            DuracionMinutos = duracionMinutos;
+            Motivo = motivo;
+            Observaciones = observaciones;
         }
 
         public void Reprogramar(DateTime nuevaFechaHora, int duracionMinutos)

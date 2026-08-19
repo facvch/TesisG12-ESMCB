@@ -18,12 +18,12 @@
             <p class="text-secondary" style="margin: 0;">Directorio de agentes comerciales de suministro</p>
         </div>
     </div>
-    <a href="/inventario/proveedores/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button class="btn-primary-glass" @onclick="OpenProveedorModalForCreate" style="display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nuevo Proveedor
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -58,13 +58,13 @@
                             <td><strong>@i.RazonSocial</strong></td>
                             <td>@i.Cuit</td>
                             <td>@i.Telefono</td>
-                            <td><a href="mailto:@i.Email" class="text-light">@i.Email</a></td>
+                            <td><a href="mailto:@i.Email" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="text-light">@i.Email</a></td>
                             <td>
                                 @if(i.Activo) { <span class="badge bg-success">Sí</span> }
                                 else { <span class="badge bg-danger">No</span> }
                             </td>
                             <td class="text-end">
-                                <a href="/inventario/proveedores/editar/@i.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
+                                <button class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenProveedorModalForEdit(i.Id)">Editar</button>
                                 <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(i.Id)">Eliminar</button>
                             </td>
                         </tr>
@@ -82,10 +82,83 @@
     </div>
 }
 
+
+@* ── Modal de Proveedor (Nuevo/Editar) ── *@
+@if (showProveedorModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseProveedorModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 800px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(string.IsNullOrEmpty(proveedorModel.Id) ? "Nuevo Proveedor" : "Editar Proveedor")</h3>
+                <button class="modal-close-btn" @onclick="CloseProveedorModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="proveedorModel" OnValidSubmit="HandleSaveProveedor" FormName="modalProveedorForm">
+                <DataAnnotationsValidator />
+
+                <div class="row">
+                    <div class="col-md-7 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Razón Social (*)</label>
+                        <InputText @bind-Value="proveedorModel.RazonSocial" class="form-control bg-dark text-light border-secondary" placeholder="Ej. Droguería del Sur S.A." />
+                        <ValidationMessage For="@(() => proveedorModel.RazonSocial)" class="text-danger" />
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">CUIT (*)</label>
+                        <InputText @bind-Value="proveedorModel.Cuit" class="form-control bg-dark text-light border-secondary" placeholder="XX-XXXXXXXX-X" />
+                        <ValidationMessage For="@(() => proveedorModel.Cuit)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Teléfono / Celular</label>
+                        <InputText @bind-Value="proveedorModel.Telefono" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Email de Contacto</label>
+                        <InputText @bind-Value="proveedorModel.Email" type="email" class="form-control bg-dark text-light border-secondary" placeholder="ventas@proveedor.com" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Dirección Física</label>
+                    <InputText @bind-Value="proveedorModel.Direccion" class="form-control bg-dark text-light border-secondary" placeholder="Calle, Número, Ciudad, Provincia" />
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <InputCheckbox @bind-Value="proveedorModel.Activo" class="form-check-input" id="modalProveedorActivoSw" />
+                    <label class="form-check-label" for="modalProveedorActivoSw" style="color: var(--text-secondary);">Proveedor Activo (Habilitado para compras)</label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(proveedorErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@proveedorErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseProveedorModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingProveedor">
+                        @if(isSavingProveedor) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private List<ProveedorDto>? Items;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+
+    private bool showProveedorModal;
+    private ProveedorDto proveedorModel = new() { Activo = true };
+    private bool isSavingProveedor;
+    private string proveedorErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,6 +180,90 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    // ── Proveedor Modal Handlers ──
+    private void OpenProveedorModalForCreate()
+    {
+        proveedorModel = new ProveedorDto { Activo = true };
+        proveedorErrorMessage = string.Empty;
+        isSavingProveedor = false;
+        showProveedorModal = true;
+    }
+
+    private async Task OpenProveedorModalForEdit(string id)
+    {
+        proveedorErrorMessage = string.Empty;
+        isSavingProveedor = false;
+        showProveedorModal = true;
+        try
+        {
+            var p = await CatalogoService.GetProveedorByIdAsync(id);
+            if (p != null)
+            {
+                proveedorModel = p;
+            }
+            else
+            {
+                proveedorErrorMessage = "No se encontró el elemento solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            proveedorErrorMessage = "Error al intentar obtener la información del proveedor.";
+        }
+    }
+
+    private void CloseProveedorModal()
+    {
+        showProveedorModal = false;
+    }
+
+    private async Task HandleSaveProveedor()
+    {
+        if (string.IsNullOrWhiteSpace(proveedorModel.RazonSocial))
+        {
+            proveedorErrorMessage = "La Razón Social es requerida.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(proveedorModel.Cuit))
+        {
+            proveedorErrorMessage = "El CUIT es requerido.";
+            return;
+        }
+
+        isSavingProveedor = true;
+        proveedorErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (string.IsNullOrEmpty(proveedorModel.Id))
+            {
+                success = await CatalogoService.CreateProveedorAsync(proveedorModel);
+            }
+            else
+            {
+                success = await CatalogoService.UpdateProveedorAsync(proveedorModel.Id, proveedorModel);
+            }
+
+            if (success)
+            {
+                showProveedorModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                proveedorErrorMessage = "Error al guardar el proveedor. Valide el formato del CUIT.";
+            }
+        }
+        catch (Exception ex)
+        {
+            proveedorErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingProveedor = false;
         }
     }
 

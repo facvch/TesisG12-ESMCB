@@ -1,4 +1,5 @@
 using API.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -7,6 +8,7 @@ namespace Controllers
     /// Controller para gestión del caché de respuestas
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class CacheController : BaseController
     {
         /// <summary>

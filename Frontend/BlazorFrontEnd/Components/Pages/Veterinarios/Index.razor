@@ -1,17 +1,165 @@
 @page "/veterinarios"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject VeterinarioService VeterinarioService
 @inject NavigationManager Navigation
+@inject AuthService AuthService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Directorio Médico</PageTitle>
+
+<style>
+    .vet-calendar-panel {
+        background-color: #FAFAFA !important;
+        color: #333333 !important;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow-x: auto;
+    }
+
+    .vet-calendar-panel::-webkit-scrollbar {
+        height: 8px;
+    }
+    .vet-calendar-panel::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .vet-calendar-panel::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .vet-calendar-panel::-webkit-scrollbar-thumb:hover {
+        background: #0284c7;
+    }
+
+    .vet-calendar-grid {
+        min-width: 2300px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .vet-calendar-header {
+        display: flex;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 10px;
+        margin-bottom: 5px;
+    }
+
+    .vet-calendar-day-title {
+        width: 140px;
+        min-width: 140px;
+        font-weight: 700;
+        color: #333333 !important;
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        position: sticky;
+        left: 0;
+        z-index: 30;
+        background-color: #FAFAFA !important;
+        border-right: 2px solid #e2e8f0;
+    }
+
+    .vet-calendar-hours-container {
+        flex-grow: 1;
+        display: flex;
+        min-width: 2160px;
+    }
+
+    .vet-calendar-hour-col {
+        width: 90px;
+        min-width: 90px;
+        flex-shrink: 0;
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #333333 !important;
+        border-left: 1px dashed #cbd5e1;
+    }
+
+    .vet-calendar-row {
+        display: flex;
+        border-bottom: 1px solid #e2e8f0;
+        position: relative;
+    }
+
+    .vet-calendar-row-day-name {
+        width: 140px;
+        min-width: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 8px 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        position: sticky;
+        left: 0;
+        z-index: 30;
+        background-color: #FAFAFA !important;
+        color: #333333 !important;
+        border-right: 2px solid #e2e8f0;
+    }
+
+    .vet-calendar-row-timeline {
+        flex-grow: 1;
+        min-width: 2160px;
+        position: relative;
+        display: flex;
+        background: #f1f5f9;
+    }
+
+    .vet-calendar-hour-bg-cell {
+        width: 90px;
+        min-width: 90px;
+        flex-shrink: 0;
+        border-left: 1px dashed #e2e8f0;
+        height: 100%;
+    }
+
+    .horario-card-sm {
+        position: absolute;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        z-index: 5;
+    }
+
+    .horario-card-sm:hover {
+        transform: translateY(-2px) scale(1.02);
+        z-index: 20;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+        filter: brightness(1.25);
+    }
+
+    .horario-card-normal {
+        background: rgba(34, 197, 94, 0.2);
+        border-left: 4px solid #22c55e;
+        color: #fff;
+    }
+
+    .horario-card-guardia {
+        background: rgba(59, 130, 246, 0.25);
+        border-left: 4px solid #3b82f6;
+        color: #fff;
+    }
+</style>
 
 <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
     <div>
         <h2 style="font-weight: 700; margin: 0;">Cuerpo Médico Veterinario</h2>
-        <p class="text-secondary" style="margin: 0;">Gestión de información de contacto y especialidades</p>
+        <p class="text-secondary" style="margin: 0;">Gestión de información de contacto, especialidades y disponibilidad horaria</p>
     </div>
-    <AuthorizeView Roles="Admin,Veterinario">
+    <AuthorizeView Roles="Admin,Gerente">
         <Authorized>
             <a href="/veterinarios/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
@@ -23,7 +171,7 @@
     </AuthorizeView>
 </div>
 
-<div class="glass-card">
+<div class="glass-card mb-4">
     @if (isLoading)
     {
         <p class="text-secondary">Cargando directorio de profesionales...</p>
@@ -35,14 +183,15 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-dark table-hover" style="background: transparent;">
+            <table class="table table-dark table-hover align-middle" style="background: transparent;">
                 <thead>
                     <tr style="border-bottom: 2px solid var(--border-glass);">
                         <th>Dr./Dra.</th>
                         <th>Matrícula</th>
                         <th>Especialidad</th>
+                        <th>Estado Actual</th>
                         <th>Contacto</th>
-                        <AuthorizeView Roles="Admin,Veterinario">
+                        <AuthorizeView Roles="Admin,Gerente">
                             <Authorized>
                                 <th class="text-end">Acciones</th>
                             </Authorized>
@@ -59,12 +208,32 @@
                             <td><span class="badge bg-secondary">MP: @v.Matricula</span></td>
                             <td class="text-info">@(string.IsNullOrEmpty(v.Especialidad) ? "Clínica General" : v.Especialidad)</td>
                             <td>
+                                @if (v.DisponibilidadActual == "Disponible")
+                                {
+                                    <span class="badge px-3 py-2" style="background-color: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e;">
+                                        🟢 Disponible
+                                    </span>
+                                }
+                                else if (v.DisponibilidadActual == "Guardia")
+                                {
+                                    <span class="badge px-3 py-2" style="background-color: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6;">
+                                        🔵 Guardia
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge px-3 py-2" style="background-color: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444;">
+                                        🔴 No Disponible
+                                    </span>
+                                }
+                            </td>
+                            <td>
                                 <div class="small">
                                     📞 @v.Telefono<br/>
                                     ✉️ @v.Email
                                 </div>
                             </td>
-                            <AuthorizeView Roles="Admin,Veterinario">
+                            <AuthorizeView Roles="Admin,Gerente">
                                 <Authorized>
                                     <td class="text-end">
                                         <a href="/veterinarios/editar/@v.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
@@ -80,6 +249,111 @@
     }
 </div>
 
+<!-- SECCIÓN: CALENDARIO VISUAL DE HORARIOS (24 Horas con Scroll Horizontal y Filas Dinámicas) -->
+<div class="vet-calendar-panel">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h3 style="font-weight: 700; margin: 0; font-size: 1.25rem; color: #333333;">📅 Calendario Semanal de Cobertura y Horarios</h3>
+            <p class="small margin-0" style="color: #475569;">Deslice horizontalmente para recorrer las 24hs. La altura de los días se ajusta automáticamente para ver todos los médicos de forma clara.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="small mb-0 text-nowrap" style="color: #475569;">Filtrar por Médico:</label>
+            <select class="form-select bg-light text-dark border-secondary form-select-sm" style="min-width: 200px;" @bind="selectedVetFilter">
+                <option value="">-- Todos los Profesionales --</option>
+                @if (veterinarios != null)
+                {
+                    @foreach (var vet in veterinarios)
+                    {
+                        <option value="@vet.Id">@vet.NombreCompleto</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="vet-calendar-grid">
+        <!-- ENCABEZADO: 24 HORAS EN LAS COLUMNAS -->
+        <div class="vet-calendar-header">
+            <div class="vet-calendar-day-title" style="color: #333333;">Día / Horas</div>
+            <div class="vet-calendar-hours-container">
+                @for (int hour = 0; hour < 24; hour++)
+                {
+                    <div class="vet-calendar-hour-col">
+                        @($"{hour:D2}:00")
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- FILAS: LOS DÍAS DE LA SEMANA -->
+        @for (int dia = 1; dia <= 7; dia++)
+        {
+            var diaNombre = GetDiaNombre(dia);
+            bool isToday = (int)DateTime.Today.DayOfWeek == (dia == 7 ? 0 : dia);
+            var horariosPositioned = GetHorariosPositionedForDay(dia);
+
+            int maxLanes = horariosPositioned.Any() ? horariosPositioned.Max(p => p.TotalLanes) : 1;
+            double calculatedRowHeight = Math.Max(72.0, (maxLanes * 46.0) + 12.0);
+
+            <div class="vet-calendar-row" style="min-height: @(calculatedRowHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px; height: @(calculatedRowHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px;">
+                <!-- Columna 1 Sticky (Fila): Nombre del Día -->
+                <div class="vet-calendar-row-day-name">
+                    <span style="color: @(isToday ? "#0284c7" : "#333333"); font-weight: @(isToday ? "700" : "600");">
+                        @diaNombre.ToUpper()
+                    </span>
+                    @if (isToday)
+                    {
+                        <span class="badge bg-primary mt-1" style="font-size: 0.65rem; width: fit-content;">Hoy</span>
+                    }
+                </div>
+
+                <!-- Timeline Horizontal con celdas de guía y tarjetas de horarios -->
+                <div class="vet-calendar-row-timeline">
+                    <!-- Guías visuales punteadas por hora (24 columnas) -->
+                    @for (int h = 0; h < 24; h++)
+                    {
+                        <div class="vet-calendar-hour-bg-cell"></div>
+                    }
+
+                    @if (!horariosPositioned.Any())
+                    {
+                        <div class="d-flex align-items-center justify-content-center text-secondary w-100 fst-italic" style="font-size: 0.75rem; opacity: 0.5; pointer-events: none;">
+                            Sin guardia / atención programada
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var pos in horariosPositioned)
+                        {
+                            bool isGuardia = pos.Item.Horario.TipoHorarioId == 2 || pos.Item.Horario.TipoHorarioNombre.Equals("Guardia", StringComparison.OrdinalIgnoreCase);
+                            string cardClass = isGuardia ? "horario-card-guardia" : "horario-card-normal";
+                            
+                            double topPx = (pos.LaneIndex * 46.0) + 6.0;
+
+                            <div class="horario-card-sm @cardClass"
+                                 style="left: @(pos.LeftPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; 
+                                        width: @(pos.WidthPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; 
+                                        top: @(topPx.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px; 
+                                        height: 40px;"
+                                 title="@pos.Item.VetNombre - @pos.Item.Horario.HoraInicio hs a @pos.Item.Horario.HoraFin hs (@(isGuardia ? "Guardia" : "Atención Normal"))">
+                                <div class="fw-bold text-truncate" style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @pos.Item.VetNombre
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center" style="font-size: 0.68rem; opacity: 0.95;">
+                                    <span>@pos.Item.Horario.HoraInicio - @pos.Item.Horario.HoraFin</span>
+                                    <span class="badge" style="font-size: 0.58rem; background: rgba(255,255,255,0.25); margin-left: 4px;">
+                                        @(isGuardia ? "Guardia" : "Normal")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
 @if (!string.IsNullOrEmpty(errorMessage))
 {
     <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
@@ -91,10 +365,23 @@
     private List<VeterinarioDto>? veterinarios;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+    private string selectedVetFilter = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
+        try
+        {
+            var profile = await AuthService.GetProfileAsync();
+            if (profile != null && profile.RolNombre == "Veterinario" && !string.IsNullOrEmpty(profile.VeterinarioId))
+            {
+                selectedVetFilter = profile.VeterinarioId;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[VET INDEX] Error al obtener el perfil de veterinario: {ex.Message}");
+        }
     }
 
     private async Task LoadDataAsync()
@@ -120,12 +407,156 @@
 
     private async Task ConfirmarDelete(string id)
     {
-        bool confirm = true; 
+        var vet = veterinarios?.FirstOrDefault(v => v.Id == id);
+        string nombreCompleto = vet != null ? vet.NombreCompleto : "el profesional";
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"¿Estás seguro que querés dar de baja al profesional {nombreCompleto}?"); 
         if(confirm)
         {
             var exito = await VeterinarioService.DeleteAsync(id);
             if(exito) await LoadDataAsync();
             else errorMessage = "Error al dar de baja al profesional. Puede tener consultas asignadas.";
         }
+    }
+
+    private string GetDiaNombre(int dia) => dia switch
+    {
+        1 => "Lunes",
+        2 => "Martes",
+        3 => "Miércoles",
+        4 => "Jueves",
+        5 => "Viernes",
+        6 => "Sábado",
+        7 => "Domingo",
+        _ => ""
+    };
+
+    private class VetHorarioItem
+    {
+        public string VetNombre { get; set; } = string.Empty;
+        public HorarioDto Horario { get; set; } = new();
+    }
+
+    private class VetHorarioPositioned
+    {
+        public VetHorarioItem Item { get; set; } = new();
+        public double LeftPercent { get; set; }
+        public double WidthPercent { get; set; }
+        public int LaneIndex { get; set; }
+        public int TotalLanes { get; set; }
+    }
+
+    private List<VetHorarioItem> GetHorariosPorDia(int dia)
+    {
+        var list = new List<VetHorarioItem>();
+        if (veterinarios == null) return list;
+
+        var sourceVets = string.IsNullOrEmpty(selectedVetFilter)
+            ? veterinarios
+            : veterinarios.Where(v => v.Id == selectedVetFilter).ToList();
+
+        foreach (var v in sourceVets)
+        {
+            if (v.Horarios != null)
+            {
+                foreach (var h in v.Horarios.Where(x => x.Activo && x.DiaSemana == dia))
+                {
+                    list.Add(new VetHorarioItem
+                    {
+                        VetNombre = v.NombreCompleto,
+                        Horario = h
+                    });
+                }
+            }
+        }
+
+        return list.OrderBy(x => x.Horario.HoraInicio).ToList();
+    }
+
+    private (double Left, double Width) GetPositionPercentages(HorarioDto h)
+    {
+        if (!TimeSpan.TryParse(h.HoraInicio, out var tStart)) tStart = new TimeSpan(8, 0, 0);
+        if (!TimeSpan.TryParse(h.HoraFin, out var tEnd)) tEnd = new TimeSpan(16, 0, 0);
+
+        double start = tStart.TotalHours;
+        double end = tEnd.TotalHours;
+
+        if (end <= start) end = 24.0;
+
+        double minHour = 0.0;
+        double maxHour = 24.0;
+        double totalRange = maxHour - minHour; // 24 hours total (00:00 to 24:00)
+
+        start = Math.Max(minHour, Math.Min(maxHour, start));
+        end = Math.Max(minHour, Math.Min(maxHour, end));
+
+        double left = (start / totalRange) * 100.0;
+        double width = ((end - start) / totalRange) * 100.0;
+
+        return (left, width);
+    }
+
+    private List<VetHorarioPositioned> GetHorariosPositionedForDay(int dia)
+    {
+        var items = GetHorariosPorDia(dia);
+        var result = new List<VetHorarioPositioned>();
+        if (!items.Any()) return result;
+
+        var lanes = new List<List<VetHorarioItem>>();
+        foreach (var item in items)
+        {
+            if (!TimeSpan.TryParse(item.Horario.HoraInicio, out var s)) s = new TimeSpan(8, 0, 0);
+            if (!TimeSpan.TryParse(item.Horario.HoraFin, out var e)) e = new TimeSpan(16, 0, 0);
+
+            if (e <= s) e = new TimeSpan(24, 0, 0);
+
+            int targetLane = -1;
+            for (int i = 0; i < lanes.Count; i++)
+            {
+                bool hasOverlap = false;
+                foreach (var existing in lanes[i])
+                {
+                    TimeSpan.TryParse(existing.Horario.HoraInicio, out var es);
+                    TimeSpan.TryParse(existing.Horario.HoraFin, out var ee);
+                    if (ee <= es) ee = new TimeSpan(24, 0, 0);
+
+                    if (s < ee && e > es)
+                    {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+                if (!hasOverlap)
+                {
+                    lanes[i].Add(item);
+                    targetLane = i;
+                    break;
+                }
+            }
+
+            if (targetLane == -1)
+            {
+                lanes.Add(new List<VetHorarioItem> { item });
+                targetLane = lanes.Count - 1;
+            }
+        }
+
+        int totalLanes = Math.Max(1, lanes.Count);
+        for (int l = 0; l < lanes.Count; l++)
+        {
+            foreach (var item in lanes[l])
+            {
+                var (left, width) = GetPositionPercentages(item.Horario);
+                result.Add(new VetHorarioPositioned
+                {
+                    Item = item,
+                    LeftPercent = left,
+                    WidthPercent = width,
+                    LaneIndex = l,
+                    TotalLanes = totalLanes
+                });
+            }
+        }
+
+        return result;
     }
 }

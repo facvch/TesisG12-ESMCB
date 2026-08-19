@@ -31,6 +31,7 @@ namespace BlazorFrontEnd.Models
         public string Tipo { get; set; } = string.Empty;
         public string Titulo { get; set; } = string.Empty;
         public string Detalle { get; set; } = string.Empty;
+        public string EntidadId { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; }
     }
 
@@ -40,5 +41,24 @@ namespace BlazorFrontEnd.Models
         public string FechaCorta { get; set; } = string.Empty;
         public int TotalVentas { get; set; }
         public decimal Ingresos { get; set; }
+    }
+
+    public class VacunaPendienteDto
+    {
+        public string PacienteId { get; set; } = string.Empty;
+        public string Paciente { get; set; } = string.Empty;
+        public string Propietario { get; set; } = string.Empty;
+        public string Telefono { get; set; } = string.Empty;
+        public string Vacuna { get; set; } = string.Empty;
+        public DateTime FechaProximaDosis { get; set; }
+        public int DiasRestantes { get; set; }
+        public string Detalle { get; set; } = string.Empty;
+    }
+
+    public class VacunasPendientesResponse
+    {
+        public int Total { get; set; }
+        public int DiasAntelacion { get; set; }
+        public List<VacunaPendienteDto> Items { get; set; } = new();
     }
 }

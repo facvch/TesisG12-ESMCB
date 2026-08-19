@@ -20,6 +20,8 @@ namespace Application.DataTransferObjects
         public decimal Total { get; set; }
         public string Estado { get; set; }
         public string Observaciones { get; set; }
+        public int? SucursalId { get; set; }
+        public string? SucursalNombre { get; set; }
         public List<DetalleVentaDto> Detalles { get; set; } = new();
     }
 

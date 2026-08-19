@@ -61,7 +61,8 @@ namespace BlazorFrontEnd.Services
 
         public async Task<bool> UpdateAsync(string id, RegistroVacunacionDto modelo)
         {
-            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/{id}", modelo);
+            modelo.Id = id;
+            var response = await _httpClient.PutAsJsonAsync(BaseUrl, modelo);
             return response.IsSuccessStatusCode;
         }
 

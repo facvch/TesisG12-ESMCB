@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -8,6 +9,7 @@ namespace Controllers
     /// Controller de documentación que genera catálogo completo de la API
     /// </summary>
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class DocumentacionController(IActionDescriptorCollectionProvider actionProvider) : BaseController
     {
         /// <summary>

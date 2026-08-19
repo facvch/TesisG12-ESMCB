@@ -21,10 +21,12 @@ namespace Infrastructure.Repositories.Sql
         public DbSet<Tratamiento> Tratamientos { get; set; }
         public DbSet<HistorialClinico> HistorialesClinico { get; set; }
 
-        // Entidades de gestión de turnos
+        // Entidades de gestión de turnos y horarios
         public DbSet<Servicio> Servicios { get; set; }
         public DbSet<Veterinario> Veterinarios { get; set; }
         public DbSet<Turno> Turnos { get; set; }
+        public DbSet<TipoHorario> TiposHorarios { get; set; }
+        public DbSet<Horario> Horarios { get; set; }
 
         // Entidades de gestión de stock
         public DbSet<Categoria> Categorias { get; set; }
@@ -44,6 +46,7 @@ namespace Infrastructure.Repositories.Sql
         // Entidades de autenticación
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Sucursal> Sucursales { get; set; }
 
         // Entidades de auditoría y notificaciones
         public DbSet<AuditLog> AuditLogs { get; set; }
@@ -232,6 +235,50 @@ namespace Infrastructure.Repositories.Sql
                 entity.Property(v => v.Especialidad).HasMaxLength(100);
 
                 entity.HasIndex(v => v.Matricula).IsUnique();
+
+                entity.HasOne(v => v.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(v => v.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configuración de TipoHorario
+            modelBuilder.Entity<TipoHorario>(entity =>
+            {
+                entity.ToTable("TiposHorarios");
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(t => t.Descripcion).HasMaxLength(200);
+
+                entity.HasData(
+                    new TipoHorario(1, "Normal", "Horario de atención regular"),
+                    new TipoHorario(2, "Guardia", "Horario de guardia / emergencia")
+                );
+            });
+
+            // Configuración de Horario
+            modelBuilder.Entity<Horario>(entity =>
+            {
+                entity.ToTable("Horarios");
+                entity.HasKey(h => h.Id);
+                entity.Property(h => h.VeterinarioId).IsRequired();
+                entity.Property(h => h.DiaSemana).IsRequired();
+                entity.Property(h => h.HoraInicio).IsRequired();
+                entity.Property(h => h.HoraFin).IsRequired();
+                entity.Property(h => h.TipoHorarioId).IsRequired();
+
+                entity.HasOne(h => h.Veterinario)
+                    .WithMany(v => v.Horarios)
+                    .HasForeignKey(h => h.VeterinarioId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(h => h.TipoHorario)
+                    .WithMany(t => t.Horarios)
+                    .HasForeignKey(h => h.TipoHorarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(h => h.VeterinarioId);
+                entity.HasIndex(h => h.DiaSemana);
             });
 
             // Configuración de Turno
@@ -255,6 +302,11 @@ namespace Infrastructure.Repositories.Sql
                 entity.HasOne(t => t.Servicio)
                     .WithMany()
                     .HasForeignKey(t => t.ServicioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(t => t.SucursalId)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(t => t.PacienteId);
@@ -303,6 +355,11 @@ namespace Infrastructure.Repositories.Sql
                 entity.Property(d => d.Id).ValueGeneratedOnAdd();
                 entity.Property(d => d.Nombre).IsRequired().HasMaxLength(100);
                 entity.Property(d => d.Ubicacion).HasMaxLength(200);
+
+                entity.HasOne(d => d.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(d => d.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Configuración de Producto
@@ -403,6 +460,11 @@ namespace Infrastructure.Repositories.Sql
                     .HasForeignKey(v => v.MetodoPagoId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(v => v.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(v => v.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasIndex(v => v.PropietarioId);
                 entity.HasIndex(v => v.Fecha);
             });
@@ -477,6 +539,11 @@ namespace Infrastructure.Repositories.Sql
                     .HasForeignKey(u => u.RolId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(u => u.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(u => u.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasIndex(u => u.NombreUsuario).IsUnique();
                 entity.HasIndex(u => u.Email).IsUnique();
             });
@@ -519,6 +586,18 @@ namespace Infrastructure.Repositories.Sql
                 entity.Property(c => c.Grupo).IsRequired().HasMaxLength(50);
                 entity.HasIndex(c => c.Clave).IsUnique();
                 entity.HasIndex(c => c.Grupo);
+            });
+
+            // Configuración de Sucursal
+            modelBuilder.Entity<Sucursal>(entity =>
+            {
+                entity.ToTable("Sucursales");
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Id).ValueGeneratedOnAdd();
+                entity.Property(s => s.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(s => s.Direccion).IsRequired().HasMaxLength(200);
+                entity.Property(s => s.Telefono).IsRequired().HasMaxLength(50);
+                entity.Property(s => s.Email).HasMaxLength(100);
             });
         }
     }

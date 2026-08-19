@@ -1,4 +1,6 @@
 @page "/historial-clinico/nuevo-tratamiento/{PacienteId}"
+@page "/historial-clinico/editar-tratamiento/{PacienteId}/{TratamientoId}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject TratamientoService TratamientoService
@@ -6,10 +8,10 @@
 @inject PersonalService PersonalService
 @inject NavigationManager Navigation
 
-<PageTitle>Iniciar Tratamiento - Historial Clínico</PageTitle>
+<PageTitle>@(isEdit ? "Editar Tratamiento" : "Iniciar Tratamiento") - Historial Clínico</PageTitle>
 
 <div class="glass-card" style="max-width: 800px; margin: auto; margin-top:20px;">
-    <h4>Iniciar Plan de Tratamiento (@pacienteNombre)</h4>
+    <h4>@(isEdit ? "Editar Plan de Tratamiento" : "Iniciar Plan de Tratamiento") (@pacienteNombre)</h4>
     <hr class="border-secondary" />
 
     <EditForm Model="model" OnValidSubmit="HandleSave">
@@ -19,6 +21,7 @@
             <div class="col-md-6">
                 <label>Fecha de Inicio (*)</label>
                 <InputDate @bind-Value="model.Fecha" class="form-control bg-dark text-light border-secondary" />
+                <ValidationMessage For="@(() => model.Fecha)" class="text-danger" />
             </div>
             <div class="col-md-6">
                 <label>Veterinario a Cargo (*)</label>
@@ -48,6 +51,7 @@
         <div class="mb-3">
             <label>Medicación Recetada / Dosis de choque y mantenimiento</label>
             <InputTextArea @bind-Value="model.Medicacion" class="form-control bg-dark text-light border-secondary" rows="3" placeholder="Ej: Amoxicilina 500mg cada 12hs por 7 días..." />
+            <ValidationMessage For="@(() => model.Medicacion)" class="text-danger" />
         </div>
 
         <div class="mb-3 form-check" style="margin-top: 20px;">
@@ -62,7 +66,7 @@
 
         <div class="d-flex justify-content-end mt-4 gap-2">
             <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
-            <button type="submit" class="btn-primary-glass" disabled="@isSaving">Guardar Tratamiento</button>
+            <button type="submit" class="btn-primary-glass" disabled="@isSaving">@(isEdit ? "Guardar Cambios" : "Iniciar Tratamiento")</button>
         </div>
     </EditForm>
 </div>
@@ -70,6 +74,11 @@
 @code {
     [Parameter]
     public string PacienteId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? TratamientoId { get; set; }
+
+    private bool isEdit => !string.IsNullOrEmpty(TratamientoId);
 
     private TratamientoDto model = new() { Fecha = DateTime.Today };
     private string pacienteNombre = "Cargando...";
@@ -89,12 +98,26 @@
 
         var vRes = await PersonalService.GetVeterinariosActivosAsync();
         if(vRes != null) vets = vRes;
+
+        if (isEdit)
+        {
+            var existing = await TratamientoService.GetByIdAsync(TratamientoId!);
+            if (existing != null)
+            {
+                model = existing;
+            }
+            else
+            {
+                errorMessage = "No se encontró el tratamiento a editar.";
+            }
+        }
     }
 
     private async Task HandleSave()
     {
         isSaving = true;
-        
+        errorMessage = string.Empty;
+
         if (string.IsNullOrEmpty(model.Diagnostico))
         {
             errorMessage = "El campo Diagnóstico es requerido.";
@@ -102,13 +125,31 @@
             return;
         }
 
-        if(await TratamientoService.CreateAsync(model))
+        try
         {
-            GoBack();
+            bool success;
+            if (isEdit)
+            {
+                success = await TratamientoService.UpdateAsync(TratamientoId!, model);
+            }
+            else
+            {
+                success = await TratamientoService.CreateAsync(model);
+            }
+
+            if (success)
+            {
+                GoBack();
+            }
+            else
+            {
+                errorMessage = isEdit ? "Error al intentar actualizar el tratamiento." : "Error al intentar guardar el tratamiento.";
+                isSaving = false;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = "Error al intentar guardar el tratamiento.";
+            errorMessage = $"Ocurrió una excepción: {ex.Message}";
             isSaving = false;
         }
     }

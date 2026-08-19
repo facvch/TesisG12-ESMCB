@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class ConfiguracionController(IConfiguracionSistemaRepository repo) : BaseController
     {
         private readonly IConfiguracionSistemaRepository _repo = repo;

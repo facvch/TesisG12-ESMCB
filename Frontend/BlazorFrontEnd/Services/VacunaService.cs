@@ -64,7 +64,8 @@ namespace BlazorFrontEnd.Services
                     Nombre = modelo.Nombre,
                     Descripcion = modelo.Descripcion,
                     Laboratorio = modelo.Laboratorio,
-                    IntervaloDosisDias = modelo.IntervaloDosisDias
+                    IntervaloDosisDias = modelo.IntervaloDosisDias,
+                    Activo = modelo.Activo
                 };
                 var response = await _httpClient.PutAsJsonAsync(BaseUrl, request);
                 return response.IsSuccessStatusCode;

@@ -1,0 +1,336 @@
+@page "/sucursales"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using BlazorFrontEnd.Models
+@using BlazorFrontEnd.Services
+@inject SucursalService SucursalService
+@inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject BlazorFrontEnd.Auth.TokenStorageService TokenStorage
+
+<PageTitle>Gestión de Sucursales</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+    <div>
+        <h2 style="font-weight: 700; margin: 0;">Sucursales</h2>
+        <p class="text-secondary" style="margin: 0;">Gestión de centros veterinarios y locales del sistema</p>
+    </div>
+    <button @onclick="OpenNewModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Nueva Sucursal
+    </button>
+</div>
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="margin-bottom: var(--sp-md);">
+        <h4 style="margin: 0;">Lista de Sucursales</h4>
+    </div>
+
+    @if (isLoading)
+    {
+        <p class="text-secondary">Cargando datos...</p>
+    }
+    else if (sucursales == null || !sucursales.Any())
+    {
+        <p class="text-secondary">No se encontraron sucursales en el sistema.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-dark table-hover" style="background: transparent;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-glass);">
+                        <th>Nombre</th>
+                        <th>Dirección</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in sucursales)
+                    {
+                        <tr style="border-bottom: 1px solid var(--border-glass);">
+                            <td><strong>@s.Nombre</strong></td>
+                            <td>@s.Direccion</td>
+                            <td>@s.Telefono</td>
+                            <td>@s.Email</td>
+                            <td>
+                                @if (s.Activa)
+                                {
+                                    <span style="color: var(--accent-primary);">Activa</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--accent-danger);">Inactiva</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenEditModal(s)">Editar</button>
+                                @if (s.Activa)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(s)">Desactivar</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">
+        @errorMessage
+    </div>
+}
+
+@* ═══════ MODAL: Crear/Editar Sucursal ═══════ *@
+@if (showModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(isEdit ? "Editar Sucursal" : "Nueva Sucursal")</h3>
+                <button class="modal-close-btn" @onclick="CloseModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="modalModel" OnValidSubmit="HandleSave" FormName="modalSucursalForm">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                    <InputText @bind-Value="modalModel.Nombre" class="form-control bg-dark text-light border-secondary" required />
+                    <ValidationMessage For="@(() => modalModel.Nombre)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Dirección (*)</label>
+                    <InputText @bind-Value="modalModel.Direccion" class="form-control bg-dark text-light border-secondary" required />
+                    <ValidationMessage For="@(() => modalModel.Direccion)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Teléfono (*)</label>
+                    <InputText @bind-Value="modalModel.Telefono" class="form-control bg-dark text-light border-secondary" required />
+                    <ValidationMessage For="@(() => modalModel.Telefono)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Email</label>
+                    <InputText @bind-Value="modalModel.Email" class="form-control bg-dark text-light border-secondary" type="email" />
+                    <ValidationMessage For="@(() => modalModel.Email)" class="text-danger" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(modalErrorMessage))
+                {
+                    <div class="alert alert-danger p-2">@modalErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end" style="gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSaving">
+                        @if(isSaving) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL: Confirmar Desactivación ═══════ *@
+@if (showDeleteModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseDeleteModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Confirmar Desactivación</h3>
+                <button class="modal-close-btn" @onclick="CloseDeleteModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div style="margin-top: 15px; margin-bottom: 25px;">
+                <p>¿Está seguro de que desea desactivar la sucursal <strong>@sucursalToDelete?.Nombre</strong>?</p>
+                <small class="text-secondary">Esto deshabilitará su visibilidad en el sistema para nuevas operaciones, pero conservará los registros históricos.</small>
+            </div>
+
+            <div class="d-flex justify-content-end" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseDeleteModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" style="background: var(--accent-danger); border: none;" @onclick="ExecuteDelete">Desactivar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<SucursalDto>? sucursales = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    // Modal state
+    private bool showModal = false;
+    private bool isEdit = false;
+    private SucursalDto modalModel = new();
+    private string modalErrorMessage = string.Empty;
+    private bool isSaving = false;
+
+    // Delete state
+    private bool showDeleteModal = false;
+    private SucursalDto? sucursalToDelete;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await SyncTokenAsync();
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SyncTokenAsync()
+    {
+        try
+        {
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
+            if (!string.IsNullOrWhiteSpace(token))
+                TokenStorage.SetToken(token);
+        }
+        catch { }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        try
+        {
+            sucursales = await SucursalService.GetAllAsync(soloActivos: false);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar las sucursales: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenNewModal()
+    {
+        isEdit = false;
+        modalModel = new SucursalDto();
+        modalErrorMessage = string.Empty;
+        showModal = true;
+    }
+
+    private void OpenEditModal(SucursalDto s)
+    {
+        isEdit = true;
+        modalModel = new SucursalDto
+        {
+            Id = s.Id,
+            Nombre = s.Nombre,
+            Direccion = s.Direccion,
+            Telefono = s.Telefono,
+            Email = s.Email,
+            Activa = s.Activa
+        };
+        modalErrorMessage = string.Empty;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private async Task HandleSave()
+    {
+        isSaving = true;
+        modalErrorMessage = string.Empty;
+        try
+        {
+            bool res;
+            if (isEdit)
+            {
+                res = await SucursalService.UpdateAsync(modalModel);
+            }
+            else
+            {
+                var req = new CreateSucursalRequest
+                {
+                    Nombre = modalModel.Nombre,
+                    Direccion = modalModel.Direccion,
+                    Telefono = modalModel.Telefono,
+                    Email = modalModel.Email
+                };
+                res = await SucursalService.CreateAsync(req);
+            }
+
+            if (res)
+            {
+                showModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                modalErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+            }
+        }
+        catch (Exception ex)
+        {
+            modalErrorMessage = $"Excepción interna: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void ConfirmDelete(SucursalDto s)
+    {
+        sucursalToDelete = s;
+        showDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        showDeleteModal = false;
+        sucursalToDelete = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (sucursalToDelete == null) return;
+        try
+        {
+            var res = await SucursalService.DeleteAsync(sucursalToDelete.Id);
+            if (res)
+            {
+                showDeleteModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                errorMessage = "No se pudo desactivar la sucursal.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al desactivar: {ex.Message}";
+        }
+    }
+}

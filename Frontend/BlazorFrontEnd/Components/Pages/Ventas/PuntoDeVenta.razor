@@ -1,4 +1,5 @@
 @page "/ventas/pos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario,Recepcionista")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject VentaService VentaService
@@ -16,13 +17,13 @@
     <div class="col-md-7">
         <div class="d-flex align-items-center mb-3">
             <button class="btn btn-outline-secondary me-3" @onclick="GoBack">
-                 ← Volver a Caja
+                 ← Volver a Comercio
             </button>
-            <h3 class="m-0" style="font-weight: 700;">Terminal de Ventas</h3>
+            <h3 class="m-0" style="font-weight: 700;">Registrar Salida de Productos</h3>
         </div>
 
         <div class="glass-card mb-3">
-            <h5 class="mb-3">Buscador de Productos / Servicios</h5>
+            <h5 class="mb-3">Buscador de Productos</h5>
             <div class="input-group">
                 <input type="text" class="form-control" placeholder="Escanear Código de Barras o Escribir nombre..." @bind-value="searchTerm" @bind-value:event="oninput" @onkeyup="OnSearch" />
                 <button class="btn btn-outline-info" type="button" @onclick="BuscarProductos">Buscar</button>
@@ -65,7 +66,7 @@
     <div class="col-md-5">
         <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="m-0">Ticket Actual</h4>
+                <h4 class="m-0">Carrito Actual</h4>
                 <button class="btn btn-sm btn-outline-danger" @onclick="VaciarCarrito">Vaciar</button>
             </div>
 
@@ -75,7 +76,7 @@
                 {
                     <div class="text-center text-secondary mt-5">
                         <p>El carrito está vacío.</p>
-                        <small>Busque o escanee productos para agregarlos al ticket de venta.</small>
+                        <small>Busque o escanee productos para agregarlos al carrito.</small>
                     </div>
                 }
                 else
@@ -144,8 +145,8 @@
                     <div class="alert alert-danger p-2 small m-0 mb-3">@msgError</div>
                 }
 
-                <button class="btn-primary-glass w-100 btn-lg" disabled="@(!PuedeCobrar)" @onclick="ProcesarVenta">
-                    @if(procesando) { <span>Procesando...</span> } else { <span>Registrar venta</span> }
+                <button class="btn-primary-glass w-100 btn-lg" disabled="@procesando" @onclick="ProcesarVenta">
+                    @if(procesando) { <span>Procesando...</span> } else { <span>Registrar salida de productos</span> }
                 </button>
             </div>
         </div>
@@ -306,19 +307,33 @@
     private async Task ProcesarVenta()
     {
         msgError = "";
-        procesando = true;
         
-        // Validar que todos los items tengan depósito si corresponde
+        // 1. Validar que haya al menos un producto en la lista
+        if (!carrito.Any())
+        {
+            msgError = "Debe ingresar al menos un producto a la lista.";
+            return;
+        }
+
+        // 2. Validar que todos los items tengan depósito si corresponde
         foreach (var item in carrito)
         {
             if (!DepositoValido(item))
             {
-                msgError = $"Debe seleccionar un depósito para '{item.Descripcion}'.";
-                procesando = false;
+                msgError = $"Debe seleccionar de qué depósito está retirando {item.Descripcion}";
                 return;
             }
         }
 
+        // 3. Validar que se haya seleccionado un método de pago
+        if (ventaRequest.MetodoPagoId <= 0)
+        {
+            msgError = "Debe seleccionar un método de pago.";
+            return;
+        }
+
+        procesando = true;
+        
         // Asignar los items del carrito final a la request
         ventaRequest.Detalles = carrito;
 

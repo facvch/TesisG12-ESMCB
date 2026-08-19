@@ -71,9 +71,42 @@ namespace Controllers
             if (rol == null) return BadRequest($"No existe el rol con Id {request.RolId}");
 
             var usuario = new Usuario(request.NombreUsuario, request.Email,
-                request.NombreCompleto, request.Password, request.RolId);
+                request.NombreCompleto, request.Password, request.RolId, request.SucursalId);
 
             if (!usuario.IsValid) return BadRequest(usuario.GetErrors().Select(e => e.ErrorMessage));
+
+            if (rol.Nombre == "Veterinario")
+            {
+                var partes = (request.NombreCompleto ?? "").Trim().Split(' ', 2);
+                var nombre = partes.Length > 0 ? partes[0] : request.NombreUsuario;
+                var apellido = partes.Length > 1 ? partes[1] : "Veterinario";
+
+                if (string.IsNullOrWhiteSpace(nombre)) nombre = request.NombreUsuario;
+                if (string.IsNullOrWhiteSpace(apellido)) apellido = "Veterinario";
+
+                if (nombre.Length > 50) nombre = nombre.Substring(0, 50);
+                if (apellido.Length > 50) apellido = apellido.Substring(0, 50);
+
+                var uniqueSuffix = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                var matricula = $"MP-{uniqueSuffix}";
+                var telefono = "0000000000";
+
+                var nuevoVet = new Veterinario(
+                    nombre,
+                    apellido,
+                    matricula,
+                    telefono,
+                    request.Email ?? "",
+                    "General",
+                    request.SucursalId ?? 0
+                );
+
+                var vetIdObj = await _veterinarioRepo.AddAsync(nuevoVet);
+                var vetId = vetIdObj?.ToString() ?? nuevoVet.Id;
+
+                usuario.SetVeterinarioId(vetId);
+            }
+
             var id = await _usuarioRepo.AddAsync(usuario);
             return Created($"api/v1/auth/usuarios/{id}", MapToDto(usuario));
         }
@@ -84,12 +117,8 @@ namespace Controllers
         [HttpPost("api/v1/auth/seed")]
         public async Task<IActionResult> Seed()
         {
-            var existingUsers = await _usuarioRepo.GetActivosAsync();
-            if (existingUsers.Any())
-                return BadRequest("Ya existen usuarios en el sistema. No se puede hacer seed.");
-
             // Crear roles
-            var roles = new[] { "Admin", "Veterinario", "Recepcionista" };
+            var roles = new[] { "Admin", "Veterinario", "Recepcionista", "Gerente" };
             foreach (var rolName in roles)
             {
                 var existing = await _rolRepo.GetByNombreAsync(rolName);
@@ -97,14 +126,18 @@ namespace Controllers
                     await _rolRepo.AddAsync(new Rol(rolName, $"Rol de {rolName}"));
             }
 
-            var adminRol = await _rolRepo.GetByNombreAsync("Admin");
+            var existingUsers = await _usuarioRepo.GetActivosAsync();
+            if (!existingUsers.Any())
+            {
+                var adminRol = await _rolRepo.GetByNombreAsync("Admin");
+                // Crear usuario admin
+                var admin = new Usuario("admin", "admin@veterinaria.com",
+                    "Administrador del Sistema", "Admin123!", adminRol.Id);
+                await _usuarioRepo.AddAsync(admin);
+                return Ok(new { Message = "Seed completado. Creados roles y usuario admin.", AdminUser = "admin", AdminPass = "Admin123!" });
+            }
 
-            // Crear usuario admin
-            var admin = new Usuario("admin", "admin@veterinaria.com",
-                "Administrador del Sistema", "Admin123!", adminRol.Id);
-            await _usuarioRepo.AddAsync(admin);
-
-            return Ok(new { Message = "Seed completado", AdminUser = "admin", AdminPass = "Admin123!" });
+            return Ok(new { Message = "Roles verificados/creados. No se creó usuario admin porque ya existen usuarios en el sistema." });
         }
 
         // ═══════════════════════════════════════════
@@ -118,10 +151,10 @@ namespace Controllers
         [Authorize]
         public async Task<IActionResult> GetProfile()
         {
-            var userId = User.FindFirst("sub")?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var username = User.FindFirst("name")?.Value;
+            if (string.IsNullOrEmpty(username)) return Unauthorized();
 
-            var usuario = await _usuarioRepo.FindOneAsync(userId);
+            var usuario = await _usuarioRepo.GetByNombreUsuarioAsync(username);
             if (usuario == null) return NotFound();
             return Ok(MapToDto(usuario));
         }
@@ -236,7 +269,12 @@ namespace Controllers
             if (usuario == null) return NotFound();
 
             // Check role is Veterinario
-            var rolName = usuario.Rol?.Nombre ?? "";
+            var rolName = usuario.Rol?.Nombre;
+            if (rolName == null && usuario.RolId > 0)
+            {
+                var rol = await _rolRepo.FindOneAsync(usuario.RolId);
+                rolName = rol?.Nombre;
+            }
             if (rolName != "Veterinario")
                 return BadRequest("Solo los usuarios con rol Veterinario pueden completar estos datos");
 
@@ -252,6 +290,10 @@ namespace Controllers
                 if (vet != null)
                 {
                     vet.Actualizar(nombre, apellido, request.Telefono ?? "", request.Email ?? "", request.Especialidad ?? "");
+                    
+                    if (!vet.IsValid)
+                        return BadRequest(vet.GetErrors().Select(e => e.ErrorMessage));
+
                     _veterinarioRepo.Update(vet.Id, vet);
                     return Ok(new { Message = "Datos de veterinario actualizados", VeterinarioId = vet.Id });
                 }
@@ -260,6 +302,9 @@ namespace Controllers
             // Create new
             var nuevoVet = new Veterinario(nombre, apellido, request.Matricula ?? "",
                 request.Telefono ?? "", request.Email ?? "", request.Especialidad ?? "");
+
+            if (!nuevoVet.IsValid)
+                return BadRequest(nuevoVet.GetErrors().Select(e => e.ErrorMessage));
 
             var vetId = await _veterinarioRepo.AddAsync(nuevoVet);
             usuario.SetVeterinarioId(vetId.ToString());
@@ -273,7 +318,7 @@ namespace Controllers
         // ═══════════════════════════════════════════
 
         [HttpGet("api/v1/auth/usuarios")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Gerente")]
         public async Task<IActionResult> GetAllUsers()
         {
             var usuarios = await _usuarioRepo.GetActivosAsync();
@@ -312,7 +357,7 @@ namespace Controllers
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claimsList = new List<Claim>
             {
                 new Claim("sub", usuario.Id),
                 new Claim("name", usuario.NombreUsuario),
@@ -320,6 +365,13 @@ namespace Controllers
                 new Claim("given_name", usuario.NombreCompleto),
                 new Claim("role", usuario.Rol?.Nombre ?? "")
             };
+
+            if (usuario.SucursalId.HasValue)
+            {
+                claimsList.Add(new Claim("sucursalId", usuario.SucursalId.Value.ToString()));
+            }
+
+            var claims = claimsList.ToArray();
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"] ?? "VeterinariaAPI",
@@ -336,7 +388,10 @@ namespace Controllers
             Id = u.Id, NombreUsuario = u.NombreUsuario, Email = u.Email,
             NombreCompleto = u.NombreCompleto, RolId = u.RolId,
             RolNombre = u.Rol?.Nombre ?? "", FotoUrl = u.FotoUrl,
-            VeterinarioId = u.VeterinarioId, FechaCreacion = u.FechaCreacion,
+            VeterinarioId = u.VeterinarioId,
+            SucursalId = u.SucursalId,
+            SucursalNombre = u.Sucursal?.Nombre ?? "",
+            FechaCreacion = u.FechaCreacion,
             UltimoLogin = u.UltimoLogin, Activo = u.Activo
         };
     }
@@ -354,6 +409,7 @@ namespace Controllers
         public string NombreCompleto { get; set; }
         public string Password { get; set; }
         public int RolId { get; set; }
+        public int? SucursalId { get; set; }
     }
 
     public class ChangePasswordRequest

@@ -41,7 +41,7 @@ namespace Controllers
 
             return Ok(new
             {
-                TotalPacientes = pacientes.Count,
+                TotalPacientes = pacientes.Count(p => p.Activo),
                 TotalPropietarios = propietarios.Count,
                 TotalProductos = productos.Count(p => p.Activo),
                 ProductosStockBajo = productos.Count(p => p.Activo && p.StockActual <= p.StockMinimo),

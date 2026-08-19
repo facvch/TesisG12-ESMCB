@@ -44,6 +44,7 @@ namespace Domain.Entities
         public string PasswordHash { get; private set; }
         public string PasswordSalt { get; private set; }
         public int RolId { get; private set; }
+        public int? SucursalId { get; private set; }
         public string? FotoUrl { get; private set; }
         public string? VeterinarioId { get; private set; }
         public DateTime FechaCreacion { get; private set; }
@@ -52,22 +53,26 @@ namespace Domain.Entities
 
         // Navegación
         public virtual Rol Rol { get; private set; }
+        public virtual Sucursal? Sucursal { get; private set; }
 
         protected Usuario() { }
 
         public Usuario(string nombreUsuario, string email, string nombreCompleto,
-            string password, int rolId) : this()
+            string password, int rolId, int? sucursalId = null) : this()
         {
             Id = Guid.NewGuid().ToString();
             NombreUsuario = nombreUsuario;
             Email = email;
             NombreCompleto = nombreCompleto;
             RolId = rolId;
+            SucursalId = sucursalId;
             FechaCreacion = DateTime.Now;
             Activo = true;
 
             SetPassword(password);
         }
+
+        public void AsignarSucursal(int? sucursalId) => SucursalId = sucursalId;
 
         public void SetPassword(string password)
         {

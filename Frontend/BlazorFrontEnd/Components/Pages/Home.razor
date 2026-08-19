@@ -1,18 +1,25 @@
-@page "/"
+@page "/dashboard"
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject DashboardService DashboardService
 @inject NavigationManager Navigation
+@inject AuthService AuthService
+@inject TurnoService TurnoService
+
+<style>
+    .alert-clickable {
+        transition: background-color 0.2s ease, transform 0.15s ease;
+    }
+    .alert-clickable:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        transform: translateX(4px);
+    }
+    .alert-clickable:active {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+</style>
 
 <PageTitle>Dashboard | Panel Principal</PageTitle>
-
-<!-- Banner y Título -->
-<div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
-    <div>
-        <h2 style="font-weight: 700; margin: 0; color: var(--text-primary);">📍 Centro de Comando</h2>
-        <p class="text-secondary" style="margin: 0;">Resumen General del Sistema (Hoy: @DateTime.Today.ToString("dd MMMM yyyy"))</p>
-    </div>
-</div>
 
 @if (isLoading)
 {
@@ -22,149 +29,371 @@
         Cargando indicadores y procesando alertas del sistema...
     </div>
 }
-else if (kpis == null || monitor == null)
+else if (userProfile == null)
 {
     <div class="alert alert-danger" style="background: rgba(255, 107, 107, 0.1); border: 1px solid var(--accent-danger); color: #c0392b;">
-        Error al obtener los datos. Verifique que la API del Backend esté corriendo y posea el rol adecuado.
+        Error al obtener los datos de usuario. Verifique que la API del Backend esté corriendo.
     </div>
 }
-else
+else if (userProfile.RolNombre == "Veterinario")
 {
-    <!-- KPIs Principales -->
+    <!-- Banner y Título -->
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+        <div>
+            <h2 style="font-weight: 700; margin: 0; color: var(--text-primary);">🩺 Panel Profesional</h2>
+            <p class="text-secondary" style="margin: 0;">Bienvenido, Dr/a. @userProfile.NombreCompleto (Hoy: @DateTime.Today.ToString("dd MMMM yyyy"))</p>
+        </div>
+    </div>
+
+    <!-- KPIs Rápidos -->
     <div class="row mb-4">
-        <!-- Ingresos del Mes -->
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="glass-card text-center" style="padding: var(--sp-md);">
-                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Caja del Mes</p>
-                <h3 style="color: var(--accent-primary); font-weight: 800; margin: 0;">$@kpis.IngresosMesActual.ToString("N0")</h3>
-                <small class="text-success">@kpis.VentasMesActual.ToString() tickets emitidos</small>
+                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Mis Turnos de Hoy</p>
+                <h3 style="color: var(--accent-primary); font-weight: 800; margin: 0;">@(misTurnosHoy?.Count ?? 0)</h3>
+                <small class="text-secondary">Turnos programados asignados a tu agenda</small>
             </div>
         </div>
-        <!-- Turnos del Día -->
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="glass-card text-center" style="padding: var(--sp-md);">
-                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Turnos de Hoy</p>
-                <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@kpis.TurnosCompletadosHoy / @kpis.TurnosHoy</h3>
-                <small class="text-info">@kpis.TurnosPendientesHoy pendientes</small>
-            </div>
-        </div>
-        <!-- Padrón de Pacientes -->
-        <div class="col-md-3">
-            <div class="glass-card text-center" style="padding: var(--sp-md);">
-                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Pacientes Activos</p>
-                <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@kpis.TotalPacientes</h3>
-                <small class="text-secondary">En @kpis.TotalPropietarios familias</small>
-            </div>
-        </div>
-        <!-- Inventario Crítico -->
-        <div class="col-md-3">
-            <div class="glass-card text-center" style="padding: var(--sp-md); @(kpis.ProductosStockBajo > 0 ? "border: 1px solid var(--accent-danger);" : "")">
-                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Stock en Alerta</p>
-                <h3 style="@(kpis.ProductosStockBajo > 0 ? "color: var(--accent-danger);" : "color: var(--text-primary);") font-weight: 800; margin: 0;">@kpis.ProductosStockBajo</h3>
-                <small class="text-secondary">De @kpis.TotalProductos Artículos Totales</small>
+                <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Vacunas Próximas</p>
+                <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@(vacunasProximas?.Count ?? 0)</h3>
+                <small class="text-secondary">Alertas de dosis en los próximos 30 días</small>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <!-- Gráfico / Ingresos (Placeholder visual con CSS) -->
-        <div class="col-md-8">
-            <div class="glass-card" style="height: 100%;">
-                <h5 class="mb-4" style="color: var(--text-primary);">Historial de Caja (Últimos 7 días)</h5>
-                @if(ingresos == null || !ingresos.Any())
+        <!-- Turnos de Hoy -->
+        <div class="col-md-7 mb-4">
+            <div class="glass-card" style="height: 100%; min-height: 400px; display: flex; flex-direction: column;">
+                <h5 class="mb-3" style="color: var(--text-primary); font-weight: 700;">📅 Mis Turnos de Hoy</h5>
+                
+                @if (misTurnosHoy == null || !misTurnosHoy.Any())
                 {
-                    <p class="text-secondary">No hay data reciente para graficar.</p>
+                    <div class="text-center text-secondary my-auto p-4">
+                        <p style="font-size: 1.2rem; margin: 0;">🎉 ¡Día despejado!</p>
+                        <small>No tienes turnos agendados para hoy.</small>
+                    </div>
                 }
                 else
                 {
-                    <div class="d-flex align-items-end justify-content-between p-3 border rounded" style="height: 250px; background: var(--bg-main); border-color: var(--border-color);">
-                        @{ var max = ingresos.Max(i => i.Ingresos) > 0 ? ingresos.Max(i => i.Ingresos) : 1; }
-                        @foreach(var day in ingresos)
-                        {
-                            var heightPercent = (day.Ingresos / max) * 100;
-                            var minHeight = heightPercent < 5 ? 5 : heightPercent; // At least show a tiny bar
-                            
-                            <div class="d-flex flex-column align-items-center" style="width: 12%;">
-                                <small class="text-secondary mb-1" style="font-size: 0.7rem;">$@day.Ingresos.ToString("N0")</small>
-                                <div style="width: 100%; height: @((int)minHeight)%; min-height: 5px; background: linear-gradient(180deg, var(--accent-primary) 0%, rgba(0, 163, 108, 0.2) 100%); border-radius: 4px 4px 0 0; transition: height 1s ease;">
-                                </div>
-                                <small class="mt-2" style="font-size: 0.75rem; white-space: nowrap; color: var(--text-secondary);">@day.FechaCorta</small>
-                            </div>
-                        }
+                    <div style="flex-grow: 1; overflow-y: auto; max-height: 450px;">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover table-borderless align-middle m-0" style="--bs-table-bg: transparent; --bs-table-hover-bg: rgba(255,255,255,0.03);">
+                                <thead>
+                                    <tr class="text-secondary border-bottom" style="border-color: var(--border-light) !important;">
+                                        <th style="font-size: 0.85rem; font-weight: 600;">Hora</th>
+                                        <th style="font-size: 0.85rem; font-weight: 600;">Paciente</th>
+                                        <th style="font-size: 0.85rem; font-weight: 600;">Servicio</th>
+                                        <th style="font-size: 0.85rem; font-weight: 600;">Motivo</th>
+                                        <th style="font-size: 0.85rem; font-weight: 600;">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var turno in misTurnosHoy.OrderBy(t => t.FechaHora))
+                                    {
+                                        var badgeColor = turno.Estado == "Completado" ? "bg-success" :
+                                                         turno.Estado == "Cancelado" ? "bg-danger" : "bg-warning text-dark";
+                                        
+                                        <tr class="border-bottom" style="border-color: var(--border-light) !important; cursor: pointer;" @onclick='() => Navigation.NavigateTo($"/agenda?turnoId={turno.Id}")'>
+                                            <td class="fw-bold" style="color: var(--accent-primary); font-size: 0.9rem;">@turno.FechaHora.ToString("HH:mm") hs</td>
+                                            <td>
+                                                <span style="font-weight: 600; color: #333333;">@turno.PacienteNombre</span>
+                                                <br/>
+                                                <small class="text-secondary" style="font-size: 0.75rem;">Dueño: @turno.PropietarioNombre</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary" style="font-size: 0.75rem; background-color: #3b82f6 !important;">@turno.ServicioNombre</span>
+                                            </td>
+                                            <td class="text-secondary" style="font-size: 0.85rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                @turno.Motivo
+                                            </td>
+                                            <td>
+                                                <span class="badge @badgeColor" style="font-size: 0.75rem;">@turno.Estado</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 }
             </div>
         </div>
 
-        <!-- Panel de Alertas Inteligente -->
-        <div class="col-md-4">
-            <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="m-0" style="color: var(--text-primary);">Centro de Resoluciones</h5>
-                    <span class="badge @(monitor.TotalAlertas > 0 ? "bg-danger" : "bg-success") rounded-pill">@monitor.TotalAlertas</span>
-                </div>
-                
-                <div style="flex-grow: 1; overflow-y: auto; max-height: 350px;">
-                    @if(!monitor.Alertas.Any())
-                    {
-                        <div class="text-center text-secondary mt-4">
-                            <p>✅ Todo bajo control.</p>
-                            <small>No hay alertas críticas en el sistema.</small>
+        <!-- Vacunas Próximas -->
+        <div class="col-md-5 mb-4">
+            <div class="glass-card" style="height: 100%; min-height: 400px; display: flex; flex-direction: column;">
+                <h5 class="mb-3" style="color: var(--text-primary); font-weight: 700;">💉 Pacientes con Vacunas Próximas</h5>
+
+                @if (vacunasProximas == null || !vacunasProximas.Any())
+                {
+                    <div class="text-center text-secondary my-auto p-4">
+                        <p style="font-size: 1.1rem; margin: 0;">✅ Todo al día</p>
+                        <small>No hay vacunas programadas para los próximos 30 días.</small>
+                    </div>
+                }
+                else
+                {
+                    <div style="flex-grow: 1; overflow-y: auto; max-height: 450px;">
+                        <div class="list-group list-group-flush" style="background: transparent;">
+                            @foreach (var vac in vacunasProximas.OrderBy(v => v.DiasRestantes))
+                            {
+                                var badgeClass = vac.DiasRestantes <= 0 ? "bg-danger" : "bg-info";
+                                var textBadge = vac.DiasRestantes <= 0 ? "Vencida" : $"En {vac.DiasRestantes} días";
+
+                                <div class="list-group-item bg-transparent border-bottom px-1 py-3 alert-clickable" 
+                                     style="color: var(--text-primary); border-color: var(--border-light) !important; cursor: pointer;"
+                                     @onclick='() => Navigation.NavigateTo($"/historial-clinico/paciente/{vac.PacienteId}?tab=vacunas")'>
+                                    <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                        <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 700; color: #333333;">
+                                            🐾 @vac.Paciente
+                                        </h6>
+                                        <span class="badge @badgeClass" style="font-size: 0.7rem;">@textBadge</span>
+                                    </div>
+                                    <p class="mb-1 text-secondary" style="font-size: 0.8rem; font-weight: 500;">
+                                        Vacuna: <span style="color: var(--accent-primary);">@vac.Vacuna</span>
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center" style="font-size: 0.75rem;">
+                                        <span class="text-secondary">Dueño: @vac.Propietario</span>
+                                        <span class="text-secondary">📞 @vac.Telefono</span>
+                                    </div>
+                                </div>
+                            }
                         </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Admin & Gerente Dashboard (Original) -->
+    <!-- Banner y Título -->
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
+        <div>
+            <h2 style="font-weight: 700; margin: 0; color: var(--text-primary);">📍 Centro de Comando</h2>
+            <p class="text-secondary" style="margin: 0;">Resumen General del Sistema (Hoy: @DateTime.Today.ToString("dd MMMM yyyy"))</p>
+        </div>
+    </div>
+
+    @if (kpis == null || monitor == null)
+    {
+        <div class="alert alert-danger" style="background: rgba(255, 107, 107, 0.1); border: 1px solid var(--accent-danger); color: #c0392b;">
+            Error al obtener los datos del panel. Verifique que posee los privilegios correspondientes.
+        </div>
+    }
+    else
+    {
+        <!-- KPIs Principales -->
+        <div class="row mb-4">
+            <!-- Ingresos del Mes -->
+            <div class="col-md-3">
+                <div class="glass-card text-center" style="padding: var(--sp-md);">
+                    <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Caja del Mes</p>
+                    <h3 style="color: var(--accent-primary); font-weight: 800; margin: 0;">$@kpis.IngresosMesActual.ToString("N0")</h3>
+                    <small class="text-success">@kpis.VentasMesActual.ToString() tickets emitidos</small>
+                </div>
+            </div>
+            <!-- Turnos del Día -->
+            <div class="col-md-3">
+                <div class="glass-card text-center" style="padding: var(--sp-md);">
+                    <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Turnos de Hoy</p>
+                    <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@kpis.TurnosCompletadosHoy / @kpis.TurnosHoy</h3>
+                    <small class="text-info">@kpis.TurnosPendientesHoy pendientes</small>
+                </div>
+            </div>
+            <!-- Padrón de Pacientes -->
+            <div class="col-md-3">
+                <div class="glass-card text-center" style="padding: var(--sp-md);">
+                    <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Pacientes Activos</p>
+                    <h3 style="color: var(--text-primary); font-weight: 800; margin: 0;">@kpis.TotalPacientes</h3>
+                    <small class="text-secondary">En @kpis.TotalPropietarios familias</small>
+                </div>
+            </div>
+            <!-- Inventario Crítico -->
+            <div class="col-md-3">
+                <div class="glass-card text-center" style="padding: var(--sp-md); @(kpis.ProductosStockBajo > 0 ? "border: 1px solid var(--accent-danger);" : "")">
+                    <p class="text-secondary small text-uppercase fw-bold m-0 mb-1">Stock en Alerta</p>
+                    <h3 style="@(kpis.ProductosStockBajo > 0 ? "color: var(--accent-danger);" : "color: var(--text-primary);") font-weight: 800; margin: 0;">@kpis.ProductosStockBajo</h3>
+                    <small class="text-secondary">De @kpis.TotalProductos Artículos Totales</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Gráfico / Ingresos -->
+            <div class="col-md-8">
+                <div class="glass-card" style="height: 100%;">
+                    <h5 class="mb-4" style="color: var(--text-primary);">Historial de Caja (Últimos 7 días)</h5>
+                    @if(ingresos == null || !ingresos.Any())
+                    {
+                        <p class="text-secondary">No hay data reciente para graficar.</p>
                     }
                     else
                     {
-                        <div class="list-group list-group-flush" style="background: transparent;">
-                            @foreach(var alerta in monitor.Alertas)
+                        <div class="d-flex align-items-end justify-content-between p-3 border rounded" style="height: 250px; background: var(--bg-main); border-color: var(--border-color);">
+                            @{ var max = ingresos.Max(i => i.Ingresos) > 0 ? ingresos.Max(i => i.Ingresos) : 1; }
+                            @foreach(var day in ingresos)
                             {
-                                var colorClass = alerta.Nivel == "CRITICA" ? "text-danger" :
-                                                alerta.Nivel == "IMPORTANTE" ? "text-warning" : "text-info";
+                                var heightPercent = (day.Ingresos / max) * 100;
+                                var minHeight = heightPercent < 5 ? 5 : heightPercent;
                                 
-                                <div class="list-group-item bg-transparent border-bottom px-1 py-2" style="color: var(--text-primary); border-color: var(--border-light) !important;">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 @colorClass" style="font-size: 0.9rem; font-weight: 700;">
-                                            @if(alerta.Tipo == "Stock") { <span>📦</span> }
-                                            else if(alerta.Tipo == "Turno") { <span>⏰</span> }
-                                            else if(alerta.Tipo == "Vacunación") { <span>💉</span> }
-                                            @alerta.Titulo
-                                        </h6>
-                                        <small class="text-secondary" style="font-size: 0.7rem;">@alerta.Nivel</small>
+                                <div class="d-flex flex-column align-items-center justify-content-end" style="width: 12%; height: 100%;">
+                                    <small class="text-secondary mb-1" style="font-size: 0.7rem;">$@day.Ingresos.ToString("N0")</small>
+                                    <div style="width: 100%; height: 150px; display: flex; align-items: flex-end;">
+                                        <div style="width: 100%; height: @((int)minHeight)%; min-height: 5px; background: linear-gradient(180deg, var(--accent-primary) 0%, rgba(0, 163, 108, 0.2) 100%); border-radius: 4px 4px 0 0; transition: height 1s ease;">
+                                        </div>
                                     </div>
-                                    <p class="mb-1 text-secondary" style="font-size: 0.8rem;">@alerta.Detalle</p>
+                                    <small class="mt-2" style="font-size: 0.75rem; white-space: nowrap; color: var(--text-secondary);">@day.FechaCorta</small>
                                 </div>
                             }
                         </div>
                     }
                 </div>
             </div>
+
+            <!-- Panel de Alertas Inteligente -->
+            <div class="col-md-4">
+                <div class="glass-card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="m-0" style="color: var(--text-primary);">Centro de Resoluciones</h5>
+                        <span class="badge @(monitor.TotalAlertas > 0 ? "bg-danger" : "bg-success") rounded-pill">@monitor.TotalAlertas</span>
+                    </div>
+                    
+                    <div style="flex-grow: 1; overflow-y: auto; max-height: 350px;">
+                        @if(!monitor.Alertas.Any())
+                        {
+                            <div class="text-center text-secondary mt-4">
+                                <p>✅ Todo bajo control.</p>
+                                <small>No hay alertas críticas en el sistema.</small>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush" style="background: transparent;">
+                                @foreach(var alerta in monitor.Alertas)
+                                {
+                                    var colorClass = alerta.Nivel == "CRITICA" ? "text-danger" :
+                                                    alerta.Nivel == "IMPORTANTE" ? "text-warning" : "text-info";
+                                    
+                                    <div class="list-group-item bg-transparent border-bottom px-1 py-2 alert-clickable" 
+                                         style="color: var(--text-primary); border-color: var(--border-light) !important; cursor: pointer;"
+                                         @onclick="() => OnAlertaClick(alerta)">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1 @colorClass" style="font-size: 0.9rem; font-weight: 700;">
+                                                @if(alerta.Tipo == "Stock") { <span>📦</span> }
+                                                else if(alerta.Tipo == "Turno") { <span>⏰</span> }
+                                                else if(alerta.Tipo == "Vacunación") { <span>💉</span> }
+                                                @alerta.Titulo
+                                            </h6>
+                                            <small class="text-secondary" style="font-size: 0.7rem;">@alerta.Nivel</small>
+                                        </div>
+                                        <p class="mb-1 text-secondary" style="font-size: 0.8rem;">@alerta.Detalle</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    }
 }
 
 @code {
     private bool isLoading = true;
+    private UsuarioDto? userProfile;
+
+    // Admin & Gerente data
     private KpiDashboardDto? kpis;
     private DashboardAlertasResponse? monitor;
     private List<IngresoDiarioDto>? ingresos;
 
-    protected override async Task OnInitializedAsync()
+    // Veterinario data
+    private List<TurnoDto>? misTurnosHoy;
+    private List<VacunaPendienteDto>? vacunasProximas;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
     {
         isLoading = true;
+        StateHasChanged();
         try
         {
-            var taskKpi = DashboardService.GetKpisAsync();
-            var taskMonitor = DashboardService.GetAlertasDashboardAsync();
-            var taskChart = DashboardService.GetIngresosDiariosAsync(7); // Gráfico 7 días
+            userProfile = await AuthService.GetProfileAsync();
+            if (userProfile == null)
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
 
-            await Task.WhenAll(taskKpi, taskMonitor, taskChart);
+            if (userProfile.RolNombre == "Recepcionista")
+            {
+                Navigation.NavigateTo("/agenda");
+                return;
+            }
 
-            kpis = taskKpi.Result;
-            monitor = taskMonitor.Result;
-            ingresos = taskChart.Result;
+            if (userProfile.RolNombre == "Veterinario")
+            {
+                var today = DateTime.Today;
+                var start = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0);
+                var end = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59);
+
+                var taskTurnos = TurnoService.GetRangoAsync(start, end, null, userProfile.VeterinarioId);
+                var taskVacunas = DashboardService.GetVacunasPendientesAsync(30);
+
+                await Task.WhenAll(taskTurnos, taskVacunas);
+
+                misTurnosHoy = taskTurnos.Result ?? new List<TurnoDto>();
+                vacunasProximas = taskVacunas.Result ?? new List<VacunaPendienteDto>();
+            }
+            else // Admin, Gerente, etc.
+            {
+                var taskKpi = DashboardService.GetKpisAsync();
+                var taskMonitor = DashboardService.GetAlertasDashboardAsync();
+                var taskChart = DashboardService.GetIngresosDiariosAsync(7);
+
+                await Task.WhenAll(taskKpi, taskMonitor, taskChart);
+
+                kpis = taskKpi.Result;
+                monitor = taskMonitor.Result;
+                ingresos = taskChart.Result;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[HOME INITIALIZE ERROR] {ex.Message}");
         }
         finally
         {
             isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnAlertaClick(AlertaDto alerta)
+    {
+        if (alerta.Tipo == "Stock")
+        {
+            Navigation.NavigateTo($"/inventario/productos?productoId={alerta.EntidadId}");
+        }
+        else if (alerta.Tipo == "Turno")
+        {
+            Navigation.NavigateTo($"/agenda?turnoId={alerta.EntidadId}");
+        }
+        else if (alerta.Tipo == "Vacunación")
+        {
+            Navigation.NavigateTo($"/historial-clinico/paciente/{alerta.EntidadId}?tab=vacunas");
         }
     }
 }

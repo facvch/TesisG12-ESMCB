@@ -3,6 +3,7 @@
 @using BlazorFrontEnd.Services
 @inject PropietarioService PropietarioService
 @inject NavigationManager Navigation
+@inject PacienteService PacienteService
 
 <PageTitle>Clientes / Propietarios</PageTitle>
 
@@ -11,12 +12,16 @@
         <h2 style="font-weight: 700; margin: 0;">Directorio de Clientes</h2>
         <p class="text-secondary" style="margin: 0;">Gestión de propietarios de mascotas</p>
     </div>
-    <button @onclick="OpenClienteModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Nuevo Cliente
-    </button>
+    <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
+        <Authorized>
+            <button @onclick="OpenClienteModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Nuevo Cliente
+            </button>
+        </Authorized>
+    </AuthorizeView>
 </div>
 
 <div class="glass-card">
@@ -75,8 +80,22 @@
                                 else { <span style="color: var(--accent-danger);">Inactivo</span> }
                             </td>
                             <td class="text-end">
-                                <a href="/propietarios/editar/@prop.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
-                                <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(prop.Id)">Eliminar</button>
+                                <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
+                                    <Authorized>
+                                        <button type="button" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenClienteModalForEdit(prop)">Editar</button>
+                                        @if (prop.Activo)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(prop.Id)">Eliminar</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-success" style="margin-left: 5px;" @onclick="() => ReactivatePropietario(prop.Id)">Reactivar</button>
+                                        }
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        <span class="text-secondary" style="font-size: 0.8rem;">Solo lectura</span>
+                                    </NotAuthorized>
+                                </AuthorizeView>
                             </td>
                         </tr>
                     }
@@ -101,13 +120,53 @@
     </div>
 }
 
+@if (showDeleteConfirmationModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseDeleteConfirmationModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Confirmar Eliminación</h3>
+                <button class="modal-close-btn" @onclick="CloseDeleteConfirmationModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div style="margin-top: 15px; margin-bottom: 25px;">
+                <p>Está a punto de eliminar a <strong>@propietarioToDelete?.NombreCompleto</strong>, ¿confirmar?</p>
+                @if (mascotasToDelete != null && mascotasToDelete.Any())
+                {
+                    <div class="alert alert-warning" style="background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-warning); color: white; font-size: 0.9rem; margin-top: 15px; border-radius: 8px; padding: 12px;">
+                        <strong>Aviso de mascotas afectadas:</strong>
+                        <p style="margin: 0 0 8px 0; font-size: 0.85rem;">
+                            Si se elimina '<strong>@propietarioToDelete?.NombreCompleto</strong>' se van a deshabilitar también sus mascotas:
+                        </p>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem;">
+                            @foreach (var m in mascotasToDelete)
+                            {
+                                <li><strong>@m.Nombre</strong></li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex justify-content-end" style="gap: 10px;">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseDeleteConfirmationModal">No</button>
+                <button type="button" class="btn btn-danger" style="background: var(--accent-danger); border: none;" @onclick="ExecuteDelete">Si</button>
+            </div>
+        </div>
+    </div>
+}
+
 @* ═══════ MODAL: Nuevo Cliente ═══════ *@
 @if (showClienteModal)
 {
     <div class="modal-overlay modal-overlay-z1" @onclick="CloseClienteModal" @onclick:stopPropagation="false">
         <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
             <div class="modal-header-row">
-                <h3>Nuevo Cliente</h3>
+                <h3>@(string.IsNullOrEmpty(clienteModel.Id) ? "Nuevo Cliente" : "Editar Cliente")</h3>
                 <button class="modal-close-btn" @onclick="CloseClienteModal" title="Cerrar">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -165,7 +224,7 @@
                 <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
                     <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseClienteModal">Cancelar</button>
                     <button type="submit" class="btn-primary-glass" disabled="@isSavingCliente">
-                        @if(isSavingCliente) { <span>Guardando...</span> } else { <span>Guardar Cliente</span> }
+                        @if(isSavingCliente) { <span>Guardando...</span> } else { <span>@(string.IsNullOrEmpty(clienteModel.Id) ? "Guardar Cliente" : "Guardar Cambios")</span> }
                     </button>
                 </div>
             </EditForm>
@@ -181,6 +240,11 @@
     private int currentPage = 1;
     private int pageSize = 10;
     private string searchTerm = string.Empty;
+
+    // ── Confirmación de Eliminación ──
+    private bool showDeleteConfirmationModal;
+    private PropietarioDto? propietarioToDelete;
+    private List<PacienteDto>? mascotasToDelete;
 
     // ── Modal Nuevo Cliente ──
     private bool showClienteModal;
@@ -244,16 +308,76 @@
 
     private async Task ConfirmDelete(string id)
     {
-        // Ideally show a modal, but for simplicity we'll logic here or use JS interop
-        // Implementación rápida de borrado para el CRUD
-        bool confirmed = true; // In real life: await JS.InvokeAsync<bool>("confirm", "Seguro?");
-        if (confirmed)
+        propietarioToDelete = propietariosResponse?.Items?.FirstOrDefault(p => p.Id == id);
+        if (propietarioToDelete == null) return;
+
+        mascotasToDelete = new List<PacienteDto>();
+        try
         {
-            var result = await PropietarioService.DeleteAsync(id);
+            var pets = await PacienteService.GetByPropietarioIdAsync(id);
+            if (pets != null)
+            {
+                mascotasToDelete = pets.Where(p => p.Activo).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener mascotas: {ex.Message}");
+        }
+
+        showDeleteConfirmationModal = true;
+    }
+
+    private void CloseDeleteConfirmationModal()
+    {
+        showDeleteConfirmationModal = false;
+        propietarioToDelete = null;
+        mascotasToDelete = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (propietarioToDelete == null) return;
+
+        try
+        {
+            var result = await PropietarioService.DeleteAsync(propietarioToDelete.Id);
             if (result)
+            {
                 await LoadDataAsync();
+            }
             else
-                errorMessage = "No se pudo eliminar el cliente.";
+            {
+                errorMessage = "No se pudo eliminar el propietario.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error al intentar eliminar el propietario.";
+        }
+        finally
+        {
+            CloseDeleteConfirmationModal();
+        }
+    }
+
+    private async Task ReactivatePropietario(string id)
+    {
+        try
+        {
+            var result = await PropietarioService.ActivarAsync(id);
+            if (result)
+            {
+                await LoadDataAsync();
+            }
+            else
+            {
+                errorMessage = "No se pudo reactivar el propietario.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error al intentar reactivar el propietario.";
         }
     }
 
@@ -261,6 +385,24 @@
     private void OpenClienteModal()
     {
         clienteModel = new PropietarioDto();
+        clienteErrorMessage = string.Empty;
+        isSavingCliente = false;
+        showClienteModal = true;
+    }
+
+    private void OpenClienteModalForEdit(PropietarioDto prop)
+    {
+        clienteModel = new PropietarioDto
+        {
+            Id = prop.Id,
+            Nombre = prop.Nombre,
+            Apellido = prop.Apellido,
+            DNI = prop.DNI,
+            Telefono = prop.Telefono,
+            Email = prop.Email,
+            Direccion = prop.Direccion,
+            Activo = prop.Activo
+        };
         clienteErrorMessage = string.Empty;
         isSavingCliente = false;
         showClienteModal = true;
@@ -277,7 +419,16 @@
         clienteErrorMessage = string.Empty;
         try
         {
-            var result = await PropietarioService.CreateAsync(clienteModel);
+            bool result;
+            if (string.IsNullOrEmpty(clienteModel.Id))
+            {
+                result = await PropietarioService.CreateAsync(clienteModel);
+            }
+            else
+            {
+                result = await PropietarioService.UpdateAsync(clienteModel.Id, clienteModel);
+            }
+
             if (result)
             {
                 showClienteModal = false;

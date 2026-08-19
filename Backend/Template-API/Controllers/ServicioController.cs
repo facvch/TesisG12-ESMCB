@@ -1,17 +1,20 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
 {
     [ApiController]
+    [Authorize]
     public class ServicioController(IServicioRepository servicioRepository) : BaseController
     {
         private readonly IServicioRepository _repository = servicioRepository
             ?? throw new ArgumentNullException(nameof(servicioRepository));
 
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetAll(bool soloActivos = true)
         {
             var entities = soloActivos
@@ -28,6 +31,7 @@ namespace Controllers
         }
 
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest("El ID debe ser mayor a 0");
@@ -42,6 +46,7 @@ namespace Controllers
         }
 
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreateServicioRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -57,6 +62,7 @@ namespace Controllers
         }
 
         [HttpPut("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Update([FromBody] UpdateServicioRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -73,6 +79,7 @@ namespace Controllers
         }
 
         [HttpDelete("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0) return BadRequest("El ID debe ser mayor a 0");

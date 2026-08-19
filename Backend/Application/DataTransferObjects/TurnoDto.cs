@@ -18,6 +18,8 @@ namespace Application.DataTransferObjects
         public string Estado { get; set; }
         public string Motivo { get; set; }
         public string Observaciones { get; set; }
+        public int? SucursalId { get; set; }
+        public string? SucursalNombre { get; set; }
         public DateTime FechaCreacion { get; set; }
     }
 }

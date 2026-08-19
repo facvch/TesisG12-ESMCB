@@ -21,7 +21,8 @@ namespace Controllers
         IVeterinarioRepository veterinarioRepo,
         IServicioRepository servicioRepo,
         IEspecieRepository especieRepo,
-        IRazaRepository razaRepo) : BaseController
+        IRazaRepository razaRepo,
+        IHorarioRepository horarioRepo) : BaseController
     {
         /// <summary>
         /// Pacientes paginados con ordenamiento
@@ -218,7 +219,7 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Veterinarios paginados
+        /// Veterinarios paginados con horarios
         /// </summary>
         [HttpGet("api/v1/Paginado/veterinarios")]
         public async Task<IActionResult> VeterinariosPaginados(
@@ -226,11 +227,27 @@ namespace Controllers
             [FromQuery] string sortBy = "Apellido", [FromQuery] string sortDir = "asc")
         {
             var entities = await veterinarioRepo.FindAllAsync();
-            var dtos = entities.Select(v => new
-            {
-                v.Id, v.Nombre, v.Apellido,
-                NombreCompleto = v.NombreCompleto, v.Matricula,
-                v.Especialidad, v.Telefono, v.Email, v.Activo
+            var allHorarios = (await horarioRepo.GetActivosAsync()).ToList();
+
+            var dtos = entities.Select(v => {
+                var vHorarios = allHorarios.Where(h => h.VeterinarioId == v.Id).Select(h => new Application.DataTransferObjects.HorarioDto {
+                    Id = h.Id,
+                    VeterinarioId = h.VeterinarioId,
+                    DiaSemana = h.DiaSemana,
+                    HoraInicio = h.HoraInicio.ToString(@"hh\:mm"),
+                    HoraFin = h.HoraFin.ToString(@"hh\:mm"),
+                    TipoHorarioId = h.TipoHorarioId,
+                    TipoHorarioNombre = h.TipoHorario?.Nombre ?? (h.TipoHorarioId == 2 ? "Guardia" : "Normal"),
+                    Activo = h.Activo
+                }).ToList();
+
+                return new
+                {
+                    v.Id, v.Nombre, v.Apellido,
+                    NombreCompleto = v.NombreCompleto, v.Matricula,
+                    v.Especialidad, v.Telefono, v.Email, v.Activo,
+                    Horarios = vHorarios
+                };
             });
             return Ok(PaginacionHelper.Paginar(dtos, page, pageSize, sortBy, sortDir));
         }

@@ -38,6 +38,7 @@ namespace Infrastructure.Repositories.Sql
                     .ThenInclude(p => p.Propietario)
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
+                .Include(t => t.Sucursal)
                 .Where(t => t.FechaHora >= inicio && t.FechaHora < fin)
                 .OrderBy(t => t.FechaHora)
                 .ToListAsync();
@@ -50,6 +51,7 @@ namespace Infrastructure.Repositories.Sql
                     .ThenInclude(p => p.Propietario)
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
+                .Include(t => t.Sucursal)
                 .Where(t => t.FechaHora >= desde && t.FechaHora <= hasta)
                 .OrderBy(t => t.FechaHora)
                 .ToListAsync();
@@ -70,6 +72,7 @@ namespace Infrastructure.Repositories.Sql
                     .ThenInclude(p => p.Propietario)
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
+                .Include(t => t.Sucursal)
                 .OrderByDescending(t => t.FechaHora)
                 .ToListAsync();
         }
@@ -80,6 +83,7 @@ namespace Infrastructure.Repositories.Sql
                 .Include(t => t.Veterinario)
                 .Include(t => t.Servicio)
                 .Include(t => t.Paciente)
+                .Include(t => t.Sucursal)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
     }

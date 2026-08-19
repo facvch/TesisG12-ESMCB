@@ -18,12 +18,12 @@
             <p class="text-secondary" style="margin: 0;">Gestión de fabricantes y sellos del inventario</p>
         </div>
     </div>
-    <a href="/inventario/marcas/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button class="btn-primary-glass" @onclick="OpenMarcaModalForCreate" style="display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nueva Marca
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -60,7 +60,7 @@
                                 else { <span class="badge bg-danger">No</span> }
                             </td>
                             <td class="text-end">
-                                <a href="/inventario/marcas/editar/@i.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
+                                <button class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenMarcaModalForEdit(i.Id)">Editar</button>
                                 <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(i.Id)">Eliminar</button>
                             </td>
                         </tr>
@@ -78,10 +78,65 @@
     </div>
 }
 
+
+@* ── Modal de Marca (Nueva/Editar) ── *@
+@if (showMarcaModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseMarcaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 600px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(marcaModel.Id == 0 ? "Nueva Marca" : "Editar Marca")</h3>
+                <button class="modal-close-btn" @onclick="CloseMarcaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="marcaModel" OnValidSubmit="HandleSaveMarca" FormName="modalMarcaForm">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre de la Marca (*)</label>
+                    <InputText @bind-Value="marcaModel.Nombre" class="form-control bg-dark text-light border-secondary" placeholder="Ej. Royal Canin, ProPlan" />
+                    <ValidationMessage For="@(() => marcaModel.Nombre)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción Opcional</label>
+                    <InputTextArea @bind-Value="marcaModel.Descripcion" class="form-control bg-dark text-light border-secondary" rows="3" />
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <InputCheckbox @bind-Value="marcaModel.Activo" class="form-check-input" id="modalMarcaActivoSw" />
+                    <label class="form-check-label" for="modalMarcaActivoSw" style="color: var(--text-secondary);">Marca Activa (Visible)</label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(marcaErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@marcaErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseMarcaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingMarca">
+                        @if(isSavingMarca) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private List<MarcaDto>? Items;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+
+    private bool showMarcaModal;
+    private MarcaDto marcaModel = new() { Activo = true };
+    private bool isSavingMarca;
+    private string marcaErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -104,6 +159,85 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    // ── Marca Modal Handlers ──
+    private void OpenMarcaModalForCreate()
+    {
+        marcaModel = new MarcaDto { Activo = true };
+        marcaErrorMessage = string.Empty;
+        isSavingMarca = false;
+        showMarcaModal = true;
+    }
+
+    private async Task OpenMarcaModalForEdit(int id)
+    {
+        marcaErrorMessage = string.Empty;
+        isSavingMarca = false;
+        showMarcaModal = true;
+        try
+        {
+            var m = await CatalogoService.GetMarcaByIdAsync(id);
+            if (m != null)
+            {
+                marcaModel = m;
+            }
+            else
+            {
+                marcaErrorMessage = "No se encontró el elemento solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            marcaErrorMessage = "Error al intentar obtener la marca.";
+        }
+    }
+
+    private void CloseMarcaModal()
+    {
+        showMarcaModal = false;
+    }
+
+    private async Task HandleSaveMarca()
+    {
+        if (string.IsNullOrWhiteSpace(marcaModel.Nombre))
+        {
+            marcaErrorMessage = "El nombre es requerido.";
+            return;
+        }
+
+        isSavingMarca = true;
+        marcaErrorMessage = string.Empty;
+        try
+        {
+            bool success;
+            if (marcaModel.Id == 0)
+            {
+                success = await CatalogoService.CreateMarcaAsync(marcaModel);
+            }
+            else
+            {
+                success = await CatalogoService.UpdateMarcaAsync(marcaModel.Id, marcaModel);
+            }
+
+            if (success)
+            {
+                showMarcaModal = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                marcaErrorMessage = "Error al guardar la marca.";
+            }
+        }
+        catch (Exception ex)
+        {
+            marcaErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingMarca = false;
         }
     }
 

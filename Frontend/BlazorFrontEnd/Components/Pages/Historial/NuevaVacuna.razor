@@ -1,4 +1,6 @@
 @page "/historial-clinico/nueva-vacuna/{PacienteId}"
+@page "/historial-clinico/editar-vacuna/{PacienteId}/{RegistroId}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject VacunacionService VacunacionService
@@ -6,10 +8,10 @@
 @inject PersonalService PersonalService
 @inject NavigationManager Navigation
 
-<PageTitle>Registrar Vacuna - Historial Clínico</PageTitle>
+<PageTitle>@(isEdit ? "Editar Vacuna" : "Registrar Vacuna") - Historial Clínico</PageTitle>
 
 <div class="glass-card" style="max-width: 800px; margin: auto; margin-top:20px;">
-    <h4>Aplicación de Vacuna (@pacienteNombre)</h4>
+    <h4>@(isEdit ? "Editar Aplicación de Vacuna" : "Aplicación de Vacuna") (@pacienteNombre)</h4>
     <hr class="border-secondary" />
 
     <EditForm Model="model" OnValidSubmit="HandleSave">
@@ -44,21 +46,25 @@
             <div class="col-md-6">
                 <label>Fecha Aplicación (*)</label>
                 <InputDate @bind-Value="model.FechaAplicacion" class="form-control bg-dark text-light border-secondary" />
+                <ValidationMessage For="@(() => model.FechaAplicacion)" class="text-danger" />
             </div>
             <div class="col-md-6">
                 <label>Próxima Dosis</label>
                 <InputDate @bind-Value="model.FechaProximaDosis" class="form-control bg-dark text-light border-secondary" />
+                <ValidationMessage For="@(() => model.FechaProximaDosis)" class="text-danger" />
             </div>
         </div>
 
         <div class="mb-3">
             <label>Número de Lote / Etiqueta</label>
             <InputText @bind-Value="model.NroLote" class="form-control bg-dark text-light border-secondary" placeholder="Lote de la ampolla" />
+            <ValidationMessage For="@(() => model.NroLote)" class="text-danger" />
         </div>
 
         <div class="mb-3">
             <label>Observaciones (Reacciones, recomendaciones)</label>
             <InputTextArea @bind-Value="model.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+            <ValidationMessage For="@(() => model.Observaciones)" class="text-danger" />
         </div>
 
         @if (!string.IsNullOrEmpty(errorMessage))
@@ -68,7 +74,7 @@
 
         <div class="d-flex justify-content-end mt-4 gap-2">
             <button type="button" class="btn btn-outline-secondary text-light" @onclick="GoBack">Cancelar</button>
-            <button type="submit" class="btn-primary-glass" disabled="@isSaving">Registrar Vacunación</button>
+            <button type="submit" class="btn-primary-glass" disabled="@isSaving">@(isEdit ? "Guardar Cambios" : "Registrar Vacunación")</button>
         </div>
     </EditForm>
 </div>
@@ -76,6 +82,11 @@
 @code {
     [Parameter]
     public string PacienteId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? RegistroId { get; set; }
+
+    private bool isEdit => !string.IsNullOrEmpty(RegistroId);
 
     private RegistroVacunacionDto model = new() { FechaAplicacion = DateTime.Today };
     private string pacienteNombre = "Cargando...";
@@ -99,6 +110,19 @@
 
         var vRes = await PersonalService.GetVeterinariosActivosAsync();
         if(vRes != null) vets = vRes;
+
+        if (isEdit)
+        {
+            var existing = await VacunacionService.GetByIdAsync(RegistroId!);
+            if (existing != null)
+            {
+                model = existing;
+            }
+            else
+            {
+                errorMessage = "No se encontró el registro de vacunación a editar.";
+            }
+        }
     }
 
     private async Task HandleSave()
@@ -110,13 +134,33 @@
         }
 
         isSaving = true;
-        if(await VacunacionService.CreateAsync(model))
+        errorMessage = string.Empty;
+
+        try
         {
-            GoBack();
+            bool success;
+            if (isEdit)
+            {
+                success = await VacunacionService.UpdateAsync(RegistroId!, model);
+            }
+            else
+            {
+                success = await VacunacionService.CreateAsync(model);
+            }
+
+            if (success)
+            {
+                GoBack();
+            }
+            else
+            {
+                errorMessage = isEdit ? "Error al intentar actualizar la vacuna." : "No se pudo guardar el registro de vacunación.";
+                isSaving = false;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = "No se pudo guardar el registro de vacunación.";
+            errorMessage = $"Ocurrió una excepción: {ex.Message}";
             isSaving = false;
         }
     }

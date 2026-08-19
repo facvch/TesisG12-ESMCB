@@ -26,12 +26,16 @@
         <h2 style="font-weight: 700; margin: 0;">Agenda de Turnos</h2>
         <p class="text-secondary" style="margin: 0;">Gestión de turnos médicos programados</p>
     </div>
-    <button @onclick="OpenTurnoModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Agendar Turno
-    </button>
+    <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
+        <Authorized>
+            <button @onclick="OpenTurnoModal" class="btn-primary-glass" style="display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Agendar Turno
+            </button>
+        </Authorized>
+    </AuthorizeView>
 </div>
 
 <div class="glass-card" style="margin-bottom: var(--sp-md);">
@@ -113,7 +117,7 @@
                             <th>Servicio</th>
                             <th>Veterinario</th>
                             <th>Estado</th>
-                            <AuthorizeView Roles="Admin,Veterinario">
+                            <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
                                 <Authorized>
                                     <th class="text-end">Acciones</th>
                                 </Authorized>
@@ -131,18 +135,31 @@
                                         <br/><span class="text-secondary">@turno.FechaHora.ToString("HH:mm") hs</span>
                                     </td>
                                     <td>
-                                        <a href="/pacientes/editar/@turno.PacienteId" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">@turno.PacienteNombre</a>
+                                        <button type="button" class="btn btn-link p-0 text-start" style="color: var(--accent-primary); text-decoration: none; font-weight: 500; border: none; background: transparent; cursor: pointer;" @onclick="() => OpenPacienteDetailModal(turno.PacienteId)">@turno.PacienteNombre</button>
                                     </td>
-                                    <td>@(string.IsNullOrEmpty(turno.PropietarioNombre) ? "—" : turno.PropietarioNombre)</td>
+                                    <td>
+                                        @if (string.IsNullOrEmpty(turno.PropietarioNombre))
+                                        {
+                                            <span>—</span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-link p-0 text-start" style="color: var(--accent-primary); text-decoration: none; border: none; background: transparent; cursor: pointer;" @onclick="() => OpenPropietarioDetailModalFromTurno(turno.PacienteId)">@turno.PropietarioNombre</button>
+                                        }
+                                    </td>
                                     <td>@turno.ServicioNombre</td>
                                     <td>@turno.VeterinarioNombre</td>
                                     <td>
                                         <span class="badge @GetBadgeColor(turno.Estado)">@turno.Estado</span>
                                     </td>
-                                    <AuthorizeView Roles="Admin,Veterinario">
+                                    <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
                                         <Authorized>
                                             <td class="text-end">
-                                                <a href="/agenda/editar/@turno.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Ver/Dictamen</a>
+                                                <button type="button" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenDetailModal(turno)">Ver/Dictamen</button>
+                                                @if (!isGerente)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-warning" style="margin-left: 5px; border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenTurnoModalForEdit(turno.Id)">Editar</button>
+                                                }
                                                 <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmCancel(turno.Id)">Cancelar</button>
                                             </td>
                                         </Authorized>
@@ -193,7 +210,7 @@
                             {
                                 var topPosition = (turno.FechaHora.Hour - 8) * 60 + turno.FechaHora.Minute;
                                 var height = 55; // Default height for 1 hr approx
-                                <div class="turno-card @GetBadgeColor(turno.Estado)" style="position: absolute; top: @(topPosition)px; left: 10px; right: 10px; height: @(height)px; padding: 5px 10px; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <div class="turno-card @GetBadgeColor(turno.Estado)" style="position: absolute; top: @(topPosition)px; left: 10px; right: 10px; height: @(height)px; padding: 5px 10px; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer;" @onclick="() => OpenDetailModal(turno)">
                                     <div class="d-flex justify-content-between">
                                         <strong>@turno.FechaHora.ToString("HH:mm") - @turno.PacienteNombre</strong>
                                         <span>@turno.ServicioNombre</span>
@@ -243,7 +260,7 @@
                             @foreach (var turno in turnosRender.Where(t => t.FechaHora.Date == day.Date && t.FechaHora.Hour >= 8 && t.FechaHora.Hour <= 20))
                             {
                                 var topPosition = (turno.FechaHora.Hour - 8) * 60 + turno.FechaHora.Minute;
-                                <div class="turno-card-sm @GetBadgeColor(turno.Estado)" style="position: absolute; top: @(topPosition)px; left: 2px; right: 2px; height: 50px; padding: 3px; border-radius: 4px; font-size: 0.75em; overflow: hidden; cursor: pointer;" title="@turno.PacienteNombre - @turno.ServicioNombre" @onclick="() => NavigateToEdit(turno.Id)">
+                                <div class="turno-card-sm @GetBadgeColor(turno.Estado)" style="position: absolute; top: @(topPosition)px; left: 2px; right: 2px; height: 50px; padding: 3px; border-radius: 4px; font-size: 0.75em; overflow: hidden; cursor: pointer;" title="@turno.PacienteNombre - @turno.ServicioNombre" @onclick="() => OpenDetailModal(turno)">
                                     <strong>@turno.FechaHora.ToString("HH:mm")</strong><br/>
                                     <span class="text-truncate d-block">@turno.PacienteNombre</span>
                                 </div>
@@ -283,19 +300,20 @@
                             bool isCurrentMonth = currentCellDate.Month == currentReferenceDate.Month;
                             bool isToday = currentCellDate.Date == DateTime.Today;
                             var dailyTurnos = turnosRender.Where(t => t.FechaHora.Date == currentCellDate.Date).ToList();
+                            var cellDateCaptured = currentCellDate;
                             
                             <div class="col p-1" style="border-right: 1px solid var(--border-glass); opacity: @(isCurrentMonth ? "1" : "0.5"); background: @(isToday ? "rgba(var(--accent-primary-rgb), 0.1)" : "transparent");">
-                                <div class="text-end" style="font-weight: @(isToday ? "bold" : "normal"); color: @(isToday ? "var(--accent-primary)" : "inherit");">@currentCellDate.Day</div>
+                                <div class="text-end" style="font-weight: @(isToday ? "bold" : "normal"); color: @(isToday ? "var(--accent-primary)" : "inherit"); cursor: pointer;" @onclick="() => IrAAgendaDiaria(cellDateCaptured)">@cellDateCaptured.Day</div>
                                 <div class="d-flex flex-column gap-1 mt-1" style="max-height: 80px; overflow-y: auto;">
                                     @foreach(var turno in dailyTurnos.Take(3))
                                     {
-                                        <div class="badge text-truncate text-start px-2 py-1 @GetBadgeColor(turno.Estado)" style="font-size: 0.7em; cursor: pointer; display: block;" title="@turno.FechaHora.ToString("HH:mm") - @turno.PacienteNombre" @onclick="() => NavigateToEdit(turno.Id)">
+                                        <div class="badge text-truncate text-start px-2 py-1 @GetBadgeColor(turno.Estado)" style="font-size: 0.7em; cursor: pointer; display: block;" title="@turno.FechaHora.ToString("HH:mm") - @turno.PacienteNombre" @onclick="() => OpenDetailModal(turno)">
                                             @turno.FechaHora.ToString("HH:mm") @turno.PacienteNombre
                                         </div>
                                     }
                                     @if (dailyTurnos.Count > 3)
                                     {
-                                        <div class="text-center text-secondary" style="font-size: 0.7em; cursor: pointer;">+@(dailyTurnos.Count - 3) más...</div>
+                                        <div class="text-center text-secondary font-weight-bold" style="font-size: 0.72em; cursor: pointer; background: rgba(255,255,255,0.06); padding: 2px; border-radius: 4px;" @onclick="() => IrAAgendaDiaria(cellDateCaptured)">+@(dailyTurnos.Count - 3) más...</div>
                                     }
                                 </div>
                             </div>
@@ -313,9 +331,9 @@
 @if (showTurnoModal)
 {
     <div class="modal-overlay modal-overlay-z1" @onclick="CloseTurnoModal" @onclick:stopPropagation="false">
-        <div class="modal-panel" @onclick:stopPropagation="true">
+        <div class="modal-panel" style="max-width: 1050px; width: 95%;" @onclick:stopPropagation="true">
             <div class="modal-header-row">
-                <h3>Asignación de Turno</h3>
+                <h3>@(string.IsNullOrEmpty(turnoModel.Id) ? "Asignación de Turno" : "Editar Turno / Dictamen")</h3>
                 <button class="modal-close-btn" @onclick="CloseTurnoModal" title="Cerrar">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
                 </button>
@@ -324,79 +342,255 @@
             { <p class="text-secondary">Cargando disponibilidad y pacientes...</p> }
             else
             {
-                <EditForm Model="turnoModel" OnValidSubmit="HandleSaveTurno" FormName="modalTurnoForm">
-                    <DataAnnotationsValidator />
-                    <div class="row">
-                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Paciente (*)</label>
-                            <div class="d-flex gap-2">
-                                <InputSelect @bind-Value="turnoModel.PacienteId" class="form-select bg-dark text-light border-secondary">
-                                    <option value="">-- Seleccione un Paciente --</option>
-                                    @foreach (var p in modalPacientes) { <option value="@p.Id">@p.Nombre (@p.EspecieNombre)</option> }
-                                </InputSelect>
-                                <button type="button" @onclick="OpenPacienteModalFromTurno" class="btn btn-outline-info d-flex align-items-center" style="white-space:nowrap;border-color:var(--border-glass);color:var(--accent-primary);" title="Registrar nuevo paciente">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> Nuevo
+                <div class="row g-3 align-items-stretch">
+                    <!-- Columna Principal (2/3): Formulario -->
+                    <div class="col-lg-8">
+                        <EditForm Model="turnoModel" OnValidSubmit="HandleSaveTurno" FormName="modalTurnoForm">
+                            <DataAnnotationsValidator />
+                            <div class="row">
+                                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Paciente (*)</label>
+                                    <div class="d-flex gap-2">
+                                        <InputSelect @bind-Value="turnoModel.PacienteId" class="form-select bg-dark text-light border-secondary">
+                                            <option value="">-- Seleccione un Paciente --</option>
+                                            @foreach (var p in modalPacientes) { <option value="@p.Id">@p.Nombre (@p.EspecieNombre)</option> }
+                                        </InputSelect>
+                                        <button type="button" @onclick="OpenPacienteModalFromTurno" class="btn btn-outline-info d-flex align-items-center" style="white-space:nowrap;border-color:var(--border-glass);color:var(--accent-primary);" title="Registrar nuevo paciente">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> Nuevo
+                                        </button>
+                                    </div>
+                                    <ValidationMessage For="@(() => turnoModel.PacienteId)" class="text-danger" />
+                                </div>
+                                <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
+                                    <InputSelect @bind-Value="turnoModel.VeterinarioId" class="form-select bg-dark text-light border-secondary">
+                                        <option value="">-- Médico Veterinario --</option>
+                                        @foreach (var v in modalVeterinarios) { <option value="@v.Id">@v.NombreCompleto - @v.Especialidad</option> }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => turnoModel.VeterinarioId)" class="text-danger" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Servicio (*)</label>
+                                    <InputSelect @bind-Value="turnoModel.ServicioId" class="form-select bg-dark text-light border-secondary">
+                                        <option value="0">-- Servicio Clínico --</option>
+                                        @foreach (var s in modalServicios) { <option value="@s.Id">@s.Nombre</option> }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => turnoModel.ServicioId)" class="text-danger" />
+                                </div>
+                                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
+                                    <input type="datetime-local" @bind="turnoModel.FechaHora" class="form-control bg-dark text-light border-secondary" />
+                                    @if (!string.IsNullOrEmpty(turnoFechaError))
+                                    { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@turnoFechaError</div> }
+                                </div>
+                                <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Estado Operativo</label>
+                                    @if (string.IsNullOrEmpty(turnoModel.Id))
+                                    {
+                                        <input type="text" value="Programado" class="form-control bg-dark text-light border-secondary" disabled />
+                                    }
+                                    else
+                                    {
+                                        <InputSelect @bind-Value="turnoModel.Estado" class="form-select bg-dark text-light border-secondary">
+                                            <option value="Programado">Programado</option>
+                                            <option value="Completado">Completado</option>
+                                            <option value="Cancelado">Cancelado</option>
+                                            <option value="Reprogramado">Reprogramado</option>
+                                        </InputSelect>
+                                    }
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Motivo del Turno (*)</label>
+                                    <InputText @bind-Value="turnoModel.Motivo" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Control general anual, Vacuna Sextuple" />
+                                    <ValidationMessage For="@(() => turnoModel.Motivo)" class="text-danger" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones Previas / Receta</label>
+                                    <InputTextArea @bind-Value="turnoModel.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(turnoErrorMessage))
+                            { <div class="alert alert-danger mt-3" style="background:rgba(239,68,68,0.2);border:1px solid var(--accent-danger);color:white;">@turnoErrorMessage</div> }
+                            <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                                <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseTurnoModal">Retornar a Agenda</button>
+                                <button type="submit" class="btn-primary-glass" disabled="@isSavingTurno">
+                                    @if(isSavingTurno) { <span>Guardando Turno...</span> } else { <span>Confirmar Turno</span> }
                                 </button>
                             </div>
-                            <ValidationMessage For="@(() => turnoModel.PacienteId)" class="text-danger" />
-                        </div>
-                        <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
-                            <InputSelect @bind-Value="turnoModel.VeterinarioId" class="form-select bg-dark text-light border-secondary">
-                                <option value="">-- Médico Veterinario --</option>
-                                @foreach (var v in modalVeterinarios) { <option value="@v.Id">@v.NombreCompleto - @v.Especialidad</option> }
-                            </InputSelect>
-                            <ValidationMessage For="@(() => turnoModel.VeterinarioId)" class="text-danger" />
+                        </EditForm>
+                    </div>
+
+                    <!-- Columna Lateral (1/3): Horarios del Veterinario -->
+                    <div class="col-lg-4">
+                        <div class="p-3 rounded h-100 d-flex flex-column" style="background: #FAFAFA !important; color: #333333 !important; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                                <span style="font-size: 1.1rem;">🗓️</span>
+                                <h5 class="m-0 fw-bold" style="font-size: 0.92rem; color: #0284c7;">
+                                    Horarios de Atención
+                                </h5>
+                            </div>
+
+                            @if (selectedVetForModal != null)
+                            {
+                                <div class="small fw-bold mb-2" style="color: #333333;">
+                                    👨‍⚕️ @selectedVetForModal.NombreCompleto
+                                </div>
+                                <div class="d-flex flex-column gap-2 overflow-auto flex-grow-1 pe-1" style="max-height: 360px;">
+                                    @for (int dia = 1; dia <= 7; dia++)
+                                    {
+                                        var diaNombre = GetDiaNombre(dia);
+                                        var horariosDia = selectedVetForModal.Horarios?.Where(h => h.Activo && h.DiaSemana == dia).ToList();
+                                        
+                                        <div class="p-2 rounded" style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid @(horariosDia != null && horariosDia.Any() ? "#0284c7" : "#cbd5e1"); font-size: 0.78rem; color: #333333;">
+                                            @if (horariosDia == null || !horariosDia.Any())
+                                            {
+                                                <div><strong style="color: #333333;">@diaNombre:</strong> <span style="color: #64748b; font-style: italic;">Sin atención</span></div>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var h in horariosDia)
+                                                {
+                                                    <div>
+                                                        <strong style="color: #333333;">@diaNombre:</strong> <span style="color: #333333;">@FormatHorarioText(h)</span>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-3" style="font-size: 0.85rem; min-height: 220px; color: #475569;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 38px; height: 38px; margin-bottom: 10px; opacity: 0.7; color: #475569;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                    </svg>
+                                    Seleccione un médico veterinario para ver sus días y horarios de atención disponibles.
+                                </div>
+                            }
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Servicio (*)</label>
-                            <InputSelect @bind-Value="turnoModel.ServicioId" class="form-select bg-dark text-light border-secondary">
-                                <option value="0">-- Servicio Clínico --</option>
-                                @foreach (var s in modalServicios) { <option value="@s.Id">@s.Nombre</option> }
-                            </InputSelect>
-                            <ValidationMessage For="@(() => turnoModel.ServicioId)" class="text-danger" />
+                </div>
+            }
+        </div>
+    </div>
+}
+@if (showDetailModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseDetailModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 650px; width: 95%;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3 style="font-weight: 700; margin: 0; color: var(--accent-primary);">Detalle de Turno</h3>
+                <button class="modal-close-btn" @onclick="CloseDetailModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            @if (selectedDetailTurno == null)
+            {
+                <p class="text-secondary">Cargando detalles...</p>
+            }
+            else
+            {
+                <div class="p-3" style="color: var(--text-primary);">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 2px;">Fecha y Hora Programada</label>
+                            <span style="font-size: 1.1rem; font-weight: 600;">@selectedDetailTurno.FechaHora.ToString("dd/MM/yyyy HH:mm") hs</span>
                         </div>
-                        <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
-                            <input type="datetime-local" @bind="turnoModel.FechaHora" class="form-control bg-dark text-light border-secondary" />
-                            @if (!string.IsNullOrEmpty(turnoFechaError))
-                            { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@turnoFechaError</div> }
-                        </div>
-                        <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Estado Operativo</label>
-                            <input type="text" value="Programado" class="form-control bg-dark text-light border-secondary" disabled />
+                        <div class="col-md-6">
+                            <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 2px;">Estado</label>
+                            <span class="badge @GetBadgeColor(selectedDetailTurno.Estado)" style="font-size: 0.9rem; padding: 6px 12px;">@selectedDetailTurno.Estado</span>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-12" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Motivo del Turno (*)</label>
-                            <InputText @bind-Value="turnoModel.Motivo" class="form-control bg-dark text-light border-secondary" placeholder="Ej: Control general anual, Vacuna Sextuple" />
-                            <ValidationMessage For="@(() => turnoModel.Motivo)" class="text-danger" />
+                    
+                    <div class="row g-3 mb-3" style="border-top: 1px solid var(--border-glass); padding-top: 15px;">
+                        <div class="col-md-6">
+                            <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 2px;">Paciente (Mascota)</label>
+                            <span style="font-size: 1rem; font-weight: 600;">@selectedDetailTurno.PacienteNombre</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 2px;">Dueño (Propietario)</label>
+                            <span style="font-size: 1rem; font-weight: 600;">@(string.IsNullOrEmpty(selectedDetailTurno.PropietarioNombre) ? "—" : selectedDetailTurno.PropietarioNombre)</span>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-12" style="margin-bottom: var(--sp-sm);">
-                            <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Observaciones Previas / Receta</label>
-                            <InputTextArea @bind-Value="turnoModel.Observaciones" class="form-control bg-dark text-light border-secondary" rows="3" />
+                    
+                    <div class="row g-3 mb-3" style="border-top: 1px solid var(--border-glass); padding-top: 15px;">
+                        <div class="col-md-6">
+                            <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 2px;">Veterinario Asignado</label>
+                            <span style="font-size: 1rem; font-weight: 600;">Dr. @selectedDetailTurno.VeterinarioNombre</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 2px;">Tipo de Servicio</label>
+                            <span style="font-size: 1rem; font-weight: 600;">@selectedDetailTurno.ServicioNombre</span>
                         </div>
                     </div>
-                    @if (!string.IsNullOrEmpty(turnoErrorMessage))
-                    { <div class="alert alert-danger mt-3" style="background:rgba(239,68,68,0.2);border:1px solid var(--accent-danger);color:white;">@turnoErrorMessage</div> }
-                    <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
-                        <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseTurnoModal">Retornar a Agenda</button>
-                        <button type="submit" class="btn-primary-glass" disabled="@isSavingTurno">
-                            @if(isSavingTurno) { <span>Guardando Turno...</span> } else { <span>Confirmar Turno</span> }
-                        </button>
+                    
+                    <div class="mb-3" style="border-top: 1px solid var(--border-glass); padding-top: 15px;">
+                        <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 4px;">Motivo del Turno</label>
+                        <p style="margin: 0; background: rgba(255,255,255,0.04); padding: 10px; border-radius: 6px; border: 1px solid var(--border-glass); color: var(--text-primary);">
+                            @selectedDetailTurno.Motivo
+                        </p>
                     </div>
-                </EditForm>
+                    
+                    <div class="mb-3">
+                        <label class="text-secondary small d-block" style="font-size: 0.8rem; margin-bottom: 4px;">Observaciones Previas / Receta</label>
+                        <p style="margin: 0; background: rgba(255,255,255,0.04); padding: 10px; border-radius: 6px; border: 1px solid var(--border-glass); min-height: 60px; white-space: pre-wrap; color: var(--text-primary);">
+                            @(string.IsNullOrEmpty(selectedDetailTurno.Observaciones) ? "Sin observaciones registradas." : selectedDetailTurno.Observaciones)
+                        </p>
+                    </div>
+                    
+                    @if (detailPropietarioInfo != null)
+                    {
+                        <div class="mb-3 p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <label class="text-secondary small d-block mb-2" style="font-size: 0.8rem;">Contacto del Dueño (@detailPropietarioInfo.NombreCompleto)</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (!string.IsNullOrEmpty(detailPropietarioInfo.Email))
+                                {
+                                    <a href="@detailMailtoUrl" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn btn-sm btn-outline-info d-flex align-items-center gap-1" style="color: #60a5fa; border-color: rgba(96,165,250,0.3);" title="Enviar correo electrónico">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                        </svg>
+                                        Enviar Email
+                                    </a>
+                                }
+                                @if (!string.IsNullOrEmpty(detailPropietarioInfo.Telefono))
+                                {
+                                    <a href="@detailWhatsAppUrl" target="_blank" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1" style="color: #4ade80; border-color: rgba(74,222,128,0.3);" title="Enviar recordatorio por WhatsApp">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-3.658A8.967 8.967 0 0 1 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                                        </svg>
+                                        WhatsApp Recordatorio
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end mt-4" style="gap: 12px; border-top: 1px solid var(--border-glass); padding-top: 15px;">
+                        <button type="button" class="btn btn-outline-secondary text-light" style="border-color: var(--border-glass);" @onclick="CloseDetailModal">Cerrar</button>
+                        <AuthorizeView Roles="Admin,Veterinario,Recepcionista">
+                            <Authorized>
+                                @if (!isGerente)
+                                {
+                                    <button type="button" class="btn-primary-glass" @onclick="() => NavigateFromDetailToEdit(selectedDetailTurno.Id)">
+                                        Editar / Dictamen
+                                    </button>
+                                }
+                            </Authorized>
+                        </AuthorizeView>
+                    </div>
+                </div>
             }
         </div>
     </div>
 }
 
-@* ═══════ MODAL 2: Nuevo Paciente (desde Turno) ═══════ *@
 @if (showPacienteModal)
 {
     <div class="modal-overlay modal-overlay-z2" @onclick="ClosePacienteModal" @onclick:stopPropagation="false">
@@ -436,18 +630,34 @@
                     <div class="row">
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
-                            <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
-                                <option value="0">-- Seleccione Especie --</option>
-                                @foreach (var e in modalEspecies) { <option value="@e.Id">@e.Nombre</option> }
-                            </InputSelect>
+                            <div class="d-flex gap-2">
+                                <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
+                                    <option value="0">-- Seleccione Especie --</option>
+                                    @foreach (var e in modalEspecies) { <option value="@e.Id">@e.Nombre</option> }
+                                </InputSelect>
+                                <button type="button" @onclick="OpenEspecieModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva especie">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Nuevo
+                                </button>
+                            </div>
                             <ValidationMessage For="@(() => pacienteModel.EspecieId)" class="text-danger" />
                         </div>
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
-                            <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(modalRazas.Count == 0)">
-                                <option value="">-- Seleccione Raza --</option>
-                                @foreach (var r in modalRazas) { <option value="@r.Id">@r.Nombre</option> }
-                            </InputSelect>
+                            <div class="d-flex gap-2">
+                                <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(pacienteModel.EspecieId == 0)">
+                                    <option value="">-- Seleccione Raza --</option>
+                                    @foreach (var r in modalRazas) { <option value="@r.Id">@r.Nombre</option> }
+                                </InputSelect>
+                                <button type="button" @onclick="OpenRazaModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva raza" disabled="@(pacienteModel.EspecieId == 0)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Nuevo
+                                </button>
+                            </div>
                             <ValidationMessage For="@(() => pacienteModel.RazaId)" class="text-danger" />
                         </div>
                     </div>
@@ -547,9 +757,309 @@
     </div>
 }
 
+@* ═══════ MODAL 4: Nueva Especie (desde Paciente, anidado x2) ═══════ *@
+@if (showEspecieModal)
+{
+    <div class="modal-overlay modal-overlay-z3" @onclick="CloseEspecieModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nueva Especie</h3>
+                <button class="modal-close-btn" @onclick="CloseEspecieModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <EditForm Model="especieModel" OnValidSubmit="HandleSaveEspecie" FormName="modalEspecieFormAgenda">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="especieModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => especieModel.Nombre)" class="text-danger" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                        <InputText @bind-Value="especieModel.Descripcion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(especieErrorMessage))
+                { <div class="alert alert-danger mt-3" style="background:rgba(239,68,68,0.2);border:1px solid var(--accent-danger);color:white;">@especieErrorMessage</div> }
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseEspecieModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingEspecie">
+                        @if(isSavingEspecie) { <span>Guardando...</span> } else { <span>Guardar Especie</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 5: Nueva Raza (desde Paciente, anidado x2) ═══════ *@
+@if (showRazaModal)
+{
+    <div class="modal-overlay modal-overlay-z3" @onclick="CloseRazaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Nueva Raza</h3>
+                <button class="modal-close-btn" @onclick="CloseRazaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <EditForm Model="razaModel" OnValidSubmit="HandleSaveRaza" FormName="modalRazaFormAgenda">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
+                        <InputSelect @bind-Value="razaModel.EspecieId" class="form-select bg-dark text-light border-secondary" disabled="true">
+                            @foreach (var e in modalEspecies) { <option value="@e.Id">@e.Nombre</option> }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre (*)</label>
+                        <InputText @bind-Value="razaModel.Nombre" class="form-control bg-dark text-light border-secondary" />
+                        <ValidationMessage For="@(() => razaModel.Nombre)" class="text-danger" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12" style="margin-bottom: var(--sp-sm);">
+                        <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción</label>
+                        <InputText @bind-Value="razaModel.Descripcion" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(razaErrorMessage))
+                { <div class="alert alert-danger mt-3" style="background:rgba(239,68,68,0.2);border:1px solid var(--accent-danger);color:white;">@razaErrorMessage</div> }
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseRazaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingRaza">
+                        @if(isSavingRaza) { <span>Guardando...</span> } else { <span>Guardar Raza</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL: Confirmación y Envío de Notificaciones ═══════ *@
+@if (showNotificationSuccessModal)
+{
+    <div class="modal-overlay modal-overlay-z3" @onclick="() => showNotificationSuccessModal = false" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 650px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="background: rgba(16,185,129,0.2); color: #10b981; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    </div>
+                    <h3 style="margin: 0; color: #10b981;">¡Turno Agendado con Éxito!</h3>
+                </div>
+                <button class="modal-close-btn" @onclick="() => showNotificationSuccessModal = false" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <p class="text-secondary mb-4" style="font-size: 0.95rem;">
+                El turno ha sido guardado en el sistema. Se han generado las notificaciones correspondientes para el propietario de la mascota:
+            </p>
+
+            <div class="row g-3">
+                @* CARD: EMAIL DE CONFIRMACIÓN *@
+                <div class="col-md-6">
+                    <div class="p-3 h-100 rounded d-flex flex-column" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass);">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div style="background: rgba(96,165,250,0.15); color: #60a5fa; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>
+                            </div>
+                            <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Confirmación por Email</h5>
+                        </div>
+                        
+                        <div class="flex-grow-1" style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">
+                            <p class="mb-1"><strong>Destinatario:</strong> @(string.IsNullOrEmpty(notificationEmailTo) ? "Sin registrar" : notificationEmailTo)</p>
+                            <p class="mb-2"><strong>Asunto:</strong> @notificationEmailSubject</p>
+                            <div class="p-2 rounded mb-3 bg-dark" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); font-family: monospace; white-space: pre-wrap; font-size: 0.75rem;">
+                                @notificationEmailBody
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-auto">
+                            @if (!string.IsNullOrEmpty(notificationEmailTo))
+                            {
+                                <a href="@notificationMailtoUrl" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn btn-sm btn-primary-glass flex-grow-1 text-center" style="font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                    Enviar Email
+                                </a>
+                            }
+                            <a href="@notificationGoogleCalendarUrl" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 text-center" style="font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; border-color: rgba(96,165,250,0.3); color: #60a5fa;">
+                                Google Cal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                @* CARD: WHATSAPP DE RECORDATORIO *@
+                <div class="col-md-6">
+                    <div class="p-3 h-100 rounded d-flex flex-column" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass);">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div style="background: rgba(74,222,128,0.15); color: #4ade80; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-3.658A8.967 8.967 0 0 1 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>
+                            </div>
+                            <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Recordatorio WhatsApp</h5>
+                        </div>
+
+                        <div class="flex-grow-1" style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">
+                            <p class="mb-1"><strong>Destinatario:</strong> @(string.IsNullOrEmpty(notificationWhatsAppTo) ? "Sin registrar" : notificationWhatsAppTo)</p>
+                            <p class="mb-2"><strong>Programado para:</strong> El día antes del turno</p>
+                            <div class="p-2 rounded mb-3 bg-dark" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); font-family: monospace; white-space: pre-wrap; font-size: 0.75rem;">
+                                @notificationWhatsAppBody
+                            </div>
+                        </div>
+
+                        <div class="d-flex mt-auto">
+                            @if (!string.IsNullOrEmpty(notificationWhatsAppTo))
+                            {
+                                <a href="@notificationWhatsAppUrl" target="_blank" class="btn btn-sm btn-primary-glass flex-grow-1 text-center" style="background: rgba(16,185,129,0.2) !important; color: #4ade80 !important; border-color: rgba(74,222,128,0.3); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                    Enviar WhatsApp
+                                </a>
+                            }
+                            else
+                            {
+                                <button disabled class="btn btn-sm btn-outline-secondary flex-grow-1 text-center" style="font-size: 0.8rem;">
+                                    Sin celular
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (isSurgeryTurn)
+            {
+                <div class="alert alert-warning mt-3 mb-0 d-flex align-items-start gap-2" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; font-size: 0.85rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+                    <div>
+                        <strong>Aviso de Cirugía:</strong> Se adjuntaron las indicaciones de ayuno de 24 horas al mensaje de WhatsApp.
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-outline-secondary text-light" style="border-color: var(--border-glass);" @onclick="() => showNotificationSuccessModal = false">Entendido</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 5: Detalle Paciente ═══════ *@
+@if (showPacienteDetailModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="ClosePacienteDetailModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Detalle de Paciente</h3>
+                <button class="modal-close-btn" @onclick="ClosePacienteDetailModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            @if (selectedPacienteDetail == null)
+            {
+                <p class="text-secondary">Cargando...</p>
+            }
+            else
+            {
+                <div class="mt-3">
+                    <p><strong>Nombre:</strong> @selectedPacienteDetail.Nombre</p>
+                    <p><strong>Especie:</strong> @selectedPacienteDetail.EspecieNombre</p>
+                    <p><strong>Raza:</strong> @selectedPacienteDetail.RazaNombre</p>
+                    <p><strong>Sexo:</strong> @(selectedPacienteDetail.Sexo == "M" ? "Macho" : "Hembra")</p>
+                    <p><strong>Nacimiento:</strong> @(selectedPacienteDetail.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "—")</p>
+                    <p><strong>Observaciones:</strong> @(string.IsNullOrEmpty(selectedPacienteDetail.Observaciones) ? "Ninguna" : selectedPacienteDetail.Observaciones)</p>
+                </div>
+            }
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePacienteDetailModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL 6: Detalle Propietario ═══════ *@
+@if (showPropietarioDetailModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="ClosePropietarioDetailModal" @onclick:stopPropagation="false">
+        <div class="modal-panel modal-panel-sm" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>Detalle de Dueño</h3>
+                <button class="modal-close-btn" @onclick="ClosePropietarioDetailModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            @if (selectedPropietarioDetail == null)
+            {
+                <p class="text-secondary">Cargando...</p>
+            }
+            else
+            {
+                <div class="mt-3">
+                    <p><strong>Nombre Completo:</strong> @selectedPropietarioDetail.NombreCompleto</p>
+                    <p><strong>DNI:</strong> @selectedPropietarioDetail.DNI</p>
+                    <p><strong>Teléfono:</strong> @selectedPropietarioDetail.Telefono</p>
+                    <p><strong>Email:</strong> @selectedPropietarioDetail.Email</p>
+                    <p><strong>Dirección:</strong> @(string.IsNullOrEmpty(selectedPropietarioDetail.Direccion) ? "Sin dirección" : selectedPropietarioDetail.Direccion)</p>
+                    <div class="d-flex gap-2 mt-3 mb-3">
+                        <a href="https://wa.me/@FormatWhatsApp(selectedPropietarioDetail.Telefono)" target="_blank" class="btn btn-success btn-sm d-flex align-items-center gap-2" style="background-color: #25D366; border: none; font-weight: 600; color: white;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
+                                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.949h.004c4.368 0 7.926-3.562 7.928-7.929a7.89 7.89 0 0 0-2.33-5.69m-5.61 10.744h-.01a6.5 6.5 0 0 1-3.3-1.02l-.242-.144-2.454.644.656-2.387-.156-.25a6.5 6.5 0 0 1-1.007-3.5C.029 4.348 3.52 1.052 7.99 1.052a6.5 6.5 0 0 1 4.59 1.93 6.5 6.5 0 0 1 1.922 4.6c-.004 4.475-3.498 7.969-7.965 7.969m3.636-4.708c-.18-.089-1.08-.534-1.25-.597-.17-.061-.29-.092-.41.09-.12.18-.46.597-.56.711-.1.115-.2.13-.38.041-1.81-.9-3.236-2.225-4.088-3.727-.12-.206-.013-.319.09-.422.09-.09.18-.21.28-.31.09-.1.12-.17.18-.29.06-.12.03-.22-.01-.31-.04-.09-.41-1.005-.56-1.373-.15-.356-.3-.3-.41-.3-.1-.005-.22-.005-.34-.005-.12 0-.32.045-.49.23-.17.19-.66.645-.66 1.57s.68 1.835.77 1.962c.09.13 1.34 2.044 3.25 2.87.45.2 1.01.32 1.37.43.46.15.88.13 1.21.08.37-.06 1.08-.44 1.23-.863.15-.42.15-.78.1-.863-.05-.08-.18-.12-.36-.21"/>
+                            </svg> WhatsApp
+                        </a>
+                        @if (!string.IsNullOrEmpty(selectedPropietarioDetail.Email))
+                        {
+                            <a href="mailto:@selectedPropietarioDetail.Email" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn btn-outline-info btn-sm d-flex align-items-center gap-2" style="color: white; border-color: var(--border-glass);">
+                                Enviar Correo
+                            </a>
+                        }
+                    </div>
+                    <p><strong>Mascotas:</strong></p>
+                    @if (selectedPropietarioMascotas == null)
+                    {
+                        <span class="text-secondary">Cargando mascotas...</span>
+                    }
+                    else if (!selectedPropietarioMascotas.Any())
+                    {
+                        <span class="text-secondary">Sin mascotas registradas.</span>
+                    }
+                    else
+                    {
+                        <ul>
+                            @foreach (var m in selectedPropietarioMascotas)
+                            {
+                                <li>@m.Nombre (@m.EspecieNombre - @m.RazaNombre)</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePropietarioDetailModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
 @using System.Globalization
 
 @code {
+    [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "turnoId")]
+    public string? QueryTurnoId { get; set; }
+
+    private bool isGerente = false;
     private string currentView = "Lista";
     private DateTime currentReferenceDate = DateTime.Today;
     private PaginatedList<TurnoDto>? turnosResponse;
@@ -590,10 +1100,61 @@
     private bool isSavingCliente;
     private string clienteErrorMessage = string.Empty;
 
+    // ── Modal Especie (anidado x2) ──
+    private bool showEspecieModal;
+    private EspecieDto especieModel = new();
+    private bool isSavingEspecie;
+    private string especieErrorMessage = string.Empty;
+
+    // ── Modal Raza (anidado x2) ──
+    private bool showRazaModal;
+    private RazaDto razaModel = new();
+    private bool isSavingRaza;
+    private string razaErrorMessage = string.Empty;
+
+    // ── Previsualización de Notificaciones Automáticas ──
+    private bool showNotificationSuccessModal;
+    private TurnoDto? notificationTurnoRef;
+    private string notificationEmailTo = "";
+    private string notificationEmailSubject = "";
+    private string notificationEmailBody = "";
+    private string notificationWhatsAppTo = "";
+    private string notificationWhatsAppBody = "";
+    private string notificationGoogleCalendarUrl = "";
+    private string notificationMailtoUrl = "";
+    private string notificationWhatsAppUrl = "";
+    private bool isSurgeryTurn = false;
+
+    // ── Modal Detalle Turno ──
+    private bool showDetailModal;
+    private TurnoDto? selectedDetailTurno;
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isGerente = user.IsInRole("Gerente");
+
         await LoadVeterinariosAsync();
         await LoadDataAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(QueryTurnoId))
+        {
+            try
+            {
+                var t = await TurnoService.GetByIdAsync(QueryTurnoId);
+                if (t != null)
+                {
+                    await OpenDetailModal(t);
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 
     private async Task LoadVeterinariosAsync()
@@ -672,7 +1233,11 @@
 
     private async Task PreviousPage() { if (turnosResponse?.HasPreviousPage == true) { currentPage--; await LoadDataAsync(); } }
     private async Task NextPage() { if (turnosResponse?.HasNextPage == true) { currentPage++; await LoadDataAsync(); } }
-    private void NavigateToEdit(string id) => Navigation.NavigateTo($"/agenda/editar/{id}");
+    private void NavigateToEdit(string id)
+    {
+        if (isGerente) return;
+        Navigation.NavigateTo($"/agenda/editar/{id}");
+    }
 
     private async Task ConfirmCancel(string id)
     {
@@ -697,12 +1262,50 @@
 
     private void CloseTurnoModal() => showTurnoModal = false;
 
+    private VeterinarioDto? selectedVetForModal =>
+        modalVeterinarios?.FirstOrDefault(v => v.Id == turnoModel.VeterinarioId);
+
+    private string GetDiaNombre(int dia) => dia switch
+    {
+        1 => "Lunes",
+        2 => "Martes",
+        3 => "Miércoles",
+        4 => "Jueves",
+        5 => "Viernes",
+        6 => "Sábado",
+        7 => "Domingo",
+        _ => ""
+    };
+
+    private string FormatHorarioText(HorarioDto h)
+    {
+        string inicioStr = h.HoraInicio;
+        string finStr = h.HoraFin;
+
+        if (TimeSpan.TryParse(h.HoraInicio, out var tsStart))
+        {
+            var dtStart = DateTime.Today.Add(tsStart);
+            inicioStr = dtStart.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLower();
+        }
+
+        if (TimeSpan.TryParse(h.HoraFin, out var tsEnd))
+        {
+            var dtEnd = DateTime.Today.Add(tsEnd);
+            finStr = dtEnd.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLower();
+        }
+
+        bool isGuardia = h.TipoHorarioId == 2 || string.Equals(h.TipoHorarioNombre, "Guardia", StringComparison.OrdinalIgnoreCase);
+        string tipoStr = isGuardia ? "Turno guardia" : "Turno normal";
+
+        return $"{inicioStr} a {finStr} | {tipoStr}";
+    }
+
     private async Task HandleSaveTurno()
     {
         isSavingTurno = true; turnoErrorMessage = string.Empty; turnoFechaError = string.Empty;
 
-        // Validación custom: fecha no puede ser pasada
-        if (turnoModel.FechaHora < DateTime.Now)
+        // Validación custom: fecha no puede ser pasada si es nuevo
+        if (string.IsNullOrEmpty(turnoModel.Id) && turnoModel.FechaHora < DateTime.Now)
         {
             turnoFechaError = "La fecha ingresada es inválida (Es una fecha pasada)";
             isSavingTurno = false;
@@ -711,9 +1314,76 @@
 
         try
         {
-            var result = await TurnoService.CreateAsync(turnoModel);
-            if (result) { showTurnoModal = false; await LoadDataAsync(); }
-            else turnoErrorMessage = "Ya hay un turno registrado en la fecha/hora ingresada para el mismo veterinario.";
+            bool result;
+            string serverMsg = string.Empty;
+            TurnoDto? savedTurno = null;
+            if (string.IsNullOrEmpty(turnoModel.Id))
+            {
+                var createRes = await TurnoService.CreateWithResultAsync(turnoModel);
+                result = createRes.Success;
+                serverMsg = createRes.ErrorMessage;
+                if (result)
+                {
+                    savedTurno = new TurnoDto
+                    {
+                        Id = turnoModel.Id,
+                        PacienteId = turnoModel.PacienteId,
+                        PacienteNombre = modalPacientes.FirstOrDefault(p => p.Id == turnoModel.PacienteId)?.Nombre ?? "Paciente",
+                        VeterinarioId = turnoModel.VeterinarioId,
+                        VeterinarioNombre = modalVeterinarios.FirstOrDefault(v => v.Id == turnoModel.VeterinarioId)?.NombreCompleto ?? "Veterinario",
+                        ServicioId = turnoModel.ServicioId,
+                        ServicioNombre = modalServicios.FirstOrDefault(s => s.Id == turnoModel.ServicioId)?.Nombre ?? "Servicio",
+                        FechaHora = turnoModel.FechaHora,
+                        DuracionMinutos = turnoModel.DuracionMinutos > 0 ? turnoModel.DuracionMinutos : (modalServicios.FirstOrDefault(s => s.Id == turnoModel.ServicioId)?.DuracionMinutos ?? 30),
+                        Motivo = turnoModel.Motivo,
+                        Observaciones = turnoModel.Observaciones,
+                        Estado = turnoModel.Estado
+                    };
+                }
+            }
+            else
+            {
+                // Si el estado es Completado o Cancelado, disparamos a los métodos específicos de estado en la API
+                if (turnoModel.Estado == "Completado")
+                    result = await TurnoService.ChangeStatusAsync(turnoModel.Id, "Completado");
+                else if (turnoModel.Estado == "Cancelado")
+                    result = await TurnoService.ChangeStatusAsync(turnoModel.Id, "Cancelado");
+                else
+                {
+                    var resUpdate = await TurnoService.UpdateWithResultAsync(turnoModel.Id, turnoModel);
+                    result = resUpdate.Success;
+                    serverMsg = resUpdate.ErrorMessage;
+                }
+                if (result)
+                {
+                    savedTurno = new TurnoDto
+                    {
+                        Id = turnoModel.Id,
+                        PacienteId = turnoModel.PacienteId,
+                        PacienteNombre = modalPacientes.FirstOrDefault(p => p.Id == turnoModel.PacienteId)?.Nombre ?? "Paciente",
+                        VeterinarioId = turnoModel.VeterinarioId,
+                        VeterinarioNombre = modalVeterinarios.FirstOrDefault(v => v.Id == turnoModel.VeterinarioId)?.NombreCompleto ?? "Veterinario",
+                        ServicioId = turnoModel.ServicioId,
+                        ServicioNombre = modalServicios.FirstOrDefault(s => s.Id == turnoModel.ServicioId)?.Nombre ?? "Servicio",
+                        FechaHora = turnoModel.FechaHora,
+                        DuracionMinutos = turnoModel.DuracionMinutos > 0 ? turnoModel.DuracionMinutos : (modalServicios.FirstOrDefault(s => s.Id == turnoModel.ServicioId)?.DuracionMinutos ?? 30),
+                        Motivo = turnoModel.Motivo,
+                        Observaciones = turnoModel.Observaciones,
+                        Estado = turnoModel.Estado
+                    };
+                }
+            }
+            
+            if (result) 
+            { 
+                showTurnoModal = false; 
+                await LoadDataAsync(); 
+                if (savedTurno != null)
+                {
+                    await PrepareNotificationPreview(savedTurno);
+                }
+            }
+            else turnoErrorMessage = !string.IsNullOrEmpty(serverMsg) ? serverMsg : "Ya hay un turno registrado en la fecha/hora ingresada para el mismo veterinario o error de guardado.";
         }
         catch (Exception) { turnoErrorMessage = "Excepción al enviar datos del turno."; }
         finally { isSavingTurno = false; }
@@ -793,5 +1463,308 @@
         }
         catch (Exception) { clienteErrorMessage = "Error de conexión."; }
         finally { isSavingCliente = false; }
+    }
+
+    // ══════ MODAL ESPECIE & RAZA (desde Paciente) ══════
+    private void OpenEspecieModalFromPaciente()
+    {
+        especieModel = new EspecieDto();
+        especieErrorMessage = string.Empty;
+        isSavingEspecie = false;
+        showEspecieModal = true;
+    }
+
+    private void CloseEspecieModal() => showEspecieModal = false;
+
+    private async Task HandleSaveEspecie()
+    {
+        isSavingEspecie = true; especieErrorMessage = string.Empty;
+        try
+        {
+            var result = await CatalogoService.CreateEspecieAsync(especieModel);
+            if (result)
+            {
+                var esp = await CatalogoService.GetEspeciesActivasAsync();
+                if (esp != null)
+                {
+                    modalEspecies = esp;
+                    var nuevo = esp.FirstOrDefault(e => e.Nombre.Equals(especieModel.Nombre, StringComparison.OrdinalIgnoreCase));
+                    if (nuevo != null)
+                    {
+                        await OnModalEspecieChanged(nuevo.Id);
+                    }
+                }
+                showEspecieModal = false;
+            }
+            else especieErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+        }
+        catch (Exception) { especieErrorMessage = "Error de conexión al guardar."; }
+        finally { isSavingEspecie = false; }
+    }
+
+    private void OpenRazaModalFromPaciente()
+    {
+        if (pacienteModel.EspecieId == 0) return;
+        razaModel = new RazaDto { EspecieId = pacienteModel.EspecieId };
+        razaErrorMessage = string.Empty;
+        isSavingRaza = false;
+        showRazaModal = true;
+    }
+
+    private void CloseRazaModal() => showRazaModal = false;
+
+    private async Task HandleSaveRaza()
+    {
+        isSavingRaza = true; razaErrorMessage = string.Empty;
+        try
+        {
+            var result = await CatalogoService.CreateRazaAsync(razaModel);
+            if (result)
+            {
+                var r = await CatalogoService.GetRazasPorEspecieAsync(pacienteModel.EspecieId);
+                modalRazas = r ?? new List<RazaDto>();
+                var nuevo = modalRazas.FirstOrDefault(ra => ra.Nombre.Equals(razaModel.Nombre, StringComparison.OrdinalIgnoreCase));
+                if (nuevo != null)
+                {
+                    pacienteModel.RazaId = nuevo.Id;
+                }
+                showRazaModal = false;
+            }
+            else razaErrorMessage = "Ocurrió un error al guardar. Vuelva a intentar.";
+        }
+        catch (Exception) { razaErrorMessage = "Error de conexión al guardar."; }
+        finally { isSavingRaza = false; }
+    }
+
+    // ── Previsualización de Notificaciones ──
+    private async Task PrepareNotificationPreview(TurnoDto turno)
+    {
+        notificationTurnoRef = turno;
+        showNotificationSuccessModal = false;
+        
+        try
+        {
+            var pac = await PacienteService.GetByIdAsync(turno.PacienteId);
+            if (pac == null) return;
+
+            var prop = await PropietarioService.GetByIdAsync(pac.PropietarioId);
+            if (prop == null) return;
+
+            bool isCirugia = false;
+            if (!string.IsNullOrEmpty(turno.Motivo) && (turno.Motivo.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("cirugía", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operacion", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operación", StringComparison.OrdinalIgnoreCase)))
+            {
+                isCirugia = true;
+            }
+            if (!string.IsNullOrEmpty(turno.ServicioNombre) && (turno.ServicioNombre.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.ServicioNombre.Contains("cirugía", StringComparison.OrdinalIgnoreCase)))
+            {
+                isCirugia = true;
+            }
+            isSurgeryTurn = isCirugia;
+
+            notificationEmailTo = prop.Email;
+            notificationEmailSubject = $"Confirmación de Turno - Veterinaria";
+            
+            int duracion = turno.DuracionMinutos > 0 ? turno.DuracionMinutos : 30;
+            var startUtc = turno.FechaHora.ToUniversalTime();
+            var endUtc = startUtc.AddMinutes(duracion);
+            
+            var gCalText = Uri.EscapeDataString($"Turno Veterinaria - Mascota: {pac.Nombre}");
+            var gCalDates = $"{startUtc:yyyyMMddTHHmmssZ}/{endUtc:yyyyMMddTHHmmssZ}";
+            var gCalDetails = Uri.EscapeDataString($"Turno agendado para {pac.Nombre} con el veterinario {turno.VeterinarioNombre}. Servicio: {turno.ServicioNombre}. Motivo: {turno.Motivo}");
+            notificationGoogleCalendarUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={gCalText}&dates={gCalDates}&details={gCalDetails}";
+
+            notificationEmailBody = $"Hola {prop.NombreCompleto},\n\nTe confirmamos que se ha agendado un turno para tu mascota {pac.Nombre} el día {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs.\n\nVeterinario: {turno.VeterinarioNombre}\nServicio: {turno.ServicioNombre}\nMotivo: {turno.Motivo}\n\nPara añadir este turno a tu Google Calendar, haz clic en el siguiente enlace:\n{notificationGoogleCalendarUrl}\n\nSaludos,\nEl equipo de la Veterinaria.";
+
+            notificationMailtoUrl = $"mailto:{prop.Email}?subject={Uri.EscapeDataString(notificationEmailSubject)}&body={Uri.EscapeDataString(notificationEmailBody)}";
+
+            notificationWhatsAppTo = prop.Telefono;
+            var wsText = $"Hola {prop.NombreCompleto}, te recordamos que mañana {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs tienes un turno programado para {pac.Nombre} con el veterinario {turno.VeterinarioNombre}.";
+            
+            if (isCirugia)
+            {
+                wsText += "\n\n⚠️ INDICACIONES IMPORTANTES DE CIRUGÍA: Por favor, recuerde que el animal debe realizar un ayuno total de sólidos y líquidos (sin comida ni agua) durante las 24 horas previas al turno.";
+            }
+            
+            notificationWhatsAppBody = wsText;
+            
+            var cleanPhone = new string(prop.Telefono.Where(char.IsDigit).ToArray());
+            notificationWhatsAppUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(wsText)}";
+            
+            showNotificationSuccessModal = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al preparar notificaciones: {ex.Message}");
+        }
+    }
+
+    // ══════ MODAL DETALLE DE TURNO & DEEP LINKING ══════
+    private PropietarioDto? detailPropietarioInfo;
+    private PacienteDto? detailPacienteInfo;
+    private string detailMailtoUrl = "";
+    private string detailWhatsAppUrl = "";
+
+    private async Task OpenDetailModal(TurnoDto turno)
+    {
+        selectedDetailTurno = turno;
+        showDetailModal = true;
+        detailPropietarioInfo = null;
+        detailPacienteInfo = null;
+        detailMailtoUrl = "";
+        detailWhatsAppUrl = "";
+
+        try
+        {
+            detailPacienteInfo = await PacienteService.GetByIdAsync(turno.PacienteId);
+            if (detailPacienteInfo != null)
+            {
+                detailPropietarioInfo = await PropietarioService.GetByIdAsync(detailPacienteInfo.PropietarioId);
+                if (detailPropietarioInfo != null)
+                {
+                    bool isCirugia = false;
+                    if (!string.IsNullOrEmpty(turno.Motivo) && (turno.Motivo.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("cirugía", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operacion", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operación", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        isCirugia = true;
+                    }
+                    if (!string.IsNullOrEmpty(turno.ServicioNombre) && (turno.ServicioNombre.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.ServicioNombre.Contains("cirugía", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        isCirugia = true;
+                    }
+
+                    int duracion = turno.DuracionMinutos > 0 ? turno.DuracionMinutos : 30;
+                    var startUtc = turno.FechaHora.ToUniversalTime();
+                    var endUtc = startUtc.AddMinutes(duracion);
+                    var gCalText = Uri.EscapeDataString($"Turno Veterinaria - Mascota: {detailPacienteInfo.Nombre}");
+                    var gCalDates = $"{startUtc:yyyyMMddTHHmmssZ}/{endUtc:yyyyMMddTHHmmssZ}";
+                    var gCalDetails = Uri.EscapeDataString($"Turno agendado para {detailPacienteInfo.Nombre} con el veterinario {turno.VeterinarioNombre}. Servicio: {turno.ServicioNombre}. Motivo: {turno.Motivo}");
+                    var gCalUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={gCalText}&dates={gCalDates}&details={gCalDetails}";
+
+                    var emailSubject = $"Confirmación de Turno - Veterinaria";
+                    var emailBody = $"Hola {detailPropietarioInfo.NombreCompleto},\n\nTe confirmamos que se ha agendado un turno para tu mascota {detailPacienteInfo.Nombre} el día {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs.\n\nVeterinario: {turno.VeterinarioNombre}\nServicio: {turno.ServicioNombre}\nMotivo: {turno.Motivo}\n\nPara añadir este turno a tu Google Calendar, haz clic en el siguiente enlace:\n{gCalUrl}\n\nSaludos,\nEl equipo de la Veterinaria.";
+
+                    detailMailtoUrl = $"mailto:{detailPropietarioInfo.Email}?subject={Uri.EscapeDataString(emailSubject)}&body={Uri.EscapeDataString(emailBody)}";
+
+                    var wsText = $"Hola {detailPropietarioInfo.NombreCompleto}, te recordamos que mañana {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs tienes un turno programado para {detailPacienteInfo.Nombre} con el veterinario {turno.VeterinarioNombre}.";
+                    if (isCirugia)
+                    {
+                        wsText += "\n\n⚠️ INDICACIONES IMPORTANTES DE CIRUGÍA: Por favor, recuerde que el animal debe realizar un ayuno total de sólidos y líquidos (sin comida ni agua) durante las 24 horas previas al turno.";
+                    }
+                    var cleanPhone = new string(detailPropietarioInfo.Telefono.Where(char.IsDigit).ToArray());
+                    detailWhatsAppUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(wsText)}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar detalle propietario: {ex.Message}");
+        }
+    }
+
+    private void CloseDetailModal()
+    {
+        showDetailModal = false;
+        selectedDetailTurno = null;
+        if (!string.IsNullOrEmpty(QueryTurnoId))
+        {
+            QueryTurnoId = null;
+            Navigation.NavigateTo("/agenda");
+        }
+    }
+
+    private async Task NavigateFromDetailToEdit(string id)
+    {
+        await OpenTurnoModalForEdit(id);
+    }
+
+    private async Task OpenTurnoModalForEdit(string id)
+    {
+        showDetailModal = false;
+        turnoModel = new TurnoDto(); turnoErrorMessage = string.Empty; isSavingTurno = false;
+        isLoadingTurnoModal = true; showTurnoModal = true;
+        try
+        {
+            var resP = await PacienteService.GetAllAsync(1, 1000, ""); if (resP != null) modalPacientes = resP.Items;
+            var resV = await PersonalService.GetVeterinariosActivosAsync(); if (resV != null) modalVeterinarios = resV;
+            var resS = await ServiciosService.GetServiciosActivosAsync(); if (resS != null) modalServicios = resS;
+
+            var existing = await TurnoService.GetByIdAsync(id);
+            if (existing != null)
+            {
+                turnoModel = existing;
+            }
+            else
+            {
+                turnoErrorMessage = "No se encontró el turno a editar.";
+            }
+        }
+        catch { turnoErrorMessage = "Error al cargar datos del turno."; }
+        finally { isLoadingTurnoModal = false; }
+    }
+
+    // Detail popover states
+    private bool showPacienteDetailModal;
+    private PacienteDto? selectedPacienteDetail;
+    private bool showPropietarioDetailModal;
+    private PropietarioDto? selectedPropietarioDetail;
+    private List<PacienteDto>? selectedPropietarioMascotas;
+
+    private void ClosePacienteDetailModal()
+    {
+        showPacienteDetailModal = false;
+        selectedPacienteDetail = null;
+    }
+
+    private void ClosePropietarioDetailModal()
+    {
+        showPropietarioDetailModal = false;
+        selectedPropietarioDetail = null;
+        selectedPropietarioMascotas = null;
+    }
+
+    private async Task OpenPacienteDetailModal(string pacienteId)
+    {
+        selectedPacienteDetail = null;
+        showPacienteDetailModal = true;
+        try
+        {
+            var pac = await PacienteService.GetByIdAsync(pacienteId);
+            if (pac != null) selectedPacienteDetail = pac;
+        }
+        catch {}
+    }
+
+    private async Task OpenPropietarioDetailModalFromTurno(string pacienteId)
+    {
+        selectedPropietarioDetail = null;
+        selectedPropietarioMascotas = null;
+        showPropietarioDetailModal = true;
+        try
+        {
+            var pac = await PacienteService.GetByIdAsync(pacienteId);
+            if (pac != null)
+            {
+                var prop = await PropietarioService.GetByIdAsync(pac.PropietarioId);
+                if (prop != null)
+                {
+                    selectedPropietarioDetail = prop;
+                    selectedPropietarioMascotas = await PacienteService.GetByPropietarioIdAsync(prop.Id) ?? new List<PacienteDto>();
+                }
+            }
+        }
+        catch {}
+    }
+
+    private string FormatWhatsApp(string telefono)
+    {
+        if (string.IsNullOrEmpty(telefono)) return string.Empty;
+        var clean = new string(telefono.Where(char.IsDigit).ToArray());
+        return clean;
+    }
+
+    private async Task IrAAgendaDiaria(DateTime fecha)
+    {
+        currentView = "Diaria";
+        currentReferenceDate = fecha;
+        await LoadDataAsync();
     }
 }

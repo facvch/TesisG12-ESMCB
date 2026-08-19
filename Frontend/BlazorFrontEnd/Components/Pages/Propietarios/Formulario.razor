@@ -1,4 +1,6 @@
+@page "/propietarios/nuevo"
 @page "/propietarios/editar/{Id}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario,Recepcionista")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject PropietarioService PropietarioService

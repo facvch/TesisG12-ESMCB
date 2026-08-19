@@ -1,4 +1,4 @@
-@page "/login"
+@page "/"
 @rendermode InteractiveServer
 @layout BlazorFrontEnd.Components.Layout.EmptyLayout
 @using BlazorFrontEnd.Models
@@ -81,7 +81,15 @@
                 await LocalStorage.SetItemAsync("authToken", response.Token);
                 TokenStorage.SetToken(response.Token);
                 ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthentication(response.Token);
-                Navigation.NavigateTo("/", forceLoad: true);
+                
+                if (response.Usuario != null && response.Usuario.RolNombre == "Recepcionista")
+                {
+                    Navigation.NavigateTo("/agenda", forceLoad: true);
+                }
+                else
+                {
+                    Navigation.NavigateTo("/dashboard", forceLoad: true);
+                }
             }
             else
             {

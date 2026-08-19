@@ -18,12 +18,12 @@
             <p class="text-secondary" style="margin: 0;">Clasificación de las existencias del inventario</p>
         </div>
     </div>
-    <a href="/inventario/categorias/nuevo" class="btn-primary-glass" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <button class="btn-primary-glass" @onclick="OpenCategoriaModalForCreate" style="display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Nueva Categoría
-    </a>
+    </button>
 </div>
 
 <div class="glass-card">
@@ -60,7 +60,7 @@
                                 else { <span class="badge bg-danger">No</span> }
                             </td>
                             <td class="text-end">
-                                <a href="/inventario/categorias/editar/@i.Id" class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);">Editar</a>
+                                <button class="btn btn-sm btn-outline-info" style="border-color: var(--border-glass); color: var(--text-primary);" @onclick="() => OpenCategoriaModalForEdit(i.Id)">Editar</button>
                                 <button class="btn btn-sm btn-outline-danger" style="margin-left: 5px;" @onclick="() => ConfirmDelete(i.Id)">Eliminar</button>
                             </td>
                         </tr>
@@ -78,10 +78,65 @@
     </div>
 }
 
+
+@* ── Modal de Categoría (Nueva/Editar) ── *@
+@if (showCategoriaModal)
+{
+    <div class="modal-overlay modal-overlay-z1" @onclick="CloseCategoriaModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 600px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <h3>@(categoriaModel.Id == 0 ? "Nueva Categoría" : "Editar Categoría")</h3>
+                <button class="modal-close-btn" @onclick="CloseCategoriaModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <EditForm Model="categoriaModel" OnValidSubmit="HandleSaveCategoria" FormName="modalCategoriaForm">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Nombre de la Categoría (*)</label>
+                    <InputText @bind-Value="categoriaModel.Nombre" class="form-control bg-dark text-light border-secondary" placeholder="Ej. AlimentosSecos, Medicamentos, Accesorios" />
+                    <ValidationMessage For="@(() => categoriaModel.Nombre)" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Descripción Opcional</label>
+                    <InputTextArea @bind-Value="categoriaModel.Descripcion" class="form-control bg-dark text-light border-secondary" rows="3" />
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <InputCheckbox @bind-Value="categoriaModel.Activo" class="form-check-input" id="modalCategoriaActivoSw" />
+                    <label class="form-check-label" for="modalCategoriaActivoSw" style="color: var(--text-secondary);">Categoría Activa (Visible)</label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(categoriaErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mt-2" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-danger); color: white;">@categoriaErrorMessage</div>
+                }
+
+                <div class="d-flex justify-content-end mt-4" style="gap: 10px;">
+                    <button type="button" class="btn btn-outline-secondary text-light" @onclick="CloseCategoriaModal">Cancelar</button>
+                    <button type="submit" class="btn-primary-glass" disabled="@isSavingCategoria">
+                        @if(isSavingCategoria) { <span>Guardando...</span> } else { <span>Guardar</span> }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
 @code {
     private List<CategoriaDto>? Items;
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+
+    private bool showCategoriaModal;
+    private CategoriaDto categoriaModel = new() { Activo = true };
+    private bool isSavingCategoria;
+    private string categoriaErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +158,92 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    // ── Categoria Modal Handlers ──
+    private void OpenCategoriaModalForCreate()
+    {
+        categoriaModel = new CategoriaDto { Activo = true };
+        categoriaErrorMessage = string.Empty;
+        isSavingCategoria = false;
+        showCategoriaModal = true;
+    }
+
+    private async Task OpenCategoriaModalForEdit(int id)
+    {
+        categoriaErrorMessage = string.Empty;
+        isSavingCategoria = false;
+        showCategoriaModal = true;
+        try
+        {
+            var c = await CatalogoService.GetCategoriaByIdAsync(id);
+            if (c != null)
+            {
+                categoriaModel = c;
+            }
+            else
+            {
+                categoriaErrorMessage = "No se encontró el elemento solicitado.";
+            }
+        }
+        catch (Exception)
+        {
+            categoriaErrorMessage = "Error al intentar obtener la categoría.";
+        }
+    }
+
+    private void CloseCategoriaModal()
+    {
+        showCategoriaModal = false;
+    }
+
+    private async Task HandleSaveCategoria()
+    {
+        if (string.IsNullOrWhiteSpace(categoriaModel.Nombre))
+        {
+            categoriaErrorMessage = "El nombre es requerido.";
+            return;
+        }
+
+        isSavingCategoria = true;
+        categoriaErrorMessage = string.Empty;
+        try
+        {
+            if (categoriaModel.Id == 0)
+            {
+                var result = await CatalogoService.CreateCategoriaAsync(categoriaModel);
+                if (result.Success)
+                {
+                    showCategoriaModal = false;
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    categoriaErrorMessage = result.ErrorMessage ?? "Error al crear la categoría.";
+                }
+            }
+            else
+            {
+                var success = await CatalogoService.UpdateCategoriaAsync(categoriaModel.Id, categoriaModel);
+                if (success)
+                {
+                    showCategoriaModal = false;
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    categoriaErrorMessage = "Error al actualizar la categoría.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            categoriaErrorMessage = $"Ocurrió una excepción: {ex.Message}";
+        }
+        finally
+        {
+            isSavingCategoria = false;
         }
     }
 

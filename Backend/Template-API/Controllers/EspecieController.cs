@@ -1,6 +1,7 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -9,6 +10,7 @@ namespace Controllers
     /// Controller para gestionar las Especies de animales
     /// </summary>
     [ApiController]
+    [Authorize]
     public class EspecieController(IEspecieRepository especieRepository) : BaseController
     {
         private readonly IEspecieRepository _repository = especieRepository 
@@ -18,6 +20,7 @@ namespace Controllers
         /// Obtiene todas las especies
         /// </summary>
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetAll(uint pageIndex = 1, uint pageSize = 10, bool soloActivas = true)
         {
             var entities = soloActivas 
@@ -39,6 +42,7 @@ namespace Controllers
         /// Obtiene una especie por su ID
         /// </summary>
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest("El ID debe ser mayor a 0");
@@ -59,6 +63,7 @@ namespace Controllers
         /// Crea una nueva especie
         /// </summary>
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreateEspecieRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -80,6 +85,7 @@ namespace Controllers
         /// Actualiza una especie existente
         /// </summary>
         [HttpPut("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Update([FromBody] UpdateEspecieRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -100,6 +106,7 @@ namespace Controllers
         /// Elimina (desactiva) una especie
         /// </summary>
         [HttpDelete("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0) return BadRequest("El ID debe ser mayor a 0");

@@ -18,6 +18,8 @@ namespace Application.DataTransferObjects
         public string RolNombre { get; set; }
         public string? FotoUrl { get; set; }
         public string? VeterinarioId { get; set; }
+        public int? SucursalId { get; set; }
+        public string? SucursalNombre { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? UltimoLogin { get; set; }
         public bool Activo { get; set; }

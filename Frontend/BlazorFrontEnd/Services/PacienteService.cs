@@ -25,6 +25,11 @@ namespace BlazorFrontEnd.Services
             return await _httpClient.GetUnwrappedAsync<PacienteDto>($"{BaseUrl}/{id}");
         }
 
+        public async Task<List<PacienteDto>?> GetByPropietarioIdAsync(string propietarioId)
+        {
+            return await _httpClient.GetUnwrappedAsync<List<PacienteDto>>($"{BaseUrl}/byPropietario/{propietarioId}");
+        }
+
         public async Task<(bool Success, string ErrorMessage)> CreateAsync(PacienteDto paciente)
         {
             var response = await _httpClient.PostAsJsonAsync(BaseUrl, paciente);

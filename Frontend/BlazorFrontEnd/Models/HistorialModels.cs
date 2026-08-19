@@ -10,8 +10,8 @@ namespace BlazorFrontEnd.Models
         public string PacienteId { get; set; } = string.Empty;
         public string PacienteNombre { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "Especifique la fecha de consulta")]
-        public DateTime Fecha { get; set; } = DateTime.Today;
+        [Required(ErrorMessage = "La fecha es obligatoria")]
+        public DateTime? Fecha { get; set; } = DateTime.Today;
         
         [Required(ErrorMessage = "Indique el motivo de la consulta")]
         public string Motivo { get; set; } = string.Empty;

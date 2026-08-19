@@ -1,6 +1,7 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -9,11 +10,13 @@ namespace Controllers
     /// Controller para gestionar los Pacientes (mascotas)
     /// </summary>
     [ApiController]
+    [Authorize]
     public class PacienteController(
         IPacienteRepository pacienteRepository,
         IPropietarioRepository propietarioRepository,
         IEspecieRepository especieRepository,
-        IRazaRepository razaRepository) : BaseController
+        IRazaRepository razaRepository,
+        ITurnoRepository turnoRepository) : BaseController
     {
         private readonly IPacienteRepository _pacienteRepository = pacienteRepository 
             ?? throw new ArgumentNullException(nameof(pacienteRepository));
@@ -23,11 +26,14 @@ namespace Controllers
             ?? throw new ArgumentNullException(nameof(especieRepository));
         private readonly IRazaRepository _razaRepository = razaRepository 
             ?? throw new ArgumentNullException(nameof(razaRepository));
+        private readonly ITurnoRepository _turnoRepository = turnoRepository 
+            ?? throw new ArgumentNullException(nameof(turnoRepository));
 
         /// <summary>
         /// Obtiene todos los pacientes
         /// </summary>
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetAll(bool soloActivos = true)
         {
             var entities = soloActivos 
@@ -42,6 +48,7 @@ namespace Controllers
         /// Busca pacientes por nombre
         /// </summary>
         [HttpGet("api/v1/[Controller]/search")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> Search([FromQuery] string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre)) 
@@ -56,6 +63,7 @@ namespace Controllers
         /// Obtiene pacientes por propietario
         /// </summary>
         [HttpGet("api/v1/[Controller]/byPropietario/{propietarioId}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetByPropietario(string propietarioId)
         {
             if (string.IsNullOrWhiteSpace(propietarioId)) 
@@ -70,6 +78,7 @@ namespace Controllers
         /// Obtiene pacientes por especie
         /// </summary>
         [HttpGet("api/v1/[Controller]/byEspecie/{especieId}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetByEspecie(int especieId)
         {
             if (especieId <= 0) return BadRequest("El ID de especie debe ser mayor a 0");
@@ -83,6 +92,7 @@ namespace Controllers
         /// Obtiene un paciente por su ID
         /// </summary>
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
@@ -97,6 +107,7 @@ namespace Controllers
         /// Crea un nuevo paciente
         /// </summary>
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreatePacienteRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -141,23 +152,38 @@ namespace Controllers
         /// <summary>
         /// Actualiza un paciente existente
         /// </summary>
-        [HttpPut("api/v1/[Controller]")]
-        public async Task<IActionResult> Update([FromBody] UpdatePacienteRequest request)
+        [HttpPut("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
+        public async Task<IActionResult> Update(string id, [FromBody] UpdatePacienteRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
 
-            var entity = await _pacienteRepository.FindOneAsync(request.Id);
-            if (entity == null) return NotFound($"No se encontró el paciente con Id {request.Id}");
+            var entity = await _pacienteRepository.FindOneAsync(id);
+            if (entity == null) return NotFound($"No se encontró el paciente con Id {id}");
 
             entity.Actualizar(request.Nombre, request.Sexo, request.FechaNacimiento, request.Observaciones ?? "");
 
             if (request.FotoUrl != null)
                 entity.ActualizarFoto(request.FotoUrl);
 
+            if (!string.IsNullOrWhiteSpace(request.PropietarioId))
+            {
+                var propietario = await _propietarioRepository.FindOneAsync(request.PropietarioId);
+                if (propietario != null)
+                {
+                    entity.CambiarPropietario(request.PropietarioId);
+                }
+            }
+
+            if (request.EspecieId > 0)
+            {
+                entity.CambiarEspecie(request.EspecieId, request.RazaId);
+            }
+
             if (!entity.IsValid)
                 return BadRequest(entity.GetErrors().Select(e => e.ErrorMessage));
 
-            _pacienteRepository.Update(request.Id, entity);
+            _pacienteRepository.Update(id, entity);
             return NoContent();
         }
 
@@ -165,6 +191,7 @@ namespace Controllers
         /// Cambia el propietario de un paciente
         /// </summary>
         [HttpPut("api/v1/[Controller]/{id}/cambiarPropietario")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> CambiarPropietario(string id, [FromBody] string nuevoPropietarioId)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
@@ -182,9 +209,10 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Elimina (desactiva) un paciente
+        /// Elimina (desactiva) un paciente y elimina sus turnos asociados
         /// </summary>
         [HttpDelete("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Delete(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
@@ -194,6 +222,23 @@ namespace Controllers
 
             entity.Desactivar();
             _pacienteRepository.Update(id, entity);
+
+            try
+            {
+                var turnos = await _turnoRepository.GetByPacienteIdAsync(id);
+                if (turnos != null)
+                {
+                    foreach (var t in turnos)
+                    {
+                        _turnoRepository.Remove(t.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARN] Error al eliminar turnos del paciente {id}: {ex.Message}");
+            }
+
             return NoContent();
         }
 
@@ -237,5 +282,8 @@ namespace Controllers
         public DateTime? FechaNacimiento { get; set; }
         public string FotoUrl { get; set; }
         public string Observaciones { get; set; }
+        public string PropietarioId { get; set; }
+        public int EspecieId { get; set; }
+        public int? RazaId { get; set; }
     }
 }

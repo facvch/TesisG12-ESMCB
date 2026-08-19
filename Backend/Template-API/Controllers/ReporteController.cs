@@ -17,6 +17,7 @@ namespace Controllers
         IRegistroVacunacionRepository vacunacionRepo,
         ITratamientoRepository tratamientoRepo,
         IProductoRepository productoRepo,
+        IProductoDepositoRepository pdRepo,
         IVentaRepository ventaRepo,
         IDetalleVentaRepository detalleVentaRepo,
         IVeterinarioRepository veterinarioRepo,
@@ -44,6 +45,10 @@ namespace Controllers
 
             // Turnos de hoy
             var turnosHoy = await turnoRepo.GetByFechaAsync(hoy);
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                turnosHoy = turnosHoy.Where(t => t.SucursalId == UserSucursalId.Value).ToList();
+            }
             var turnosPendientes = turnosHoy.Count(t =>
                 t.Estado == EstadoTurno.Programado || t.Estado == EstadoTurno.Confirmado);
 
@@ -51,14 +56,40 @@ namespace Controllers
             var vacunasPendientes = await vacunacionRepo.GetVacunasPendientesAsync();
 
             // Stock bajo
-            var stockBajo = await productoRepo.GetStockBajoAsync();
+            var stockBajoCount = 0;
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                var allActiveProds = await productoRepo.GetActivosAsync();
+                foreach (var p in allActiveProds)
+                {
+                    var pd = await pdRepo.GetByProductoIdAsync(p.Id);
+                    var branchStock = pd.Where(s => s.Deposito?.SucursalId == UserSucursalId.Value).Sum(s => s.StockActual);
+                    if (branchStock <= p.StockMinimo)
+                    {
+                        stockBajoCount++;
+                    }
+                }
+            }
+            else
+            {
+                var stockBajo = await productoRepo.GetStockBajoAsync();
+                stockBajoCount = stockBajo.Count();
+            }
 
             // Ventas hoy
             var ventasHoy = await ventaRepo.GetByFechaRangoAsync(hoy, hoy.AddDays(1));
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                ventasHoy = ventasHoy.Where(v => v.SucursalId == UserSucursalId.Value).ToList();
+            }
             var ventasConfirmadas = ventasHoy.Where(v => v.Estado == EstadoVenta.Confirmada).ToList();
 
             // Ventas del mes
             var ventasMes = await ventaRepo.GetByFechaRangoAsync(inicioMes, finMes);
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                ventasMes = ventasMes.Where(v => v.SucursalId == UserSucursalId.Value).ToList();
+            }
             var ventasMesConf = ventasMes.Where(v => v.Estado == EstadoVenta.Confirmada).ToList();
 
             // Tratamientos activos (usamos un paciente genérico - buscamos todos)
@@ -71,12 +102,12 @@ namespace Controllers
 
             return Ok(new DashboardDto
             {
-                TotalPacientes = pacientes.Count(),
+                TotalPacientes = pacientes.Count(p => p.Activo),
                 TotalPropietarios = propietarios.Count(),
                 TurnosHoy = turnosHoy.Count(),
                 TurnosPendientes = turnosPendientes,
                 VacunasPendientes = vacunasPendientes.Count(),
-                ProductosStockBajo = stockBajo.Count(),
+                ProductosStockBajo = stockBajoCount,
                 VentasHoy = ventasConfirmadas.Sum(v => v.Total),
                 VentasHoyCount = ventasConfirmadas.Count,
                 VentasMes = ventasMesConf.Sum(v => v.Total),
@@ -100,6 +131,10 @@ namespace Controllers
             var h = hasta ?? DateTime.Today.AddDays(1);
 
             var ventas = await ventaRepo.GetByFechaRangoAsync(d, h);
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                ventas = ventas.Where(v => v.SucursalId == UserSucursalId.Value).ToList();
+            }
             var confirmadas = ventas.Where(v => v.Estado == EstadoVenta.Confirmada).ToList();
 
             // Ventas por método de pago
@@ -175,8 +210,53 @@ namespace Controllers
         {
             var todos = await productoRepo.FindAllAsync();
             var activos = todos.Where(p => p.Activo).ToList();
-            var stockBajo = activos.Where(p => p.StockBajo).ToList();
-            var sinStock = activos.Where(p => p.StockActual == 0).ToList();
+
+            var stockBajo = new List<Producto>();
+            var sinStock = new List<Producto>();
+            decimal valorTotalStock = 0;
+            var listStockBajo = new List<ProductoStockBajoDto>();
+
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                foreach (var p in activos)
+                {
+                    var pd = await pdRepo.GetByProductoIdAsync(p.Id);
+                    var branchStocks = pd.Where(s => s.Deposito?.SucursalId == UserSucursalId.Value).ToList();
+                    var branchStockActual = branchStocks.Sum(s => s.StockActual);
+
+                    if (branchStockActual <= p.StockMinimo)
+                    {
+                        stockBajo.Add(p);
+                        listStockBajo.Add(new ProductoStockBajoDto
+                        {
+                            Id = p.Id,
+                            Nombre = p.Nombre,
+                            StockActual = branchStockActual,
+                            StockMinimo = p.StockMinimo,
+                            CategoriaNombre = p.Categoria?.Nombre ?? ""
+                        });
+                    }
+                    if (branchStockActual == 0)
+                    {
+                        sinStock.Add(p);
+                    }
+                    valorTotalStock += branchStockActual * p.PrecioCompra;
+                }
+            }
+            else
+            {
+                stockBajo = activos.Where(p => p.StockBajo).ToList();
+                sinStock = activos.Where(p => p.StockActual == 0).ToList();
+                valorTotalStock = activos.Sum(p => p.StockActual * p.PrecioCompra);
+                listStockBajo = stockBajo.Select(p => new ProductoStockBajoDto
+                {
+                    Id = p.Id,
+                    Nombre = p.Nombre,
+                    StockActual = p.StockActual,
+                    StockMinimo = p.StockMinimo,
+                    CategoriaNombre = p.Categoria?.Nombre ?? ""
+                }).OrderBy(p => p.StockActual).ToList();
+            }
 
             return Ok(new ReporteStockDto
             {
@@ -184,13 +264,8 @@ namespace Controllers
                 ProductosActivos = activos.Count,
                 ProductosStockBajo = stockBajo.Count,
                 ProductosSinStock = sinStock.Count,
-                ValorTotalStock = activos.Sum(p => p.StockActual * p.PrecioCompra),
-                ListaStockBajo = stockBajo.Select(p => new ProductoStockBajoDto
-                {
-                    Id = p.Id, Nombre = p.Nombre,
-                    StockActual = p.StockActual, StockMinimo = p.StockMinimo,
-                    CategoriaNombre = p.Categoria?.Nombre ?? ""
-                }).OrderBy(p => p.StockActual).ToList()
+                ValorTotalStock = valorTotalStock,
+                ListaStockBajo = listStockBajo
             });
         }
 
@@ -213,6 +288,10 @@ namespace Controllers
             for (var dia = d.Date; dia < h.Date; dia = dia.AddDays(1))
             {
                 var turnosDia = await turnoRepo.GetByFechaAsync(dia);
+                if (!IsAdmin && UserSucursalId.HasValue)
+                {
+                    turnosDia = turnosDia.Where(t => t.SucursalId == UserSucursalId.Value).ToList();
+                }
                 todosTurnos.AddRange(turnosDia);
             }
 

@@ -32,6 +32,37 @@ namespace BlazorFrontEnd.Models
         public DateTime FechaCreacion { get; set; }
     }
 
+    public class TipoHorarioDto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public bool Activo { get; set; }
+    }
+
+    public class HorarioDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string VeterinarioId { get; set; } = string.Empty;
+        public int DiaSemana { get; set; } // 1=Lunes..7=Domingo
+        public string DiaSemanaNombre => DiaSemana switch
+        {
+            1 => "Lunes",
+            2 => "Martes",
+            3 => "Miércoles",
+            4 => "Jueves",
+            5 => "Viernes",
+            6 => "Sábado",
+            7 => "Domingo",
+            _ => "Desconocido"
+        };
+        public string HoraInicio { get; set; } = "08:00";
+        public string HoraFin { get; set; } = "16:00";
+        public int TipoHorarioId { get; set; } = 1; // 1=Normal, 2=Guardia
+        public string TipoHorarioNombre { get; set; } = "Normal";
+        public bool Activo { get; set; } = true;
+    }
+
     public class VeterinarioDto
     {
         public string Id { get; set; } = string.Empty;
@@ -43,6 +74,8 @@ namespace BlazorFrontEnd.Models
         public string Email { get; set; } = string.Empty;
         public string Especialidad { get; set; } = string.Empty;
         public bool Activo { get; set; }
+        public List<HorarioDto> Horarios { get; set; } = new();
+        public string DisponibilidadActual { get; set; } = "No Disponible";
     }
 
     public class ServicioDto

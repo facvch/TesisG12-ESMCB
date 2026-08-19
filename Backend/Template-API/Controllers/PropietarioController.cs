@@ -1,6 +1,7 @@
 using Application.DataTransferObjects;
 using Application.Repositories;
 using Core.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
@@ -9,15 +10,21 @@ namespace Controllers
     /// Controller para gestionar los Propietarios de mascotas
     /// </summary>
     [ApiController]
-    public class PropietarioController(IPropietarioRepository propietarioRepository) : BaseController
+    [Authorize]
+    public class PropietarioController(
+        IPropietarioRepository propietarioRepository,
+        IPacienteRepository pacienteRepository) : BaseController
     {
         private readonly IPropietarioRepository _repository = propietarioRepository 
             ?? throw new ArgumentNullException(nameof(propietarioRepository));
+        private readonly IPacienteRepository _pacienteRepository = pacienteRepository 
+            ?? throw new ArgumentNullException(nameof(pacienteRepository));
 
         /// <summary>
         /// Obtiene todos los propietarios
         /// </summary>
         [HttpGet("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetAll(bool soloActivos = true)
         {
             var entities = soloActivos 
@@ -46,6 +53,7 @@ namespace Controllers
         /// Busca propietarios por nombre
         /// </summary>
         [HttpGet("api/v1/[Controller]/search")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> Search([FromQuery] string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre)) 
@@ -71,6 +79,7 @@ namespace Controllers
         /// Obtiene un propietario por su ID
         /// </summary>
         [HttpGet("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetById(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
@@ -98,6 +107,7 @@ namespace Controllers
         /// Busca un propietario por DNI
         /// </summary>
         [HttpGet("api/v1/[Controller]/byDni/{dni}")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
         public async Task<IActionResult> GetByDni(string dni)
         {
             if (string.IsNullOrWhiteSpace(dni)) return BadRequest("El DNI es requerido");
@@ -122,6 +132,7 @@ namespace Controllers
         /// Crea un nuevo propietario
         /// </summary>
         [HttpPost("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Create([FromBody] CreatePropietarioRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -149,6 +160,7 @@ namespace Controllers
         /// Actualiza un propietario existente
         /// </summary>
         [HttpPut("api/v1/[Controller]")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Update([FromBody] UpdatePropietarioRequest request)
         {
             if (request is null) return BadRequest("El request no puede ser nulo");
@@ -166,9 +178,10 @@ namespace Controllers
         }
 
         /// <summary>
-        /// Elimina (desactiva) un propietario
+        /// Elimina (desactiva) un propietario y desactiva sus mascotas asociadas
         /// </summary>
         [HttpDelete("api/v1/[Controller]/{id}")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
         public async Task<IActionResult> Delete(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
@@ -178,6 +191,55 @@ namespace Controllers
 
             entity.Desactivar();
             _repository.Update(id, entity);
+
+            try
+            {
+                var allPacientes = await _pacienteRepository.FindAllAsync();
+                var ownerPacientes = allPacientes.Where(p => p.PropietarioId == id);
+                foreach (var p in ownerPacientes)
+                {
+                    p.Desactivar();
+                    _pacienteRepository.Update(p.Id, p);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARN] Error al desactivar mascotas del propietario {id}: {ex.Message}");
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Activa un propietario y sus mascotas asociadas
+        /// </summary>
+        [HttpPut("api/v1/[Controller]/{id}/activar")]
+        [Authorize(Roles = "Admin,Veterinario,Recepcionista")]
+        public async Task<IActionResult> Activar(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID es requerido");
+
+            var entity = await _repository.FindOneAsync(id);
+            if (entity == null) return NotFound($"No se encontró el propietario con Id {id}");
+
+            entity.Activar();
+            _repository.Update(id, entity);
+
+            try
+            {
+                var allPacientes = await _pacienteRepository.FindAllAsync();
+                var ownerPacientes = allPacientes.Where(p => p.PropietarioId == id);
+                foreach (var p in ownerPacientes)
+                {
+                    p.Activar();
+                    _pacienteRepository.Update(p.Id, p);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARN] Error al activar mascotas del propietario {id}: {ex.Message}");
+            }
+
             return NoContent();
         }
     }

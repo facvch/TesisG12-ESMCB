@@ -66,6 +66,7 @@ namespace Infrastructure.Factories
         private static void RegisterSqlRepositories(IServiceCollection services)
         {
             // Veterinary system repositories
+            services.AddTransient<ISucursalRepository, Repositories.Sql.SucursalRepository>();
             services.AddTransient<IEspecieRepository, Repositories.Sql.EspecieRepository>();
             services.AddTransient<IRazaRepository, Repositories.Sql.RazaRepository>();
             services.AddTransient<IPropietarioRepository, Repositories.Sql.PropietarioRepository>();
@@ -77,10 +78,12 @@ namespace Infrastructure.Factories
             services.AddTransient<ITratamientoRepository, Repositories.Sql.TratamientoRepository>();
             services.AddTransient<IHistorialClinicoRepository, Repositories.Sql.HistorialClinicoRepository>();
 
-            // Phase 5 - Gestión de Turnos
+            // Phase 5 - Gestión de Turnos y Horarios
             services.AddTransient<IServicioRepository, Repositories.Sql.ServicioRepository>();
             services.AddTransient<IVeterinarioRepository, Repositories.Sql.VeterinarioRepository>();
             services.AddTransient<ITurnoRepository, Repositories.Sql.TurnoRepository>();
+            services.AddTransient<ITipoHorarioRepository, Repositories.Sql.TipoHorarioRepository>();
+            services.AddTransient<IHorarioRepository, Repositories.Sql.HorarioRepository>();
 
             // Phase 6 - Gestión de Stock
             services.AddTransient<ICategoriaRepository, Repositories.Sql.CategoriaRepository>();

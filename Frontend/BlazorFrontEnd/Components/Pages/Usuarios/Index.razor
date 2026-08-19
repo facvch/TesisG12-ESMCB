@@ -1,4 +1,5 @@
 @page "/usuarios"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject UsuarioService UsuarioService
@@ -58,6 +59,7 @@
                             <th>Usuario / Email</th>
                             <th>Nombre Completo</th>
                             <th>Rol Asignado</th>
+                            <th>Sucursal</th>
                             <th>Último Acceso</th>
                             <th class="text-end">Acciones</th>
                         </tr>
@@ -76,6 +78,16 @@
                                 <td>@user.NombreCompleto</td>
                                 <td>
                                     <span class="@rolColor">@user.RolNombre</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(user.SucursalNombre))
+                                    {
+                                        <span class="badge bg-secondary">@user.SucursalNombre</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary" style="font-size: 0.85rem;">Global</span>
+                                    }
                                 </td>
                                 <td class="text-secondary">
                                     @if(user.UltimoLogin.HasValue) {

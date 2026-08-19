@@ -29,7 +29,10 @@ builder.Services.AddScoped<HttpClient>(sp =>
 builder.Services.AddBlazoredLocalStorage();
 
 // Add Authentication and Authorization
+builder.Services.AddAuthentication();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorizationCore();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler, BlazorFrontEnd.Auth.BlazorAuthorizationMiddlewareResultHandler>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, BlazorFrontEnd.Auth.CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<BlazorFrontEnd.Auth.TokenStorageService>();
 builder.Services.AddScoped<BlazorFrontEnd.Services.AuthService>();
@@ -61,6 +64,8 @@ builder.Services.AddScoped<BlazorFrontEnd.Services.MetodoPagoService>();
 // Módulo de Usuarios y Personal
 builder.Services.AddScoped<BlazorFrontEnd.Services.UsuarioService>();
 builder.Services.AddScoped<BlazorFrontEnd.Services.VeterinarioService>();
+builder.Services.AddScoped<BlazorFrontEnd.Services.HorarioService>();
+builder.Services.AddScoped<BlazorFrontEnd.Services.SucursalService>();
 
 // Dashboard y Reportes
 builder.Services.AddScoped<BlazorFrontEnd.Services.DashboardService>();

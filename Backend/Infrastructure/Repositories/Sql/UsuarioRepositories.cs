@@ -18,12 +18,12 @@ namespace Infrastructure.Repositories.Sql
     {
         public UsuarioRepository(StoreDbContext context) : base(context) { }
         public async Task<Usuario> GetByNombreUsuarioAsync(string nombreUsuario) =>
-            await Repository.Include(u => u.Rol).FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario);
+            await Repository.Include(u => u.Rol).Include(u => u.Sucursal).FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario);
         public async Task<Usuario> GetByEmailAsync(string email) =>
-            await Repository.Include(u => u.Rol).FirstOrDefaultAsync(u => u.Email == email);
+            await Repository.Include(u => u.Rol).Include(u => u.Sucursal).FirstOrDefaultAsync(u => u.Email == email);
         public async Task<IEnumerable<Usuario>> GetActivosAsync() =>
-            await Repository.Include(u => u.Rol).Where(u => u.Activo).ToListAsync();
+            await Repository.Include(u => u.Rol).Include(u => u.Sucursal).Where(u => u.Activo).ToListAsync();
         public async Task<IEnumerable<Usuario>> GetByRolIdAsync(int rolId) =>
-            await Repository.Include(u => u.Rol).Where(u => u.RolId == rolId).ToListAsync();
+            await Repository.Include(u => u.Rol).Include(u => u.Sucursal).Where(u => u.RolId == rolId).ToListAsync();
     }
 }

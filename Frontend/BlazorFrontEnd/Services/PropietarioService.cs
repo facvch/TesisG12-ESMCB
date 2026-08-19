@@ -38,13 +38,20 @@ namespace BlazorFrontEnd.Services
 
         public async Task<bool> UpdateAsync(string id, PropietarioDto propietario)
         {
-            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/{id}", propietario);
+            propietario.Id = id;
+            var response = await _httpClient.PutAsJsonAsync(BaseUrl, propietario);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteAsync(string id)
         {
             var response = await _httpClient.DeleteAsync($"{BaseUrl}/{id}");
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> ActivarAsync(string id)
+        {
+            var response = await _httpClient.PutAsync($"{BaseUrl}/{id}/activar", null);
             return response.IsSuccessStatusCode;
         }
     }

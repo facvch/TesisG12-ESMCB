@@ -39,5 +39,17 @@ namespace BlazorFrontEnd.Services
                 return new List<RazaDto>();
             }
         }
+
+        public async Task<bool> CreateEspecieAsync(EspecieDto especie)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/Especie", especie);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> CreateRazaAsync(RazaDto raza)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/Raza", raza);
+            return response.IsSuccessStatusCode;
+        }
     }
 }

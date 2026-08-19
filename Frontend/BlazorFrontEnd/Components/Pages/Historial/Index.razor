@@ -1,14 +1,15 @@
 @page "/historial-clinico"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
 @inject PacienteService PacienteService
 @inject NavigationManager Navigation
 
-<PageTitle>Buscador de Historial Clínico</PageTitle>
+<PageTitle>Buscador de Información del Paciente</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-lg);">
     <div>
-        <h2 style="font-weight: 700; margin: 0;">Historial Clínico</h2>
+        <h2 style="font-weight: 700; margin: 0;">Información del paciente</h2>
         <p class="text-secondary" style="margin: 0;">Seleccione un paciente para ver su ficha médica completa</p>
     </div>
 </div>

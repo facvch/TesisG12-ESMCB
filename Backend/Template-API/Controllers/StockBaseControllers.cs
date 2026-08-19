@@ -207,7 +207,11 @@ namespace Controllers
         public async Task<IActionResult> GetAll(bool soloActivos = true)
         {
             var entities = soloActivos ? await _repo.GetActivosAsync() : await _repo.FindAllAsync();
-            var dtos = entities.Select(d => new DepositoDto { Id = d.Id, Nombre = d.Nombre, Ubicacion = d.Ubicacion, Activo = d.Activo }).ToList();
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                entities = entities.Where(d => d.SucursalId == UserSucursalId.Value).ToList();
+            }
+            var dtos = entities.Select(MapToDto).ToList();
             return Ok(new QueryResult<DepositoDto>(dtos, dtos.Count, 1, 10));
         }
 
@@ -216,13 +220,27 @@ namespace Controllers
         {
             var e = await _repo.FindOneAsync(id);
             if (e == null) return NotFound();
-            return Ok(new DepositoDto { Id = e.Id, Nombre = e.Nombre, Ubicacion = e.Ubicacion, Activo = e.Activo });
+            if (!IsAdmin && UserSucursalId.HasValue && e.SucursalId != UserSucursalId.Value)
+            {
+                return StatusCode(403, "No tiene permisos para ver un depósito de otra sucursal");
+            }
+            return Ok(MapToDto(e));
         }
 
         [HttpPost("api/v1/[Controller]")]
         public async Task<IActionResult> Create([FromBody] CreateDepositoRequest r)
         {
-            var entity = new Domain.Entities.Deposito(r.Nombre, r.Ubicacion ?? "");
+            int targetSucursalId = 1; // default to Sucursal Central
+            if (UserSucursalId.HasValue)
+            {
+                targetSucursalId = UserSucursalId.Value;
+            }
+            else if (r.SucursalId.HasValue)
+            {
+                targetSucursalId = r.SucursalId.Value;
+            }
+
+            var entity = new Domain.Entities.Deposito(r.Nombre, r.Ubicacion ?? "", targetSucursalId);
             if (!entity.IsValid) return BadRequest(entity.GetErrors().Select(e => e.ErrorMessage));
             var id = await _repo.AddAsync(entity);
             return Created($"api/v1/Deposito/{id}", new { Id = id });
@@ -233,7 +251,25 @@ namespace Controllers
         {
             var e = await _repo.FindOneAsync(r.Id);
             if (e == null) return NotFound();
+
+            if (!IsAdmin && UserSucursalId.HasValue && e.SucursalId != UserSucursalId.Value)
+            {
+                return StatusCode(403, "No tiene permisos para modificar un depósito de otra sucursal");
+            }
+
+            int targetSucursalId = e.SucursalId;
+            if (!IsAdmin && UserSucursalId.HasValue)
+            {
+                targetSucursalId = UserSucursalId.Value;
+            }
+            else if (r.SucursalId.HasValue)
+            {
+                targetSucursalId = r.SucursalId.Value;
+            }
+
             e.Actualizar(r.Nombre, r.Ubicacion ?? "");
+            e.AsignarSucursal(targetSucursalId);
+
             if (!e.IsValid) return BadRequest(e.GetErrors().Select(x => x.ErrorMessage));
             _repo.Update(r.Id, e);
             return NoContent();
@@ -244,11 +280,27 @@ namespace Controllers
         {
             var e = await _repo.FindOneAsync(id);
             if (e == null) return NotFound();
+
+            if (!IsAdmin && UserSucursalId.HasValue && e.SucursalId != UserSucursalId.Value)
+            {
+                return StatusCode(403, "No tiene permisos para modificar un depósito de otra sucursal");
+            }
+
             e.Desactivar(); _repo.Update(id, e);
             return NoContent();
         }
+
+        private static DepositoDto MapToDto(Domain.Entities.Deposito d) => new()
+        {
+            Id = d.Id,
+            Nombre = d.Nombre,
+            Ubicacion = d.Ubicacion,
+            Activo = d.Activo,
+            SucursalId = d.SucursalId,
+            SucursalNombre = d.Sucursal?.Nombre ?? ""
+        };
     }
 
-    public class CreateDepositoRequest { public string Nombre { get; set; } public string Ubicacion { get; set; } }
-    public class UpdateDepositoRequest { public int Id { get; set; } public string Nombre { get; set; } public string Ubicacion { get; set; } }
+    public class CreateDepositoRequest { public string Nombre { get; set; } public string Ubicacion { get; set; } public int? SucursalId { get; set; } }
+    public class UpdateDepositoRequest { public int Id { get; set; } public string Nombre { get; set; } public string Ubicacion { get; set; } public int? SucursalId { get; set; } }
 }

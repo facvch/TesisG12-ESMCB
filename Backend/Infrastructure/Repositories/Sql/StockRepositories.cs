@@ -32,7 +32,19 @@ namespace Infrastructure.Repositories.Sql
     {
         public DepositoRepository(StoreDbContext context) : base(context) { }
         public async Task<IEnumerable<Deposito>> GetActivosAsync() =>
-            await Repository.Where(d => d.Activo).ToListAsync();
+            await Repository.Include(d => d.Sucursal).Where(d => d.Activo).ToListAsync();
+
+        public new async Task<List<Deposito>> FindAllAsync() =>
+            await Repository.Include(d => d.Sucursal).ToListAsync();
+
+        public new async Task<Deposito?> FindOneAsync(params object[] keyValues)
+        {
+            if (keyValues.Length > 0 && keyValues[0] is int id)
+            {
+                return await Repository.Include(d => d.Sucursal).FirstOrDefaultAsync(d => d.Id == id);
+            }
+            return await base.FindOneAsync(keyValues);
+        }
     }
 
     internal class ProductoRepository : BaseRepository<Producto>, IProductoRepository

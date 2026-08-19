@@ -38,18 +38,51 @@ namespace BlazorFrontEnd.Services
             return await _httpClient.GetUnwrappedAsync<TurnoDto>($"{BaseUrl}/{id}");
         }
 
-        public async Task<bool> CreateAsync(TurnoDto turno)
+        public async Task<(bool Success, string ErrorMessage)> CreateWithResultAsync(TurnoDto turno)
         {
             var response = await _httpClient.PostAsJsonAsync(BaseUrl, turno);
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+                return (true, string.Empty);
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (!string.IsNullOrWhiteSpace(content) && content.StartsWith("\"") && content.EndsWith("\""))
+                content = content.Trim('"');
+
+            return (false, string.IsNullOrWhiteSpace(content) ? "Error al guardar el turno" : content);
+        }
+
+        public async Task<bool> CreateAsync(TurnoDto turno)
+        {
+            var (success, _) = await CreateWithResultAsync(turno);
+            return success;
+        }
+
+        public async Task<(bool Success, string ErrorMessage)> UpdateWithResultAsync(string id, TurnoDto turno)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/{id}", new
+            {
+                PacienteId = turno.PacienteId,
+                VeterinarioId = turno.VeterinarioId,
+                ServicioId = turno.ServicioId,
+                FechaHora = turno.FechaHora,
+                DuracionMinutos = turno.DuracionMinutos,
+                Motivo = turno.Motivo,
+                Observaciones = turno.Observaciones
+            });
+            if (response.IsSuccessStatusCode)
+                return (true, string.Empty);
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (!string.IsNullOrWhiteSpace(content) && content.StartsWith("\"") && content.EndsWith("\""))
+                content = content.Trim('"');
+
+            return (false, string.IsNullOrWhiteSpace(content) ? "Error al actualizar el turno" : content);
         }
 
         public async Task<bool> UpdateAsync(string id, TurnoDto turno)
         {
-            // Instead of Full update which might not exist, TurnoController might just have state modifications. 
-            // We'll leave it as is, or use the reschedule endpoint if available.
-            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/{id}/reprogramar", new { NuevaFechaHora = turno.FechaHora, DuracionMinutos = turno.DuracionMinutos });
-            return response.IsSuccessStatusCode;
+            var (success, _) = await UpdateWithResultAsync(id, turno);
+            return success;
         }
 
         public async Task<bool> DeleteAsync(string id)
@@ -69,6 +102,11 @@ namespace BlazorFrontEnd.Services
                 return response.IsSuccessStatusCode;
             }
             return false;
+        }
+
+        public async Task<List<TurnoDto>?> GetByPacienteIdAsync(string pacienteId)
+        {
+            return await _httpClient.GetUnwrappedAsync<List<TurnoDto>>($"{BaseUrl}/byPaciente/{pacienteId}");
         }
     }
 }
