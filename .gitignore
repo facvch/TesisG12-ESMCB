@@ -1,0 +1,52 @@
+@@ -1,51 +0,0 @@
+# ---- .NET / Visual Studio ----
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.cache
+*.log
+*.user
+*.vs/
+.vscode/
+.idea/
+
+# ---- ASP.NET Core ----
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+
+# (Dejá el appsettings.json base, solo ignoramos los específicos del entorno)
+
+# ---- Entity Framework ----
+Migrations/ # Si querés que las migrations se generen de 0 en cada máquina
+# Si en cambio querés compartirlas con el equipo, quitá esta línea 👆
+
+# ---- SQLite ----
+*.db
+*.db-shm
+*.db-wal
+
+# ---- Logs ----
+logs/
+*.log
+
+# ---- Sistema operativo ----
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# ---- Herramientas externas ----
+# Rider
+*.sln.iml
+
+# Resharper
+_ReSharper*/
+
+# ---- LuckyPenny AutoMapper (logs/licencias temporales) ----
+*.luckykey
