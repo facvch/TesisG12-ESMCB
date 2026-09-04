@@ -11,6 +11,8 @@
 
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
+@implements IDisposable
+@inject BlazorFrontEnd.Auth.TokenStorageService TokenStorage
 @inject TurnoService TurnoService
 @inject VeterinarioService VeterinarioService
 @inject PacienteService PacienteService
@@ -80,7 +82,7 @@
                 <option value="">TODOS LOS VETERINARIOS</option>
                 @foreach(var vet in veterinariosList)
                 {
-                    <option value="@vet.Id" selected="@(filterVeterinarioId == vet.Id)">@vet.NombreCompleto</option>
+                    <option value="@vet.Id" selected="@(filterVeterinarioId == vet.Id)">@vet.NombreCompleto @(!string.IsNullOrEmpty(vet.SucursalNombre) ? $"({vet.SucursalNombre})" : "")</option>
                 }
             </select>
         </div>
@@ -368,7 +370,7 @@
                                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
                                     <InputSelect @bind-Value="turnoModel.VeterinarioId" class="form-select bg-dark text-light border-secondary">
                                         <option value="">-- Médico Veterinario --</option>
-                                        @foreach (var v in modalVeterinarios) { <option value="@v.Id">@v.NombreCompleto - @v.Especialidad</option> }
+                                        @foreach (var v in modalVeterinarios) { <option value="@v.Id">@v.NombreCompleto - @v.Especialidad @(!string.IsNullOrEmpty(v.SucursalNombre) ? $"({v.SucursalNombre})" : "")</option> }
                                     </InputSelect>
                                     <ValidationMessage For="@(() => turnoModel.VeterinarioId)" class="text-danger" />
                                 </div>
@@ -615,34 +617,51 @@
                             <div class="d-flex gap-2 flex-wrap">
                                 @if (!string.IsNullOrEmpty(detailPropietarioInfo.Email))
                                 {
-                                    <a href="@detailMailtoUrl" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn btn-sm btn-outline-info d-flex align-items-center gap-1" style="color: #60a5fa; border-color: rgba(96,165,250,0.3);" title="Enviar correo electrónico manual">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                                        </svg>
-                                        Enviar Email
-                                    </a>
+                                    <button type="button" @onclick="SendDetailEmailConfirmacion" disabled="@isSendingDetailEmail" class="btn btn-sm btn-outline-info d-flex align-items-center gap-1" style="color: #60a5fa; border-color: rgba(96,165,250,0.3);" title="Reenviar correo de confirmación">
+                                        @if (isSendingDetailEmail)
+                                        {
+                                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                                            <span>Enviando...</span>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                            </svg>
+                                            <span>Enviar Email</span>
+                                        }
+                                    </button>
+                                    @if (!string.IsNullOrEmpty(detailGoogleCalendarUrl))
+                                    {
+                                        <a href="@detailGoogleCalendarUrl" target="_blank" class="btn btn-sm btn-action d-flex align-items-center gap-1" style="background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4);" title="Añadir fecha a Google Calendar">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                                            </svg>
+                                            <span>Google Cal</span>
+                                        </a>
+                                    }
                                 }
                                 @if (!string.IsNullOrEmpty(detailPropietarioInfo.Telefono))
                                 {
-                                    <button type="button" @onclick="SendDetailWhatsAppTwilio" disabled="@isSendingDetailTwilio" class="btn btn-sm btn-success d-flex align-items-center gap-1" style="background-color: #25D366; border: none; font-weight: 600; color: white;" title="Enviar recordatorio automático vía Twilio">
-                                        @if (isSendingDetailTwilio)
+                                    <button type="button" @onclick="SendDetailSmsTwilio" disabled="@isSendingDetailSms" class="btn btn-sm btn-action d-flex align-items-center gap-1" style="background-color: #0284c7; color: white; border: none; font-weight: 600;" title="Enviar recordatorio SMS vía Twilio">
+                                        @if (isSendingDetailSms)
                                         {
                                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                            <span>Enviando Twilio...</span>
+                                            <span>Enviando SMS...</span>
                                         }
                                         else
                                         {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
                                                 <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.136L3.255 7.91l10.876-5.334z"/>
                                             </svg>
-                                            <span>Enviar Twilio</span>
+                                            <span>Enviar SMS (Twilio)</span>
                                         }
                                     </button>
                                     <a href="@detailWhatsAppUrl" target="_blank" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1" style="color: #4ade80; border-color: rgba(74,222,128,0.3);" title="Abrir en WhatsApp Web / wa.me">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
                                             <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.949h.004c4.368 0 7.926-3.562 7.928-7.929a7.89 7.89 0 0 0-2.33-5.69m-5.61 10.744h-.01a6.5 6.5 0 0 1-3.3-1.02l-.242-.144-2.454.644.656-2.387-.156-.25a6.5 6.5 0 0 1-1.007-3.5C.029 4.348 3.52 1.052 7.99 1.052a6.5 6.5 0 0 1 4.59 1.936.5 6.5 0 0 1 1.922 4.6c-.004 4.475-3.498 7.969-7.965 7.969m3.636-4.708c-.18-.089-1.08-.534-1.25-.597-.17-.061-.29-.092-.41.09-.12.18-.46.597-.56.711-.1.115-.2.13-.38.041-1.81-.9-3.236-2.225-4.088-3.727-.12-.206-.013-.319.09-.422.09-.09.18-.21.28-.31.09-.1.12-.17.18-.29.06-.12.03-.22-.01-.31-.04-.09-.41-1.005-.56-1.373-.15-.356-.3-.3-.41-.3-.1-.005-.22-.005-.34-.005-.12 0-.32.045-.49.23-.17.19-.66.645-.66 1.57s.68 1.835.77 1.962c.09.13 1.34 2.044 3.25 2.87.45.2 1.01.32 1.37.43.46.15.88.13 1.21.08.37-.06 1.08-.44 1.23-.863.15-.42.15-.78.1-.863-.05-.08-.18-.12-.36-.21"/>
                                         </svg>
-                                        <span>Abrir WhatsApp Web</span>
+                                        <span>WhatsApp Web</span>
                                     </a>
                                 }
                             </div>
@@ -984,109 +1003,129 @@
 @if (showNotificationSuccessModal)
 {
     <div class="modal-overlay modal-overlay-z3" @onclick="() => showNotificationSuccessModal = false" @onclick:stopPropagation="false">
-        <div class="modal-panel" style="max-width: 650px;" @onclick:stopPropagation="true">
+        <div class="modal-panel" style="max-width: 720px;" @onclick:stopPropagation="true">
             <div class="modal-header-row">
                 <div class="d-flex align-items-center gap-2">
-                    <div style="background: rgba(16,185,129,0.2); color: #10b981; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <div style="background: rgba(16,185,129,0.2); color: #10b981; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width:22px;height:22px;"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
                     </div>
-                    <h3 style="margin: 0; color: #10b981;">¡Turno Agendado con Éxito!</h3>
+                    <div>
+                        <h3 style="margin: 0; color: #10b981; font-size: 1.25rem;">¡Turno Agendado con Éxito!</h3>
+                        <span class="text-secondary small">Se activaron las alertas automáticas para el cliente</span>
+                    </div>
                 </div>
                 <button class="modal-close-btn" @onclick="() => showNotificationSuccessModal = false" title="Cerrar">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             
-            <p class="text-secondary mb-4" style="font-size: 0.95rem;">
-                El turno ha sido guardado en el sistema. Se han generado las notificaciones correspondientes para el propietario de la mascota:
+            <p class="text-secondary mb-3 mt-2" style="font-size: 0.9rem;">
+                El turno ha quedado registrado en la agenda. Se gestionaron los siguientes avisos para el cliente:
             </p>
 
             <div class="row g-3">
-                @* CARD: EMAIL DE CONFIRMACIÓN *@
+                @* CARD: EMAIL DE CONFIRMACIÓN CON GOOGLE CALENDAR *@
                 <div class="col-md-6">
                     <div class="p-3 h-100 rounded d-flex flex-column" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass);">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <div style="background: rgba(96,165,250,0.15); color: #60a5fa; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="background: rgba(96,165,250,0.15); color: #60a5fa; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>
+                                </div>
+                                <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Confirmación por Email</h5>
                             </div>
-                            <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Confirmación por Email</h5>
+                            <span class="badge" style="background: rgba(16,185,129,0.15); color: #34d399; font-size: 0.72rem; border: 1px solid rgba(16,185,129,0.3);">Envío Automático</span>
                         </div>
                         
-                        <div class="flex-grow-1" style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">
-                            <p class="mb-1"><strong>Destinatario:</strong> @(string.IsNullOrEmpty(notificationEmailTo) ? "Sin registrar" : notificationEmailTo)</p>
+                        <div class="flex-grow-1" style="font-size: 0.82rem; line-height: 1.4; color: var(--text-secondary);">
+                            <p class="mb-1"><strong>Destinatario:</strong> @(string.IsNullOrEmpty(notificationEmailTo) ? "Sin email registrado" : notificationEmailTo)</p>
                             <p class="mb-2"><strong>Asunto:</strong> @notificationEmailSubject</p>
-                            <div class="p-2 rounded mb-3 bg-dark" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); font-family: monospace; white-space: pre-wrap; font-size: 0.75rem;">
+                            <div class="p-2 rounded mb-2 bg-dark" style="max-height: 105px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); font-family: monospace; white-space: pre-wrap; font-size: 0.73rem;">
                                 @notificationEmailBody
                             </div>
                         </div>
 
+                        @if (!string.IsNullOrEmpty(notificationEmailResultMsg))
+                        {
+                            <div class="alert @(notificationEmailSuccess ? "alert-success" : "alert-danger") p-2 small mb-2 text-center" style="font-size: 0.75rem;">
+                                @notificationEmailResultMsg
+                            </div>
+                        }
+
                         <div class="d-flex gap-2 mt-auto">
+                            <a href="@notificationGoogleCalendarUrl" target="_blank" class="btn btn-sm btn-action flex-grow-1 text-center d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem; background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4);" title="Añadir fecha al calendario de Google">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                                </svg>
+                                <span>Google Calendar</span>
+                            </a>
                             @if (!string.IsNullOrEmpty(notificationEmailTo))
                             {
-                                <a href="@notificationMailtoUrl" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="btn btn-sm btn-primary-glass flex-grow-1 text-center" style="font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                    Enviar Email
-                                </a>
+                                <button type="button" @onclick="ResendConfirmationEmail" disabled="@isResendingNotificationEmail" class="btn btn-sm btn-outline-secondary" style="font-size: 0.8rem;" title="Reenviar correo de confirmación">
+                                    @if (isResendingNotificationEmail)
+                                    {
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Reenviar</span>
+                                    }
+                                </button>
                             }
-                            <a href="@notificationGoogleCalendarUrl" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 text-center" style="font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; border-color: rgba(96,165,250,0.3); color: #60a5fa;">
-                                Google Cal
-                            </a>
                         </div>
                     </div>
                 </div>
 
-                @* CARD: WHATSAPP DE RECORDATORIO *@
+                @* CARD: RECORDATORIO SMS TWILIO *@
                 <div class="col-md-6">
                     <div class="p-3 h-100 rounded d-flex flex-column" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass);">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <div style="background: rgba(74,222,128,0.15); color: #4ade80; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-3.658A8.967 8.967 0 0 1 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="background: rgba(245,158,11,0.15); color: #f59e0b; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
+                                </div>
+                                <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Recordatorio SMS (Twilio)</h5>
                             </div>
-                            <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Recordatorio WhatsApp</h5>
+                            <span class="badge" style="background: rgba(245,158,11,0.15); color: #fbbf24; font-size: 0.72rem; border: 1px solid rgba(245,158,11,0.3);">1 Día Antes</span>
                         </div>
 
-                        <div class="flex-grow-1" style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">
-                            <p class="mb-1"><strong>Destinatario:</strong> @(string.IsNullOrEmpty(notificationWhatsAppTo) ? "Sin registrar" : notificationWhatsAppTo)</p>
-                            <p class="mb-2"><strong>Programado para:</strong> El día antes del turno</p>
-                            <div class="p-2 rounded mb-3 bg-dark" style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); font-family: monospace; white-space: pre-wrap; font-size: 0.75rem;">
-                                @notificationWhatsAppBody
+                        <div class="flex-grow-1" style="font-size: 0.82rem; line-height: 1.4; color: var(--text-secondary);">
+                            <p class="mb-1"><strong>Destinatario:</strong> @(string.IsNullOrEmpty(notificationSmsTo) ? "Sin teléfono registrado" : notificationSmsTo)</p>
+                            <p class="mb-2"><strong>Programación:</strong> Se enviará automáticamente 24hs antes</p>
+                            <div class="p-2 rounded mb-2 bg-dark" style="max-height: 105px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); font-family: monospace; white-space: pre-wrap; font-size: 0.73rem;">
+                                @notificationSmsBody
                             </div>
                         </div>
 
-                        @if (!string.IsNullOrEmpty(notificationTwilioResultMsg))
+                        @if (!string.IsNullOrEmpty(notificationSmsResultMsg))
                         {
-                            <div class="alert @(notificationTwilioSuccess ? "alert-success" : "alert-danger") p-2 small mb-2 text-center" style="font-size: 0.78rem;">
-                                @notificationTwilioResultMsg
+                            <div class="alert @(notificationSmsSuccess ? "alert-success" : "alert-danger") p-2 small mb-2 text-center" style="font-size: 0.75rem;">
+                                @notificationSmsResultMsg
                             </div>
                         }
 
-                        <div class="d-flex flex-column gap-2 mt-auto">
-                            @if (!string.IsNullOrEmpty(notificationWhatsAppTo))
+                        <div class="d-flex gap-2 mt-auto">
+                            @if (!string.IsNullOrEmpty(notificationSmsTo))
                             {
-                                <button type="button" @onclick="SendNotificationViaTwilio" disabled="@isSendingNotificationTwilio" class="btn btn-sm btn-success w-100 text-center" style="background-color: #25D366; border: none; font-weight: 600; color: white; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    @if (isSendingNotificationTwilio)
+                                <button type="button" @onclick="SendNotificationViaTwilioSms" disabled="@isSendingNotificationSms" class="btn btn-sm btn-action flex-grow-1 text-center d-flex align-items-center justify-content-center gap-1" style="background: #0284c7; color: white; border: none; font-size: 0.8rem;" title="Enviar SMS ahora como prueba o recordatorio manual">
+                                    @if (isSendingNotificationSms)
                                     {
                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                        <span>Enviando por Twilio...</span>
+                                        <span>Enviando SMS...</span>
                                     }
                                     else
                                     {
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
                                             <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.136L3.255 7.91l10.876-5.334z"/>
                                         </svg>
-                                        <span>Enviar Automático (Twilio)</span>
+                                        <span>Enviar SMS Ahora (Twilio)</span>
                                     }
                                 </button>
-                                <a href="@notificationWhatsAppUrl" target="_blank" class="btn btn-sm btn-primary-glass w-100 text-center" style="background: rgba(16,185,129,0.15) !important; color: #4ade80 !important; border-color: rgba(74,222,128,0.3); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
-                                        <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.949h.004c4.368 0 7.926-3.562 7.928-7.929a7.89 7.89 0 0 0-2.33-5.69m-5.61 10.744h-.01a6.5 6.5 0 0 1-3.3-1.02l-.242-.144-2.454.644.656-2.387-.156-.25a6.5 6.5 0 0 1-1.007-3.5C.029 4.348 3.52 1.052 7.99 1.052a6.5 6.5 0 0 1 4.59 1.936.5 6.5 0 0 1 1.922 4.6c-.004 4.475-3.498 7.969-7.965 7.969m3.636-4.708c-.18-.089-1.08-.534-1.25-.597-.17-.061-.29-.092-.41.09-.12.18-.46.597-.56.711-.1.115-.2.13-.38.041-1.81-.9-3.236-2.225-4.088-3.727-.12-.206-.013-.319.09-.422.09-.09.18-.21.28-.31.09-.1.12-.17.18-.29.06-.12.03-.22-.01-.31-.04-.09-.41-1.005-.56-1.373-.15-.356-.3-.3-.41-.3-.1-.005-.22-.005-.34-.005-.12 0-.32.045-.49.23-.17.19-.66.645-.66 1.57s.68 1.835.77 1.962c.09.13 1.34 2.044 3.25 2.87.45.2 1.01.32 1.37.43.46.15.88.13 1.21.08.37-.06 1.08-.44 1.23-.863.15-.42.15-.78.1-.863-.05-.08-.18-.12-.36-.21"/>
-                                    </svg>
-                                    <span>Abrir en WhatsApp Web</span>
-                                </a>
                             }
                             else
                             {
                                 <button disabled class="btn btn-sm btn-outline-secondary flex-grow-1 text-center" style="font-size: 0.8rem;">
-                                    Sin celular
+                                    Sin teléfono
                                 </button>
                             }
                         </div>
@@ -1094,17 +1133,17 @@
                 </div>
             </div>
 
-            @if (isSurgeryTurn)
+            @if (isSurgeryOrAnalysisTurn)
             {
                 <div class="alert alert-warning mt-3 mb-0 d-flex align-items-start gap-2" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; font-size: 0.85rem;">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
                     <div>
-                        <strong>Aviso de Cirugía:</strong> Se adjuntaron las indicaciones de ayuno de 24 horas al mensaje de WhatsApp.
+                        <strong>Aviso de Preparación Especial:</strong> Al tratarse de una cirugía o análisis clínico, se incluyó la indicación: <em>"Recuerde que no debe ingerir alimentos por 24hs antes de su turno"</em>.
                     </div>
                 </div>
             }
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="d-flex justify-content-end mt-3">
                 <button type="button" class="btn btn-outline-secondary text-light" style="border-color: var(--border-glass);" @onclick="() => showNotificationSuccessModal = false">Entendido</button>
             </div>
         </div>
@@ -1320,25 +1359,58 @@
     private string notificationEmailTo = "";
     private string notificationEmailSubject = "";
     private string notificationEmailBody = "";
-    private string notificationWhatsAppTo = "";
-    private string notificationWhatsAppBody = "";
     private string notificationGoogleCalendarUrl = "";
     private string notificationMailtoUrl = "";
+    private bool isResendingNotificationEmail = false;
+    private string? notificationEmailResultMsg = null;
+    private bool notificationEmailSuccess = false;
+
+    private string notificationSmsTo = "";
+    private string notificationSmsBody = "";
+    private bool isSendingNotificationSms = false;
+    private string? notificationSmsResultMsg = null;
+    private bool notificationSmsSuccess = false;
+    private bool isSurgeryOrAnalysisTurn = false;
+
+    // Respaldo WhatsApp
+    private string notificationWhatsAppTo = "";
+    private string notificationWhatsAppBody = "";
     private string notificationWhatsAppUrl = "";
-    private bool isSurgeryTurn = false;
 
     // ── Modal Detalle Turno ──
     private bool showDetailModal;
     private TurnoDto? selectedDetailTurno;
+    private string detailGoogleCalendarUrl = "";
+    private string detailSmsBody = "";
+    private bool isSendingDetailSms = false;
+    private bool isSendingDetailEmail = false;
 
     protected override async Task OnInitializedAsync()
     {
+        TokenStorage.OnContextChanged += HandleContextChanged;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         isGerente = user.IsInRole("Gerente");
 
         await LoadVeterinariosAsync();
         await LoadDataAsync();
+    }
+
+    private async void HandleContextChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            currentPage = 1;
+            filterVeterinarioId = "";
+            await LoadVeterinariosAsync();
+            await LoadDataAsync();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        TokenStorage.OnContextChanged -= HandleContextChanged;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -1367,7 +1439,11 @@
     {
         var paginateVets = await VeterinarioService.GetAllAsync(true);
         if (paginateVets?.Items != null)
-            veterinariosList = paginateVets.Items.Where(v => v.Activo).ToList();
+        {
+            veterinariosList = paginateVets.Items
+                .Where(v => v.Activo && (!TokenStorage.ActiveSucursalId.HasValue || v.SucursalId == TokenStorage.ActiveSucursalId.Value))
+                .ToList();
+        }
     }
 
     private async Task HandleSearch(KeyboardEventArgs e)
@@ -1465,7 +1541,13 @@
         try
         {
             var resP = await PacienteService.GetAllAsync(1, 1000, ""); if (resP != null) modalPacientes = resP.Items;
-            var resV = await PersonalService.GetVeterinariosActivosAsync(); if (resV != null) modalVeterinarios = resV;
+            var resV = await PersonalService.GetVeterinariosActivosAsync();
+            if (resV != null)
+            {
+                modalVeterinarios = resV
+                    .Where(v => !TokenStorage.ActiveSucursalId.HasValue || v.SucursalId == TokenStorage.ActiveSucursalId.Value)
+                    .ToList();
+            }
             var resS = await ServiciosService.GetServiciosActivosAsync(); if (resS != null) modalServicios = resS;
         }
         catch { turnoErrorMessage = "Error al cargar datos."; }
@@ -1874,6 +1956,8 @@
     {
         notificationTurnoRef = turno;
         showNotificationSuccessModal = false;
+        notificationSmsResultMsg = null;
+        notificationEmailResultMsg = null;
         
         try
         {
@@ -1883,19 +1967,26 @@
             var prop = await PropietarioService.GetByIdAsync(pac.PropietarioId);
             if (prop == null) return;
 
-            bool isCirugia = false;
-            if (!string.IsNullOrEmpty(turno.Motivo) && (turno.Motivo.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("cirugía", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operacion", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operación", StringComparison.OrdinalIgnoreCase)))
+            // Detección de Cirugía o Análisis para aviso de ayuno
+            bool isCirugiaOAnalisis = false;
+            var motivoLower = (turno.Motivo ?? "").ToLower();
+            var servLower = (turno.ServicioNombre ?? "").ToLower();
+            if (motivoLower.Contains("cirugia") || motivoLower.Contains("cirugía") ||
+                motivoLower.Contains("operacion") || motivoLower.Contains("operación") ||
+                motivoLower.Contains("quirurg") || motivoLower.Contains("quirúrg") ||
+                motivoLower.Contains("analisis") || motivoLower.Contains("análisis") ||
+                motivoLower.Contains("laboratorio") || motivoLower.Contains("sangre") ||
+                motivoLower.Contains("extraccion") || motivoLower.Contains("extracción") ||
+                servLower.Contains("cirugia") || servLower.Contains("cirugía") ||
+                servLower.Contains("analisis") || servLower.Contains("análisis") ||
+                servLower.Contains("laboratorio"))
             {
-                isCirugia = true;
+                isCirugiaOAnalisis = true;
             }
-            if (!string.IsNullOrEmpty(turno.ServicioNombre) && (turno.ServicioNombre.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.ServicioNombre.Contains("cirugía", StringComparison.OrdinalIgnoreCase)))
-            {
-                isCirugia = true;
-            }
-            isSurgeryTurn = isCirugia;
+            isSurgeryOrAnalysisTurn = isCirugiaOAnalisis;
 
-            notificationEmailTo = prop.Email;
-            notificationEmailSubject = $"Confirmación de Turno - Veterinaria";
+            notificationEmailTo = prop.Email ?? "";
+            notificationEmailSubject = $"Confirmación de Turno para {pac.Nombre} - Veterinaria Ñandubay";
             
             int duracion = turno.DuracionMinutos > 0 ? turno.DuracionMinutos : 30;
             var startUtc = turno.FechaHora.ToUniversalTime();
@@ -1903,27 +1994,27 @@
             
             var gCalText = Uri.EscapeDataString($"Turno Veterinaria - Mascota: {pac.Nombre}");
             var gCalDates = $"{startUtc:yyyyMMddTHHmmssZ}/{endUtc:yyyyMMddTHHmmssZ}";
-            var gCalDetails = Uri.EscapeDataString($"Turno agendado para {pac.Nombre} con el veterinario {turno.VeterinarioNombre}. Servicio: {turno.ServicioNombre}. Motivo: {turno.Motivo}");
-            notificationGoogleCalendarUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={gCalText}&dates={gCalDates}&details={gCalDetails}";
+            var gCalDetails = Uri.EscapeDataString($"Turno agendado para {pac.Nombre} con el profesional {turno.VeterinarioNombre}. Servicio: {turno.ServicioNombre}. Motivo: {turno.Motivo}");
+            notificationGoogleCalendarUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={gCalText}&dates={gCalDates}&details={gCalDetails}&location={Uri.EscapeDataString(turno.SucursalNombre ?? "Veterinaria Ñandubay")}";
 
-            notificationEmailBody = $"Hola {prop.NombreCompleto},\n\nTe confirmamos que se ha agendado un turno para tu mascota {pac.Nombre} el día {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs.\n\nVeterinario: {turno.VeterinarioNombre}\nServicio: {turno.ServicioNombre}\nMotivo: {turno.Motivo}\n\nPara añadir este turno a tu Google Calendar, haz clic en el siguiente enlace:\n{notificationGoogleCalendarUrl}\n\nSaludos,\nEl equipo de la Veterinaria.";
+            notificationEmailBody = $"Hola {prop.NombreCompleto},\n\nTe confirmamos que se ha agendado un turno para tu mascota {pac.Nombre} el día {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs.\n\nProfesional: {turno.VeterinarioNombre}\nServicio: {turno.ServicioNombre}\nMotivo: {turno.Motivo}\n\nPara añadir este turno a tu Google Calendar, haz clic en el siguiente enlace:\n{notificationGoogleCalendarUrl}\n\nSaludos,\nEl equipo de Veterinaria Ñandubay.";
 
             notificationMailtoUrl = $"mailto:{prop.Email}?subject={Uri.EscapeDataString(notificationEmailSubject)}&body={Uri.EscapeDataString(notificationEmailBody)}";
 
-            notificationWhatsAppTo = prop.Telefono;
-            var wsText = $"Hola {prop.NombreCompleto}, te recordamos que mañana {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs tienes un turno programado para {pac.Nombre} con el veterinario {turno.VeterinarioNombre}.";
-            
-            if (isCirugia)
+            notificationSmsTo = prop.Telefono ?? "";
+            var smsText = $"Hola {prop.Nombre}, te recordamos que tienes un turno en Veterinaria Ñandubay el día {turno.FechaHora:dd/MM} a las {turno.FechaHora:HH:mm} hs para {pac.Nombre} ({turno.ServicioNombre}).";
+            if (isCirugiaOAnalisis)
             {
-                wsText += "\n\n⚠️ INDICACIONES IMPORTANTES DE CIRUGÍA: Por favor, recuerde que el animal debe realizar un ayuno total de sólidos y líquidos (sin comida ni agua) durante las 24 horas previas al turno.";
+                smsText += $" Recuerde que {pac.Nombre} no debe ingerir alimentos por 24hs antes de su turno.";
             }
+            notificationSmsBody = smsText;
+
+            // Mantener WhatsApp web link de respaldo
+            notificationWhatsAppTo = prop.Telefono ?? "";
+            notificationWhatsAppBody = smsText;
+            var cleanPhone = new string((prop.Telefono ?? "").Where(char.IsDigit).ToArray());
+            notificationWhatsAppUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(smsText)}";
             
-            notificationWhatsAppBody = wsText;
-            
-            var cleanPhone = new string(prop.Telefono.Where(char.IsDigit).ToArray());
-            notificationWhatsAppUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(wsText)}";
-            
-            notificationTwilioResultMsg = null;
             showNotificationSuccessModal = true;
         }
         catch (Exception ex)
@@ -1932,31 +2023,51 @@
         }
     }
 
-    private bool isSendingNotificationTwilio = false;
-    private string? notificationTwilioResultMsg = null;
-    private bool notificationTwilioSuccess = false;
-
-    private async Task SendNotificationViaTwilio()
+    private async Task SendNotificationViaTwilioSms()
     {
-        if (string.IsNullOrWhiteSpace(notificationWhatsAppTo) || string.IsNullOrWhiteSpace(notificationWhatsAppBody)) return;
-        isSendingNotificationTwilio = true;
-        notificationTwilioResultMsg = null;
+        if (string.IsNullOrWhiteSpace(notificationSmsTo) || string.IsNullOrWhiteSpace(notificationSmsBody)) return;
+        isSendingNotificationSms = true;
+        notificationSmsResultMsg = null;
         try
         {
-            var res = await WhatsAppService.SendWhatsAppAsync(notificationWhatsAppTo, notificationWhatsAppBody);
-            notificationTwilioSuccess = res.Success;
-            notificationTwilioResultMsg = res.Success 
-                ? "✅ Recordatorio enviado exitosamente por Twilio WhatsApp." 
+            var res = await WhatsAppService.SendSmsAsync(notificationSmsTo, notificationSmsBody);
+            notificationSmsSuccess = res.Success;
+            notificationSmsResultMsg = res.Success
+                ? "✅ Recordatorio enviado exitosamente por Twilio SMS."
                 : $"❌ {res.Message}";
         }
         catch (Exception ex)
         {
-            notificationTwilioSuccess = false;
-            notificationTwilioResultMsg = $"❌ Error: {ex.Message}";
+            notificationSmsSuccess = false;
+            notificationSmsResultMsg = $"❌ Error: {ex.Message}";
         }
         finally
         {
-            isSendingNotificationTwilio = false;
+            isSendingNotificationSms = false;
+        }
+    }
+
+    private async Task ResendConfirmationEmail()
+    {
+        if (notificationTurnoRef == null) return;
+        isResendingNotificationEmail = true;
+        notificationEmailResultMsg = null;
+        try
+        {
+            var res = await WhatsAppService.SendTurnoEmailConfirmacionAsync(notificationTurnoRef.Id);
+            notificationEmailSuccess = res.Success;
+            notificationEmailResultMsg = res.Success
+                ? "✅ Correo de confirmación enviado exitosamente."
+                : $"❌ {res.Message}";
+        }
+        catch (Exception ex)
+        {
+            notificationEmailSuccess = false;
+            notificationEmailResultMsg = $"❌ Error al enviar email: {ex.Message}";
+        }
+        finally
+        {
+            isResendingNotificationEmail = false;
         }
     }
 
@@ -1966,7 +2077,6 @@
     private string detailMailtoUrl = "";
     private string detailWhatsAppUrl = "";
     private string detailWhatsAppBody = "";
-    private bool isSendingDetailTwilio = false;
     private string detailEditableEstado = "";
     private string detailEditableObservaciones = "";
     private List<Adjunto> detailFilesList = new();
@@ -1978,35 +2088,62 @@
     private string? ownerDetailTwilioMsg = null;
     private bool ownerDetailTwilioSuccess = false;
 
-    private async Task SendDetailWhatsAppTwilio()
+    private async Task SendDetailSmsTwilio()
     {
-        if (detailPropietarioInfo == null || string.IsNullOrWhiteSpace(detailPropietarioInfo.Telefono) || string.IsNullOrWhiteSpace(detailWhatsAppBody))
+        if (selectedDetailTurno == null || detailPropietarioInfo == null || string.IsNullOrWhiteSpace(detailPropietarioInfo.Telefono))
         {
-            detailModalMessage = "❌ No se puede enviar el recordatorio: falta el teléfono o cuerpo del mensaje.";
+            detailModalMessage = "❌ No se puede enviar el SMS: falta el teléfono del propietario.";
             return;
         }
 
-        isSendingDetailTwilio = true;
+        isSendingDetailSms = true;
         detailModalMessage = "";
         try
         {
-            var res = await WhatsAppService.SendWhatsAppAsync(detailPropietarioInfo.Telefono, detailWhatsAppBody);
+            var res = await WhatsAppService.SendTurnoSmsRecordatorioAsync(selectedDetailTurno.Id);
             if (res.Success)
             {
-                detailModalMessage = "✅ Recordatorio de turno enviado exitosamente vía Twilio WhatsApp.";
+                detailModalMessage = "✅ Recordatorio de turno enviado exitosamente vía Twilio SMS.";
             }
             else
             {
-                detailModalMessage = $"❌ Error de Twilio: {res.Message}";
+                detailModalMessage = $"❌ {res.Message}";
             }
         }
         catch (Exception ex)
         {
-            detailModalMessage = $"❌ Error al enviar mensaje: {ex.Message}";
+            detailModalMessage = $"❌ Error al enviar SMS: {ex.Message}";
         }
         finally
         {
-            isSendingDetailTwilio = false;
+            isSendingDetailSms = false;
+        }
+    }
+
+    private async Task SendDetailEmailConfirmacion()
+    {
+        if (selectedDetailTurno == null) return;
+        isSendingDetailEmail = true;
+        detailModalMessage = "";
+        try
+        {
+            var res = await WhatsAppService.SendTurnoEmailConfirmacionAsync(selectedDetailTurno.Id);
+            if (res.Success)
+            {
+                detailModalMessage = "✅ Email de confirmación con enlace a Google Calendar enviado exitosamente.";
+            }
+            else
+            {
+                detailModalMessage = $"❌ {res.Message}";
+            }
+        }
+        catch (Exception ex)
+        {
+            detailModalMessage = $"❌ Error al enviar email: {ex.Message}";
+        }
+        finally
+        {
+            isSendingDetailEmail = false;
         }
     }
 
@@ -2018,10 +2155,10 @@
         try
         {
             var msg = $"Hola {nombre}, te contactamos desde Veterinaria Ñandubay para coordinar consultas sobre tu mascota.";
-            var res = await WhatsAppService.SendWhatsAppAsync(telefono, msg);
+            var res = await WhatsAppService.SendSmsAsync(telefono, msg);
             ownerDetailTwilioSuccess = res.Success;
             ownerDetailTwilioMsg = res.Success 
-                ? "✅ Mensaje de contacto enviado vía Twilio WhatsApp." 
+                ? "✅ Mensaje de contacto enviado vía Twilio SMS." 
                 : $"❌ {res.Message}";
         }
         catch (Exception ex)
@@ -2046,6 +2183,8 @@
         detailPropietarioInfo = null;
         detailPacienteInfo = null;
         detailMailtoUrl = "";
+        detailGoogleCalendarUrl = "";
+        detailSmsBody = "";
         detailWhatsAppUrl = "";
         detailWhatsAppBody = "";
         detailFilesList = new();
@@ -2067,14 +2206,20 @@
                 detailPropietarioInfo = await PropietarioService.GetByIdAsync(detailPacienteInfo.PropietarioId);
                 if (detailPropietarioInfo != null)
                 {
-                    bool isCirugia = false;
-                    if (!string.IsNullOrEmpty(turno.Motivo) && (turno.Motivo.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("cirugía", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operacion", StringComparison.OrdinalIgnoreCase) || turno.Motivo.Contains("operación", StringComparison.OrdinalIgnoreCase)))
+                    bool isCirugiaOAnalisis = false;
+                    var motivoLower = (turno.Motivo ?? "").ToLower();
+                    var servLower = (turno.ServicioNombre ?? "").ToLower();
+                    if (motivoLower.Contains("cirugia") || motivoLower.Contains("cirugía") ||
+                        motivoLower.Contains("operacion") || motivoLower.Contains("operación") ||
+                        motivoLower.Contains("quirurg") || motivoLower.Contains("quirúrg") ||
+                        motivoLower.Contains("analisis") || motivoLower.Contains("análisis") ||
+                        motivoLower.Contains("laboratorio") || motivoLower.Contains("sangre") ||
+                        motivoLower.Contains("extraccion") || motivoLower.Contains("extracción") ||
+                        servLower.Contains("cirugia") || servLower.Contains("cirugía") ||
+                        servLower.Contains("analisis") || servLower.Contains("análisis") ||
+                        servLower.Contains("laboratorio"))
                     {
-                        isCirugia = true;
-                    }
-                    if (!string.IsNullOrEmpty(turno.ServicioNombre) && (turno.ServicioNombre.Contains("cirugia", StringComparison.OrdinalIgnoreCase) || turno.ServicioNombre.Contains("cirugía", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        isCirugia = true;
+                        isCirugiaOAnalisis = true;
                     }
 
                     int duracion = turno.DuracionMinutos > 0 ? turno.DuracionMinutos : 30;
@@ -2083,21 +2228,22 @@
                     var gCalText = Uri.EscapeDataString($"Turno Veterinaria - Mascota: {detailPacienteInfo.Nombre}");
                     var gCalDates = $"{startUtc:yyyyMMddTHHmmssZ}/{endUtc:yyyyMMddTHHmmssZ}";
                     var gCalDetails = Uri.EscapeDataString($"Turno agendado para {detailPacienteInfo.Nombre} con el veterinario {turno.VeterinarioNombre}. Servicio: {turno.ServicioNombre}. Motivo: {turno.Motivo}");
-                    var gCalUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={gCalText}&dates={gCalDates}&details={gCalDetails}";
+                    detailGoogleCalendarUrl = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={gCalText}&dates={gCalDates}&details={gCalDetails}&location={Uri.EscapeDataString(turno.SucursalNombre ?? "Veterinaria Ñandubay")}";
 
-                    var emailSubject = $"Confirmación de Turno - Veterinaria";
-                    var emailBody = $"Hola {detailPropietarioInfo.NombreCompleto},\n\nTe confirmamos que se ha agendado un turno para tu mascota {detailPacienteInfo.Nombre} el día {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs.\n\nVeterinario: {turno.VeterinarioNombre}\nServicio: {turno.ServicioNombre}\nMotivo: {turno.Motivo}\n\nPara añadir este turno a tu Google Calendar, haz clic en el siguiente enlace:\n{gCalUrl}\n\nSaludos,\nEl equipo de la Veterinaria.";
+                    var emailSubject = $"Confirmación de Turno para {detailPacienteInfo.Nombre} - Veterinaria Ñandubay";
+                    var emailBody = $"Hola {detailPropietarioInfo.NombreCompleto},\n\nTe confirmamos que se ha agendado un turno para tu mascota {detailPacienteInfo.Nombre} el día {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs.\n\nVeterinario: {turno.VeterinarioNombre}\nServicio: {turno.ServicioNombre}\nMotivo: {turno.Motivo}\n\nPara añadir este turno a tu Google Calendar, haz clic en el siguiente enlace:\n{detailGoogleCalendarUrl}\n\nSaludos,\nEl equipo de Veterinaria Ñandubay.";
 
                     detailMailtoUrl = $"mailto:{detailPropietarioInfo.Email}?subject={Uri.EscapeDataString(emailSubject)}&body={Uri.EscapeDataString(emailBody)}";
 
-                    var wsText = $"Hola {detailPropietarioInfo.NombreCompleto}, te recordamos que mañana {turno.FechaHora:dd/MM/yyyy} a las {turno.FechaHora:HH:mm} hs tienes un turno programado para {detailPacienteInfo.Nombre} con el veterinario {turno.VeterinarioNombre}.";
-                    if (isCirugia)
+                    var smsText = $"Hola {detailPropietarioInfo.Nombre}, te recordamos que tienes un turno en Veterinaria Ñandubay el {turno.FechaHora:dd/MM} a las {turno.FechaHora:HH:mm} hs para {detailPacienteInfo.Nombre} ({turno.ServicioNombre}).";
+                    if (isCirugiaOAnalisis)
                     {
-                        wsText += "\n\n⚠️ INDICACIONES IMPORTANTES DE CIRUGÍA: Por favor, recuerde que el animal debe realizar un ayuno total de sólidos y líquidos (sin comida ni agua) durante las 24 horas previas al turno.";
+                        smsText += $" Recuerde que {detailPacienteInfo.Nombre} no debe ingerir alimentos por 24hs antes de su turno.";
                     }
-                    detailWhatsAppBody = wsText;
+                    detailSmsBody = smsText;
+                    detailWhatsAppBody = smsText;
                     var cleanPhone = new string(detailPropietarioInfo.Telefono.Where(char.IsDigit).ToArray());
-                    detailWhatsAppUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(wsText)}";
+                    detailWhatsAppUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(smsText)}";
                 }
             }
         }

@@ -26,9 +26,17 @@ namespace Infrastructure.Registrations
             /* EventBus */
             services.AddEventBus(configuration);
 
-            /* Adapters */
+            /* Adapters & IA Services */
             services.AddSingleton<IExternalApiClient, ExternalApiHttpAdapter>();
             services.AddScoped<ITwilioWhatsAppService, Infrastructure.Repositories.TwilioWhatsAppService>();
+            services.AddScoped<ITwilioSmsService, Infrastructure.Repositories.TwilioSmsService>();
+            services.AddScoped<IEmailService, Infrastructure.Repositories.EmailService>();
+            services.AddHttpClient("GeminiClient", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+            services.AddScoped<IIaService, Infrastructure.Services.IaGeminiService>();
+            services.AddHostedService<Infrastructure.Services.RecordatorioTurnosBackgroundService>();
 
             return services;
         }

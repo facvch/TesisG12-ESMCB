@@ -29,6 +29,7 @@ namespace BlazorFrontEnd.Models
         [Required(ErrorMessage = "El motivo es requerido")]
         public string Motivo { get; set; } = string.Empty;
         public string Observaciones { get; set; } = string.Empty;
+        public string? SucursalNombre { get; set; } = "Veterinaria Ñandubay";
         public DateTime FechaCreacion { get; set; }
         public string? ArchivosAdjuntos { get; set; } = "[]";
     }

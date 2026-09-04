@@ -18,7 +18,12 @@ namespace Controllers
         IVeterinarioRepository veterinarioRepository,
         IServicioRepository servicioRepository,
         IHistorialClinicoRepository historialClinicoRepository,
-        IHorarioRepository horarioRepository) : BaseController
+        IHorarioRepository horarioRepository,
+        IPropietarioRepository propietarioRepository,
+        ISucursalRepository sucursalRepository,
+        IEmailService emailService,
+        ITwilioSmsService twilioSmsService,
+        ILogger<TurnoController> logger) : BaseController
     {
         private readonly ITurnoRepository _turnoRepository = turnoRepository
             ?? throw new ArgumentNullException(nameof(turnoRepository));
@@ -32,6 +37,16 @@ namespace Controllers
             ?? throw new ArgumentNullException(nameof(historialClinicoRepository));
         private readonly IHorarioRepository _horarioRepository = horarioRepository
             ?? throw new ArgumentNullException(nameof(horarioRepository));
+        private readonly IPropietarioRepository _propietarioRepository = propietarioRepository
+            ?? throw new ArgumentNullException(nameof(propietarioRepository));
+        private readonly ISucursalRepository _sucursalRepository = sucursalRepository
+            ?? throw new ArgumentNullException(nameof(sucursalRepository));
+        private readonly IEmailService _emailService = emailService
+            ?? throw new ArgumentNullException(nameof(emailService));
+        private readonly ITwilioSmsService _twilioSmsService = twilioSmsService
+            ?? throw new ArgumentNullException(nameof(twilioSmsService));
+        private readonly ILogger<TurnoController> _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
 
         /// <summary>
         /// Obtiene la agenda de un día (todos los turnos)
@@ -42,7 +57,7 @@ namespace Controllers
         {
             var dia = fecha ?? DateTime.Today;
             var entities = await _turnoRepository.GetByFechaAsync(dia);
-            if (!IsAdmin && UserSucursalId.HasValue)
+            if (UserSucursalId.HasValue)
             {
                 entities = entities.Where(t => t.SucursalId == UserSucursalId.Value).ToList();
             }
@@ -60,7 +75,7 @@ namespace Controllers
             if (hasta <= desde) return BadRequest("La fecha 'hasta' debe ser posterior a 'desde'");
 
             var entities = await _turnoRepository.GetProgramadosAsync(desde, hasta);
-            if (!IsAdmin && UserSucursalId.HasValue)
+            if (UserSucursalId.HasValue)
             {
                 entities = entities.Where(t => t.SucursalId == UserSucursalId.Value).ToList();
             }
@@ -92,7 +107,7 @@ namespace Controllers
             if (string.IsNullOrWhiteSpace(veterinarioId)) return BadRequest("El ID del veterinario es requerido");
 
             var entities = await _turnoRepository.GetByVeterinarioIdAsync(veterinarioId, desde, hasta);
-            if (!IsAdmin && UserSucursalId.HasValue)
+            if (UserSucursalId.HasValue)
             {
                 entities = entities.Where(t => t.SucursalId == UserSucursalId.Value).ToList();
             }
@@ -110,7 +125,7 @@ namespace Controllers
             if (string.IsNullOrWhiteSpace(pacienteId)) return BadRequest("El ID del paciente es requerido");
 
             var entities = await _turnoRepository.GetByPacienteIdAsync(pacienteId);
-            if (!IsAdmin && UserSucursalId.HasValue)
+            if (UserSucursalId.HasValue)
             {
                 entities = entities.Where(t => t.SucursalId == UserSucursalId.Value).ToList();
             }
@@ -149,7 +164,7 @@ namespace Controllers
             var veterinario = await _veterinarioRepository.FindOneAsync(request.VeterinarioId);
             if (veterinario == null) return BadRequest($"No existe el veterinario con Id {request.VeterinarioId}");
 
-            if (!IsAdmin && UserSucursalId.HasValue && veterinario.SucursalId != UserSucursalId.Value)
+            if (UserSucursalId.HasValue && veterinario.SucursalId != UserSucursalId.Value)
             {
                 return BadRequest("No puede agendar turnos para veterinarios de otra sucursal");
             }
@@ -223,6 +238,32 @@ namespace Controllers
                 return BadRequest(entity.GetErrors().Select(e => e.ErrorMessage));
 
             var createdId = await _turnoRepository.AddAsync(entity);
+
+            // Disparar envío automático de email de confirmación con enlace a Google Calendar
+            try
+            {
+                var prop = await _propietarioRepository.FindOneAsync(paciente.PropietarioId);
+                if (prop != null && !string.IsNullOrWhiteSpace(prop.Email))
+                {
+                    var sucursal = veterinario.SucursalId > 0 ? await _sucursalRepository.FindOneAsync(veterinario.SucursalId) : null;
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _emailService.SendTurnoConfirmacionAsync(entity, paciente, prop, veterinario, servicio, sucursal);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"[TurnoController] Error en envío automático de email de confirmación: {ex.Message}");
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[TurnoController] Error al preparar notificación automática por email: {ex.Message}");
+            }
+
             return Created($"api/v1/Turno/{createdId}", new { Id = createdId });
         }
 
@@ -595,6 +636,78 @@ namespace Controllers
             }
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Reenvía el email de confirmación con enlace a Google Calendar para un turno específico
+        /// </summary>
+        [HttpPost("api/v1/[Controller]/{id}/enviar-email-confirmacion")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
+        public async Task<IActionResult> EnviarEmailConfirmacion(string id)
+        {
+            var turno = await _turnoRepository.FindOneAsync(id);
+            if (turno == null) return NotFound($"No se encontró el turno con Id {id}");
+
+            var paciente = await _pacienteRepository.FindOneAsync(turno.PacienteId);
+            if (paciente == null) return BadRequest("El paciente del turno no existe.");
+
+            var propietario = await _propietarioRepository.FindOneAsync(paciente.PropietarioId);
+            if (propietario == null) return BadRequest("El propietario no existe.");
+            if (string.IsNullOrWhiteSpace(propietario.Email))
+                return BadRequest("El propietario no tiene un correo electrónico registrado.");
+
+            var veterinario = await _veterinarioRepository.FindOneAsync(turno.VeterinarioId);
+            var servicio = await _servicioRepository.FindOneAsync(turno.ServicioId);
+            var sucursal = turno.SucursalId > 0 ? await _sucursalRepository.FindOneAsync(turno.SucursalId) : null;
+
+            var result = await _emailService.SendTurnoConfirmacionAsync(turno, paciente, propietario, veterinario, servicio, sucursal);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Envía el SMS de recordatorio del turno vía Twilio (incluye indicación de 24hs de ayuno si es cirugía o análisis)
+        /// </summary>
+        [HttpPost("api/v1/[Controller]/{id}/enviar-sms-recordatorio")]
+        [Authorize(Roles = "Admin,Gerente,Veterinario,Recepcionista")]
+        public async Task<IActionResult> EnviarSmsRecordatorio(string id)
+        {
+            var turno = await _turnoRepository.FindOneAsync(id);
+            if (turno == null) return NotFound($"No se encontró el turno con Id {id}");
+
+            var paciente = await _pacienteRepository.FindOneAsync(turno.PacienteId);
+            if (paciente == null) return BadRequest("El paciente del turno no existe.");
+
+            var propietario = await _propietarioRepository.FindOneAsync(paciente.PropietarioId);
+            if (propietario == null || string.IsNullOrWhiteSpace(propietario.Telefono))
+                return BadRequest("El propietario no tiene un número de teléfono registrado.");
+
+            var servicio = await _servicioRepository.FindOneAsync(turno.ServicioId);
+
+            // Detección de cirugía o análisis para el aviso de ayuno
+            bool isCirugiaOAnalisis = false;
+            string motivoLower = (turno.Motivo ?? "").ToLower();
+            string servicioLower = (servicio?.Nombre ?? "").ToLower();
+            if (motivoLower.Contains("cirugia") || motivoLower.Contains("cirugía") ||
+                motivoLower.Contains("operacion") || motivoLower.Contains("operación") ||
+                motivoLower.Contains("quirurg") || motivoLower.Contains("quirúrg") ||
+                motivoLower.Contains("analisis") || motivoLower.Contains("análisis") ||
+                motivoLower.Contains("laboratorio") || motivoLower.Contains("sangre") ||
+                motivoLower.Contains("extraccion") || motivoLower.Contains("extracción") ||
+                servicioLower.Contains("cirugia") || servicioLower.Contains("cirugía") ||
+                servicioLower.Contains("analisis") || servicioLower.Contains("análisis") ||
+                servicioLower.Contains("laboratorio"))
+            {
+                isCirugiaOAnalisis = true;
+            }
+
+            string smsText = $"Hola {propietario.Nombre}, te recordamos que tienes un turno programado en Veterinaria Ñandubay el {turno.FechaHora:dd/MM} a las {turno.FechaHora:HH:mm} hs para {paciente.Nombre} ({servicio?.Nombre ?? "Consulta"}).";
+            if (isCirugiaOAnalisis)
+            {
+                smsText += $" Recuerde que {paciente.Nombre} no debe ingerir alimentos por 24hs antes de su turno.";
+            }
+
+            var result = await _twilioSmsService.SendSmsAsync(propietario.Telefono, smsText);
+            return Ok(result);
         }
 
         private static TurnoDto MapToDto(Domain.Entities.Turno t) => new()
