@@ -2,7 +2,10 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Veterinario")]
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
+@using BlazorFrontEnd.Components.Shared
+@using BlazorFrontEnd.Helpers
 @inject PacienteService PacienteService
+@inject CatalogoService CatalogoService
 @inject NavigationManager Navigation
 
 <PageTitle>Historia Clínica</PageTitle>
@@ -15,31 +18,87 @@
 </div>
 
 <div class="glass-card">
-    <div class="d-flex justify-content-between align-items-center" style="margin-bottom: var(--sp-md);">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 style="margin: 0;">Seleccionar Paciente</h4>
-        <input type="text" value="@searchTerm" @oninput="OnSearchInput" class="form-control" placeholder="Buscar mascota por nombre..." style="width: 350px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: white;" />
+    </div>
+
+    @* ── Barra de Búsqueda y Filtros de Especie / Raza ── *@
+    <div class="row g-2 align-items-center mb-4 p-3 rounded" style="background: var(--bg-main, #FAFAFA); border: 1px solid var(--border-light, #E0E0E0);">
+        <div class="col-md-4">
+            <label class="form-label mb-1" style="font-size: 0.78rem; color: var(--text-secondary);">Buscar mascota o dueño:</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white" style="border-color: var(--border-color); color: var(--text-secondary);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </span>
+                <input type="text" value="@searchTerm" @oninput="OnSearchInput" class="form-control bg-white" placeholder="Escribir nombre o dueño..." style="border-color: var(--border-color); color: var(--text-primary);" />
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <button class="btn btn-outline-secondary" type="button" @onclick="ClearSearch">✕</button>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label mb-1" style="font-size: 0.78rem; color: var(--text-secondary);">Especie:</label>
+            <SearchableSelect TValue="int"
+                              Value="filterEspecieId"
+                              ValueChanged="OnEspecieFilterChanged"
+                              Options="@especiesOptions"
+                              Placeholder="Todas las especies" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label mb-1" style="font-size: 0.78rem; color: var(--text-secondary);">Raza:</label>
+            <SearchableSelect TValue="int"
+                              Value="filterRazaId"
+                              ValueChanged="OnRazaFilterChanged"
+                              Options="@razasOptions"
+                              Placeholder="Todas las razas"
+                              Disabled="@(filterEspecieId == 0)" />
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            @if (HasActiveFilters)
+            {
+                <button class="btn btn-sm btn-outline-secondary w-100" style="margin-top: 20px; font-size: 0.8rem;" @onclick="ClearFilters">
+                    ✕ Limpiar filtros
+                </button>
+            }
+        </div>
     </div>
 
     @if (isLoading)
     {
-        <p class="text-secondary">Cargando directorio de pacientes...</p>
+        <div class="p-4 text-center text-secondary">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            Cargando directorio de pacientes...
+        </div>
     }
     else if (pacientesResponse?.Items == null || !pacientesResponse.Items.Any())
     {
-        <p class="text-secondary">No se encontraron mascotas que coincidan con la búsqueda.</p>
+        <div class="p-4 text-center text-secondary">
+            <p class="m-0">No se encontraron mascotas que coincidan con los filtros aplicados.</p>
+        </div>
     }
     else
     {
         <div class="row" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-md);">
             @foreach (var p in pacientesResponse.Items)
             {
-                <div class="glass-card" style="padding: 15px; cursor: pointer; transition: transform 0.2s;" @onclick="() => VerHistorial(p.Id)" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="glass-card" style="padding: 15px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border-light);" @onclick="() => VerHistorial(p.Id)" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='var(--shadow-card-hover)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-card)'">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <strong style="font-size: 1.1rem; color: var(--accent-primary);">@p.Nombre</strong>
-                            <div class="text-secondary" style="font-size: 0.85rem;">@p.EspecieNombre | @p.PropietarioNombre</div>
+                            <div class="text-secondary" style="font-size: 0.85rem;">
+                                @p.EspecieNombre @(!string.IsNullOrEmpty(p.RazaNombre) ? $"• {p.RazaNombre}" : "")
+                            </div>
+                            <small class="text-secondary" style="font-size: 0.78rem;">
+                                Dueño: @p.PropietarioNombre
+                            </small>
                         </div>
-                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.08); border-radius: 50%; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border-glass);">
+                        <div style="width: 40px; height: 40px; background: rgba(0, 163, 108, 0.08); border-radius: 50%; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border-light);">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; color: var(--accent-primary);">
                                 <path d="M8.5 3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm7 0a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM4.5 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm15 0a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM12 9.5c-3.5 0-6 2.5-6 5.5 0 2.5 2 4.5 4.5 4.5.8 0 1.2-.5 1.5-.5s.7.5 1.5.5c2.5 0 4.5-2 4.5-4.5 0-3-2.5-5.5-6-5.5Z"/>
                             </svg>
@@ -50,10 +109,10 @@
         </div>
         
         <div class="d-flex justify-content-between align-items-center mt-4">
-            <span class="text-secondary">Página @pacientesResponse.PageIndex de @pacientesResponse.TotalPages</span>
+            <span class="text-secondary">Página @pacientesResponse.PageIndex de @pacientesResponse.TotalPages (@pacientesResponse.TotalCount pacientes)</span>
             <div>
                 <button class="btn btn-sm btn-outline-secondary" disabled="@(!pacientesResponse.HasPreviousPage)" @onclick="PreviousPage">Anterior</button>
-                <button class="btn btn-sm btn-outline-secondary" disabled="@(!pacientesResponse.HasNextPage)" @onclick="NextPage">Siguiente</button>
+                <button class="btn btn-sm btn-outline-secondary ms-1" disabled="@(!pacientesResponse.HasNextPage)" @onclick="NextPage">Siguiente</button>
             </div>
         </div>
     }
@@ -66,16 +125,55 @@
     private CancellationTokenSource? _debounceToken;
     private int currentPage = 1;
 
+    private int filterEspecieId = 0;
+    private int filterRazaId = 0;
+    private List<EspecieDto> especies = new();
+    private List<RazaDto> razas = new();
+
+    private bool HasActiveFilters => !string.IsNullOrEmpty(searchTerm) || filterEspecieId > 0 || filterRazaId > 0;
+
+    private IEnumerable<SearchableOption<int>> especiesOptions =>
+        especies.Select(e => new SearchableOption<int>
+        {
+            Value = e.Id,
+            Text = e.Nombre,
+            ExtraKeywords = e.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int>> razasOptions =>
+        razas.Select(r => new SearchableOption<int>
+        {
+            Value = r.Id,
+            Text = r.Nombre,
+            ExtraKeywords = r.Nombre
+        });
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadCatalogosAsync();
         await LoadDataAsync();
+    }
+
+    private async Task LoadCatalogosAsync()
+    {
+        try
+        {
+            especies = await CatalogoService.GetEspeciesActivasAsync() ?? new List<EspecieDto>();
+        }
+        catch { }
     }
 
     private async Task LoadDataAsync()
     {
         isLoading = true;
         StateHasChanged();
-        pacientesResponse = await PacienteService.GetAllAsync(currentPage, 12, searchTerm);
+        pacientesResponse = await PacienteService.GetAllAsync(
+            currentPage, 
+            12, 
+            searchTerm, 
+            filterEspecieId > 0 ? filterEspecieId : null, 
+            filterRazaId > 0 ? filterRazaId : null
+        );
         isLoading = false;
     }
 
@@ -84,20 +182,59 @@
         searchTerm = e.Value?.ToString() ?? string.Empty;
         currentPage = 1;
 
-        // Debounce: cancel previous pending search
         _debounceToken?.Cancel();
         _debounceToken = new CancellationTokenSource();
         var token = _debounceToken.Token;
 
         try
         {
-            await Task.Delay(400, token);
+            await Task.Delay(350, token);
             if (!token.IsCancellationRequested)
             {
                 await LoadDataAsync();
             }
         }
-        catch (TaskCanceledException) { /* debounce cancelled, expected */ }
+        catch (TaskCanceledException) { }
+    }
+
+    private async Task ClearSearch()
+    {
+        searchTerm = string.Empty;
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task OnEspecieFilterChanged(int especieId)
+    {
+        filterEspecieId = especieId;
+        filterRazaId = 0;
+        if (filterEspecieId > 0)
+        {
+            razas = await CatalogoService.GetRazasPorEspecieAsync(filterEspecieId) ?? new List<RazaDto>();
+        }
+        else
+        {
+            razas.Clear();
+        }
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task OnRazaFilterChanged(int razaId)
+    {
+        filterRazaId = razaId;
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = string.Empty;
+        filterEspecieId = 0;
+        filterRazaId = 0;
+        razas.Clear();
+        currentPage = 1;
+        await LoadDataAsync();
     }
 
     private void VerHistorial(string id)
@@ -105,7 +242,22 @@
         Navigation.NavigateTo($"/historial-clinico/paciente/{id}");
     }
 
-    private async Task PreviousPage() { if (pacientesResponse?.HasPreviousPage == true) { currentPage--; await LoadDataAsync(); } }
-    private async Task NextPage() { if (pacientesResponse?.HasNextPage == true) { currentPage++; await LoadDataAsync(); } }
+    private async Task PreviousPage() 
+    { 
+        if (pacientesResponse?.HasPreviousPage == true) 
+        { 
+            currentPage--; 
+            await LoadDataAsync(); 
+        } 
+    }
+
+    private async Task NextPage() 
+    { 
+        if (pacientesResponse?.HasNextPage == true) 
+        { 
+            currentPage++; 
+            await LoadDataAsync(); 
+        } 
+    }
 }
 

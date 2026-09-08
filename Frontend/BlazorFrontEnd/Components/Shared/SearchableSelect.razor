@@ -1,0 +1,218 @@
+@typeparam TValue
+@using BlazorFrontEnd.Helpers
+
+<div class="searchable-select-wrapper position-relative @CssClass" style="width: 100%;">
+    <!-- Caja principal / Botón desplegable -->
+    <div class="form-select searchable-select-trigger d-flex align-items-center justify-content-between @(isOpen ? "open" : "") @(Disabled ? "disabled opacity-50" : "")"
+         style="cursor: @(Disabled ? "not-allowed" : "pointer"); user-select: none; min-height: 38px; padding-right: 0.75rem; background-color: var(--bg-input, #F1F1F1); color: var(--text-primary, #333333); border: 1px solid var(--border-color, #CCCCCC); border-radius: var(--radius-sm, 6px);"
+         @onclick="ToggleDropdown">
+        <div class="text-truncate flex-grow-1 pe-2" style="@(IsValueSelected ? "color: var(--text-primary, #333333);" : "color: var(--text-muted, #999999);")">
+            @if (IsValueSelected && SelectedOption != null)
+            {
+                <span class="fw-semibold">@SelectedOption.Text</span>
+                @if (!string.IsNullOrEmpty(SelectedOption.Subtext))
+                {
+                    <small class="ms-1" style="color: var(--text-secondary, #666666);">(@SelectedOption.Subtext)</small>
+                }
+            }
+            else
+            {
+                <span>@Placeholder</span>
+            }
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            @if (IsValueSelected && !Disabled && AllowClear)
+            {
+                <span class="hover-clear-btn"
+                      style="cursor: pointer; padding: 0 4px; font-size: 0.85rem; line-height: 1;"
+                      @onclick:stopPropagation="true"
+                      @onclick="ClearSelection"
+                      title="Limpiar selección">✕</span>
+            }
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16" style="color: var(--text-secondary, #666666); transition: transform 0.2s ease; transform: @(isOpen ? "rotate(180deg)" : "rotate(0deg)");">
+                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Menú Desplegable con Filtro Escribible -->
+    @if (isOpen && !Disabled)
+    {
+        <!-- Backdrop invisible para cerrar al hacer clic afuera -->
+        <div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1050;" @onclick="CloseDropdown"></div>
+
+        <div class="position-absolute start-0 w-100 mt-1"
+             style="background: var(--bg-panel, #FFFFFF); z-index: 1055; max-height: 290px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-color, #CCCCCC); border-radius: var(--radius-md, 10px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);">
+            
+            <!-- Campo de Búsqueda Escribible -->
+            <div class="p-2 border-bottom" style="background: var(--bg-main, #FAFAFA); border-color: var(--border-light, #E0E0E0) !important;">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white" style="border-color: var(--border-color, #CCCCCC); color: var(--text-secondary, #666666);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </span>
+                    <input type="text"
+                           class="form-control bg-white searchable-select-filter-input"
+                           style="border-color: var(--border-color, #CCCCCC); color: var(--text-primary, #333333);"
+                           placeholder="Escribí para filtrar..."
+                           value="@searchQuery"
+                           @oninput="OnSearchInput"
+                           autofocus />
+                    @if (!string.IsNullOrEmpty(searchQuery))
+                    {
+                        <button class="btn btn-outline-secondary btn-sm" type="button" @onclick="() => searchQuery = string.Empty" style="border-color: var(--border-color, #CCCCCC); color: var(--text-secondary, #666666);">✕</button>
+                    }
+                </div>
+            </div>
+
+            <!-- Lista Desplazable de Opciones Filtradas -->
+            <div class="overflow-auto flex-grow-1" style="max-height: 220px; background: var(--bg-panel, #FFFFFF);">
+                @{
+                    var list = FilteredOptions.ToList();
+                }
+                @if (list.Count == 0)
+                {
+                    <div class="p-3 text-center small" style="color: var(--text-muted, #999999);">
+                        No se encontraron opciones para "<strong>@searchQuery</strong>"
+                    </div>
+                }
+                else
+                {
+                    @foreach (var opt in list)
+                    {
+                        var isSelected = IsSelected(opt.Value);
+                        <div class="px-3 py-2 d-flex flex-column search-option-row @(isSelected ? "selected" : "")"
+                             style="cursor: pointer; border-bottom: 1px solid var(--border-light, #EFEFEF); background: @(isSelected ? "rgba(0, 163, 108, 0.09)" : "transparent"); border-left: @(isSelected ? "4px solid var(--accent-primary, #00A36C)" : "4px solid transparent"); transition: all 0.15s ease;"
+                             @onclick="() => SelectOption(opt.Value)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold" style="color: var(--text-primary, #333333); font-size: 0.9rem;">@opt.Text</span>
+                                @if (isSelected)
+                                {
+                                    <span class="fw-bold small" style="color: var(--accent-primary, #00A36C);">✓</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(opt.Subtext))
+                            {
+                                <small style="font-size: 0.78rem; margin-top: 2px; color: var(--text-secondary, #666666);">@opt.Subtext</small>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .searchable-select-trigger:hover:not(.disabled) {
+        border-color: var(--accent-primary, #00A36C) !important;
+    }
+    .searchable-select-trigger.open {
+        border-color: var(--accent-primary, #00A36C) !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 163, 108, 0.15) !important;
+    }
+    .searchable-select-filter-input:focus {
+        border-color: var(--accent-primary, #00A36C) !important;
+        box-shadow: 0 0 0 0.15rem rgba(0, 163, 108, 0.15) !important;
+    }
+    .search-option-row:hover {
+        background-color: var(--bg-table-alt, #F9F9F9) !important;
+    }
+    .search-option-row.selected:hover {
+        background-color: rgba(0, 163, 108, 0.14) !important;
+    }
+    .hover-clear-btn {
+        color: var(--text-muted, #999999);
+        transition: color 0.15s ease;
+    }
+    .hover-clear-btn:hover {
+        color: var(--accent-danger, #FF6B6B) !important;
+    }
+</style>
+
+@code {
+    [Parameter] public TValue Value { get; set; } = default!;
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    [Parameter] public System.Linq.Expressions.Expression<Func<TValue>>? ValueExpression { get; set; }
+    [Parameter] public IEnumerable<SearchableOption<TValue>> Options { get; set; } = Enumerable.Empty<SearchableOption<TValue>>();
+    [Parameter] public string Placeholder { get; set; } = "-- Seleccione una opción --";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool AllowClear { get; set; } = true;
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public EventCallback<TValue> OnChange { get; set; }
+
+    private bool isOpen = false;
+    private string searchQuery = string.Empty;
+
+    private bool IsValueSelected
+    {
+        get
+        {
+            if (Value == null) return false;
+            if (EqualityComparer<TValue>.Default.Equals(Value, default)) return false;
+            if (Value is string s && string.IsNullOrWhiteSpace(s)) return false;
+            if (Value is int i && i == 0) return false;
+            return true;
+        }
+    }
+
+    private SearchableOption<TValue>? SelectedOption =>
+        Options?.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(o.Value, Value));
+
+    private IEnumerable<SearchableOption<TValue>> FilteredOptions
+    {
+        get
+        {
+            if (Options == null) return Enumerable.Empty<SearchableOption<TValue>>();
+            if (string.IsNullOrWhiteSpace(searchQuery)) return Options;
+
+            return Options.Where(opt =>
+                SearchHelper.ContainsFlexible(opt.Text, searchQuery) ||
+                (!string.IsNullOrEmpty(opt.Subtext) && SearchHelper.ContainsFlexible(opt.Subtext, searchQuery)) ||
+                (!string.IsNullOrEmpty(opt.ExtraKeywords) && SearchHelper.ContainsFlexible(opt.ExtraKeywords, searchQuery))
+            );
+        }
+    }
+
+    private void ToggleDropdown()
+    {
+        if (Disabled) return;
+        isOpen = !isOpen;
+        if (isOpen)
+        {
+            searchQuery = string.Empty;
+        }
+    }
+
+    private void CloseDropdown()
+    {
+        isOpen = false;
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private bool IsSelected(TValue val)
+    {
+        return EqualityComparer<TValue>.Default.Equals(val, Value);
+    }
+
+    private async Task SelectOption(TValue val)
+    {
+        Value = val;
+        isOpen = false;
+        await ValueChanged.InvokeAsync(val);
+        await OnChange.InvokeAsync(val);
+    }
+
+    private async Task ClearSelection()
+    {
+        Value = default!;
+        isOpen = false;
+        await ValueChanged.InvokeAsync(default!);
+        await OnChange.InvokeAsync(default!);
+    }
+}

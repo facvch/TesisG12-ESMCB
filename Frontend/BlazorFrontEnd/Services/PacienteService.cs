@@ -14,9 +14,11 @@ namespace BlazorFrontEnd.Services
             _httpClient = httpClient;
         }
 
-        public async Task<PaginatedList<PacienteDto>?> GetAllAsync(int page = 1, int pageSize = 10, string searchTerm = "")
+        public async Task<PaginatedList<PacienteDto>?> GetAllAsync(int page = 1, int pageSize = 10, string searchTerm = "", int? especieId = null, int? razaId = null)
         {
-            var url = $"api/v1/Paginado/pacientes?page={page}&pageSize={pageSize}&searchTerm={searchTerm}";
+            var url = $"api/v1/Paginado/pacientes?page={page}&pageSize={pageSize}&searchTerm={Uri.EscapeDataString(searchTerm)}";
+            if (especieId.HasValue && especieId.Value > 0) url += $"&especieId={especieId.Value}";
+            if (razaId.HasValue && razaId.Value > 0) url += $"&razaId={razaId.Value}";
             return await _httpClient.GetUnwrappedAsync<PaginatedList<PacienteDto>>(url);
         }
 

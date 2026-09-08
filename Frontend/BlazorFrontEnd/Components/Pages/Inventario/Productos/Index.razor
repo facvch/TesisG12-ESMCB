@@ -1,6 +1,8 @@
 @page "/inventario/productos"
 @using BlazorFrontEnd.Models
 @using BlazorFrontEnd.Services
+@using BlazorFrontEnd.Components.Shared
+@using BlazorFrontEnd.Helpers
 @inject ProductoService ProductoService
 @inject CatalogoInventarioService CatalogoService
 @inject NavigationManager Navigation
@@ -41,33 +43,33 @@
     <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: var(--sp-md); padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 8px;">
         <div style="display: flex; align-items: center; gap: 6px;">
             <label style="color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;">Categoría:</label>
-            <select @bind="filterCategoria" @bind:after="ApplyFilters" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 160px; font-size: 0.85rem;">
-                <option value="0">Todas</option>
-                @foreach (var c in categorias)
-                {
-                    <option value="@c.Id">@c.Nombre</option>
-                }
-            </select>
+            <div style="min-width: 175px;">
+                <SearchableSelect TValue="int"
+                                  Value="filterCategoria"
+                                  ValueChanged="OnFilterCategoriaChanged"
+                                  Options="@categoriasFilterOptions"
+                                  Placeholder="Todas" />
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
             <label style="color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;">Marca:</label>
-            <select @bind="filterMarca" @bind:after="ApplyFilters" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 160px; font-size: 0.85rem;">
-                <option value="0">Todas</option>
-                @foreach (var m in marcas)
-                {
-                    <option value="@m.Id">@m.Nombre</option>
-                }
-            </select>
+            <div style="min-width: 175px;">
+                <SearchableSelect TValue="int"
+                                  Value="filterMarca"
+                                  ValueChanged="OnFilterMarcaChanged"
+                                  Options="@marcasFilterOptions"
+                                  Placeholder="Todas" />
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
             <label style="color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;">Depósito:</label>
-            <select @bind="filterDeposito" @bind:after="ApplyFilters" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 160px; font-size: 0.85rem;">
-                <option value="0">Todos</option>
-                @foreach (var d in depositos)
-                {
-                    <option value="@d.Id">@d.Nombre</option>
-                }
-            </select>
+            <div style="min-width: 175px;">
+                <SearchableSelect TValue="int"
+                                  Value="filterDeposito"
+                                  ValueChanged="OnFilterDepositoChanged"
+                                  Options="@depositosFilterOptions"
+                                  Placeholder="Todos" />
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
             <label style="color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap;">Estado:</label>
@@ -314,47 +316,35 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Categoría (*)</label>
-                        <InputSelect @bind-Value="productModel.CategoriaId" class="form-select bg-dark text-light border-secondary">
-                            <option value="0">-- Seleccione Categoría --</option>
-                            @foreach (var c in categorias)
-                            {
-                                <option value="@c.Id">@c.Nombre</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="int"
+                                          @bind-Value="productModel.CategoriaId"
+                                          Options="@modalCategoriasOptions"
+                                          Placeholder="-- Seleccione Categoría --" />
                         <ValidationMessage For="@(() => productModel.CategoriaId)" class="text-danger" />
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Marca</label>
-                        <InputSelect @bind-Value="productModel.MarcaId" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Sin Marca --</option>
-                            @foreach (var m in marcas)
-                            {
-                                <option value="@m.Id">@m.Nombre</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="int?"
+                                          @bind-Value="productModel.MarcaId"
+                                          Options="@modalMarcasOptions"
+                                          Placeholder="-- Sin Marca --" />
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Proveedor</label>
-                        <InputSelect @bind-Value="productModel.ProveedorId" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Sin Proveedor --</option>
-                            @foreach (var p in proveedores)
-                            {
-                                <option value="@p.Id">@p.RazonSocial</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="string"
+                                          @bind-Value="productModel.ProveedorId"
+                                          Options="@modalProveedoresOptions"
+                                          Placeholder="-- Sin Proveedor --" />
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Depósito</label>
-                        <InputSelect @bind-Value="productModel.DepositoId" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Sin Depósito --</option>
-                            @foreach (var d in depositos)
-                            {
-                                <option value="@d.Id">@d.Nombre</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="int?"
+                                          @bind-Value="productModel.DepositoId"
+                                          Options="@modalDepositosOptions"
+                                          Placeholder="-- Sin Depósito --" />
                     </div>
                 </div>
 
@@ -505,6 +495,81 @@
     private List<MarcaDto> marcas = new();
     private List<DepositoDto> depositos = new();
     private bool HasActiveFilters => filterCategoria > 0 || filterMarca > 0 || filterDeposito > 0 || filterEstado != "todos" || filterStockBajo;
+
+    private IEnumerable<SearchableOption<int>> categoriasFilterOptions =>
+        categorias.Select(c => new SearchableOption<int>
+        {
+            Value = c.Id,
+            Text = c.Nombre,
+            ExtraKeywords = c.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int>> marcasFilterOptions =>
+        marcas.Select(m => new SearchableOption<int>
+        {
+            Value = m.Id,
+            Text = m.Nombre,
+            ExtraKeywords = m.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int>> depositosFilterOptions =>
+        depositos.Select(d => new SearchableOption<int>
+        {
+            Value = d.Id,
+            Text = d.Nombre,
+            ExtraKeywords = d.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int>> modalCategoriasOptions =>
+        categorias.Select(c => new SearchableOption<int>
+        {
+            Value = c.Id,
+            Text = c.Nombre,
+            ExtraKeywords = c.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int?>> modalMarcasOptions =>
+        marcas.Select(m => new SearchableOption<int?>
+        {
+            Value = (int?)m.Id,
+            Text = m.Nombre,
+            ExtraKeywords = m.Nombre
+        });
+
+    private IEnumerable<SearchableOption<string>> modalProveedoresOptions =>
+        proveedores.Select(p => new SearchableOption<string>
+        {
+            Value = p.Id,
+            Text = p.RazonSocial,
+            Subtext = !string.IsNullOrEmpty(p.Cuit) ? $"CUIT: {p.Cuit}" : null,
+            ExtraKeywords = $"{p.RazonSocial} {p.Cuit}"
+        });
+
+    private IEnumerable<SearchableOption<int?>> modalDepositosOptions =>
+        depositos.Select(d => new SearchableOption<int?>
+        {
+            Value = (int?)d.Id,
+            Text = d.Nombre,
+            ExtraKeywords = d.Nombre
+        });
+
+    private void OnFilterCategoriaChanged(int val)
+    {
+        filterCategoria = val;
+        ApplyFilters();
+    }
+
+    private void OnFilterMarcaChanged(int val)
+    {
+        filterMarca = val;
+        ApplyFilters();
+    }
+
+    private void OnFilterDepositoChanged(int val)
+    {
+        filterDeposito = val;
+        ApplyFilters();
+    }
 
     // Stock modal
     private bool showStockModal;

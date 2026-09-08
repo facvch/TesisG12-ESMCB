@@ -137,15 +137,27 @@
                             <td class="text-center align-middle">
                                 @if (pac.ContadorInasistencias > 0)
                                 {
-                                    <span class="badge bg-danger" style="font-size: 0.85rem; font-weight: 600; padding: 5px 9px;" title="@pac.ContadorInasistencias inasistencias a turnos registradas">
-                                        @pac.ContadorInasistencias @(pac.ContadorInasistencias == 1 ? "ausencia" : "ausencias")
-                                    </span>
+                                    <button type="button" 
+                                            class="btn p-0 border-0 bg-transparent" 
+                                            @onclick="() => AbrirDetalleInasistencias(pac)"
+                                            title="Ver historial de inasistencias de @pac.Nombre">
+                                        <span class="badge bg-danger" style="font-size: 0.85rem; font-weight: 600; padding: 5px 9px; cursor: pointer; transition: transform 0.15s ease;"
+                                              onmouseover="this.style.transform='scale(1.06)'"
+                                              onmouseout="this.style.transform='scale(1)'">
+                                            @pac.ContadorInasistencias @(pac.ContadorInasistencias == 1 ? "ausencia" : "ausencias") 🔍
+                                        </span>
+                                    </button>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary" style="font-size: 0.85rem; opacity: 0.6; padding: 5px 9px;">
-                                        0 ausencias
-                                    </span>
+                                    <button type="button" 
+                                            class="btn p-0 border-0 bg-transparent" 
+                                            @onclick="() => AbrirDetalleInasistencias(pac)"
+                                            title="Sin inasistencias registradas">
+                                        <span class="badge bg-secondary" style="font-size: 0.85rem; opacity: 0.6; padding: 5px 9px; cursor: pointer;">
+                                            0 ausencias
+                                        </span>
+                                    </button>
                                 }
                             </td>
                             <td>
@@ -266,13 +278,10 @@
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Propietario / Dueño (*)</label>
                             <div class="d-flex gap-2">
-                                <InputSelect @bind-Value="pacienteModel.PropietarioId" class="form-select bg-dark text-light border-secondary">
-                                    <option value="">-- Seleccione un Dueño --</option>
-                                    @foreach (var p in modalPropietarios)
-                                    {
-                                        <option value="@p.Id">@p.NombreCompleto - @p.DNI</option>
-                                    }
-                                </InputSelect>
+                                <SearchableSelect TValue="string"
+                                                  @bind-Value="pacienteModel.PropietarioId"
+                                                  Options="@modalPropietariosOptions"
+                                                  Placeholder="-- Seleccione un Dueño --" />
                                 <button type="button" @onclick="OpenClienteModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nuevo cliente">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -288,13 +297,11 @@
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
                             <div class="d-flex gap-2">
-                                <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
-                                    <option value="0">-- Seleccione Especie --</option>
-                                    @foreach (var e in modalEspecies)
-                                    {
-                                        <option value="@e.Id">@e.Nombre</option>
-                                    }
-                                </InputSelect>
+                                <SearchableSelect TValue="int"
+                                                  Value="pacienteModel.EspecieId"
+                                                  ValueChanged="@((int v) => OnModalEspecieChanged(v))"
+                                                  Options="@modalEspeciesOptions"
+                                                  Placeholder="-- Seleccione Especie --" />
                                 <button type="button" @onclick="OpenEspecieModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva especie">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -307,13 +314,11 @@
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
                             <div class="d-flex gap-2">
-                                <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(pacienteModel.EspecieId == 0)">
-                                    <option value="">-- Seleccione Raza --</option>
-                                    @foreach (var r in modalRazas)
-                                    {
-                                        <option value="@r.Id">@r.Nombre</option>
-                                    }
-                                </InputSelect>
+                                <SearchableSelect TValue="int?"
+                                                  @bind-Value="pacienteModel.RazaId"
+                                                  Options="@modalRazasOptions"
+                                                  Placeholder="-- Seleccione Raza --"
+                                                  Disabled="@(pacienteModel.EspecieId == 0)" />
                                 <button type="button" @onclick="OpenRazaModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva raza" disabled="@(pacienteModel.EspecieId == 0)">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -720,6 +725,103 @@
             }
             <div class="d-flex justify-content-end mt-4">
                 <button type="button" class="btn btn-outline-secondary text-light" @onclick="ClosePacienteDetailModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ═══════ MODAL Inasistencias ═══════ *@
+@if (showInasistenciasModal)
+{
+    <div class="modal-overlay modal-overlay-z2" @onclick="CloseInasistenciasModal" @onclick:stopPropagation="false">
+        <div class="modal-panel" style="max-width: 650px;" @onclick:stopPropagation="true">
+            <div class="modal-header-row">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.4rem;">⚠️</span>
+                    <div>
+                        <h3 style="margin: 0;">Inasistencias del Paciente</h3>
+                        @if (selectedPacienteInasistencias != null)
+                        {
+                            <small class="text-secondary">
+                                <strong>@selectedPacienteInasistencias.Nombre</strong> 
+                                @(string.IsNullOrEmpty(selectedPacienteInasistencias.PropietarioNombre) ? "" : $"— Dueño: {selectedPacienteInasistencias.PropietarioNombre}")
+                            </small>
+                        }
+                    </div>
+                </div>
+                <button class="modal-close-btn" @onclick="CloseInasistenciasModal" title="Cerrar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body-content mt-3">
+                @if (isLoadingInasistencias)
+                {
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                        <p class="mt-2 text-secondary mb-0">Buscando turnos con inasistencia...</p>
+                    </div>
+                }
+                else if (turnosInasistenciasList == null || !turnosInasistenciasList.Any())
+                {
+                    <div class="text-center py-4" style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 20px;">
+                        <span style="font-size: 2rem;">📅</span>
+                        <h5 class="mt-2 mb-1" style="font-weight: 600;">Sin turnos con estado "Ausente"</h5>
+                        <p class="text-secondary small mb-0">
+                            No se encontraron turnos con estado <em>Ausente</em> registrados en el sistema para este paciente.
+                            @if (selectedPacienteInasistencias?.ContadorInasistencias > 0)
+                            {
+                                <span class="d-block mt-1 text-danger font-semibold">
+                                    Contador acumulado en ficha: @selectedPacienteInasistencias.ContadorInasistencias
+                                </span>
+                            }
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-danger" style="font-size: 0.85rem; padding: 6px 12px;">
+                            @turnosInasistenciasList.Count @(turnosInasistenciasList.Count == 1 ? "inasistencia registrada" : "inasistencias registradas")
+                        </span>
+                        <span class="text-secondary small">Mostrando fechas y servicios asociados</span>
+                    </div>
+
+                    <div style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+                        @foreach (var turno in turnosInasistenciasList)
+                        {
+                            <div style="border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.04); border-radius: 8px; padding: 12px 14px; border-top: 1px solid rgba(239, 68, 68, 0.15); border-right: 1px solid rgba(239, 68, 68, 0.15); border-bottom: 1px solid rgba(239, 68, 68, 0.15);">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div style="font-weight: 600; color: #ef4444; font-size: 0.95rem;">
+                                        🗓️ @turno.FechaHora.ToString("dd/MM/yyyy HH:mm") hs
+                                    </div>
+                                    <span class="badge bg-danger" style="font-size: 0.75rem;">Ausente</span>
+                                </div>
+                                <div class="small" style="line-height: 1.5;">
+                                    <div><strong>Servicio:</strong> @(string.IsNullOrWhiteSpace(turno.ServicioNombre) ? "Consulta General" : turno.ServicioNombre)</div>
+                                    @if (!string.IsNullOrWhiteSpace(turno.VeterinarioNombre))
+                                    {
+                                        <div><strong>Veterinario:</strong> @turno.VeterinarioNombre</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(turno.Motivo))
+                                    {
+                                        <div><strong>Motivo del turno:</strong> @turno.Motivo</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(turno.Observaciones))
+                                    {
+                                        <div class="text-secondary mt-1"><em>Obs: @turno.Observaciones</em></div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-outline-secondary" @onclick="CloseInasistenciasModal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -1255,6 +1357,31 @@
     private List<EspecieDto> modalEspecies = new();
     private List<RazaDto> modalRazas = new();
 
+    private IEnumerable<SearchableOption<string>> modalPropietariosOptions =>
+        modalPropietarios.Select(p => new SearchableOption<string>
+        {
+            Value = p.Id,
+            Text = p.NombreCompleto,
+            Subtext = $"DNI: {p.DNI} • Tel: {p.Telefono}",
+            ExtraKeywords = $"{p.NombreCompleto} {p.DNI} {p.Telefono}"
+        });
+
+    private IEnumerable<SearchableOption<int>> modalEspeciesOptions =>
+        modalEspecies.Select(e => new SearchableOption<int>
+        {
+            Value = e.Id,
+            Text = e.Nombre,
+            ExtraKeywords = e.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int?>> modalRazasOptions =>
+        modalRazas.Select(r => new SearchableOption<int?>
+        {
+            Value = (int?)r.Id,
+            Text = r.Nombre,
+            ExtraKeywords = r.Nombre
+        });
+
     // ── Modal Nuevo Cliente (anidado) ──
     private bool showClienteModal;
     private PropietarioDto clienteModel = new();
@@ -1750,6 +1877,54 @@
     {
         showPacienteDetailModal = false;
         selectedPacienteDetail = null;
+    }
+
+    // Modal Inasistencias
+    private bool showInasistenciasModal;
+    private bool isLoadingInasistencias;
+    private PacienteDto? selectedPacienteInasistencias;
+    private List<TurnoDto>? turnosInasistenciasList;
+
+    private async Task AbrirDetalleInasistencias(PacienteDto pac)
+    {
+        selectedPacienteInasistencias = pac;
+        showInasistenciasModal = true;
+        isLoadingInasistencias = true;
+        turnosInasistenciasList = null;
+        StateHasChanged();
+
+        try
+        {
+            var turnos = await TurnoService.GetByPacienteAsync(pac.Id);
+            if (turnos != null)
+            {
+                turnosInasistenciasList = turnos
+                    .Where(t => t.Estado != null && t.Estado.Trim().Equals("Ausente", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(t => t.FechaHora)
+                    .ToList();
+            }
+            else
+            {
+                turnosInasistenciasList = new List<TurnoDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar inasistencias: {ex.Message}");
+            turnosInasistenciasList = new List<TurnoDto>();
+        }
+        finally
+        {
+            isLoadingInasistencias = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseInasistenciasModal()
+    {
+        showInasistenciasModal = false;
+        selectedPacienteInasistencias = null;
+        turnosInasistenciasList = null;
     }
 
     private void ClosePropietarioDetailModal()

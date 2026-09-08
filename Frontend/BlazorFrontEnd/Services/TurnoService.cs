@@ -38,23 +38,65 @@ namespace BlazorFrontEnd.Services
             return await _httpClient.GetUnwrappedAsync<TurnoDto>($"{BaseUrl}/{id}");
         }
 
-        public async Task<(bool Success, string ErrorMessage)> CreateWithResultAsync(TurnoDto turno)
+        public async Task<List<TurnoDto>?> GetByPacienteAsync(string pacienteId)
+        {
+            return await _httpClient.GetUnwrappedAsync<List<TurnoDto>>($"{BaseUrl}/byPaciente/{pacienteId}");
+        }
+
+        public async Task<List<TurnoDto>?> GetByVeterinarioAsync(string veterinarioId, DateTime? desde = null, DateTime? hasta = null)
+        {
+            var url = $"{BaseUrl}/byVeterinario/{veterinarioId}";
+            var queryParams = new List<string>();
+            if (desde.HasValue) queryParams.Add($"desde={desde.Value:s}");
+            if (hasta.HasValue) queryParams.Add($"hasta={hasta.Value:s}");
+            if (queryParams.Any()) url += "?" + string.Join("&", queryParams);
+
+            return await _httpClient.GetUnwrappedAsync<List<TurnoDto>>(url);
+        }
+
+        public async Task<(bool Success, string ErrorMessage, string? CreatedId)> CreateWithResultAsync(TurnoDto turno)
         {
             var response = await _httpClient.PostAsJsonAsync(BaseUrl, turno);
             if (response.IsSuccessStatusCode)
-                return (true, string.Empty);
+            {
+                string? createdId = null;
+                try
+                {
+                    using var doc = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
+                    if (doc != null)
+                    {
+                        if (doc.RootElement.TryGetProperty("id", out var idProp))
+                            createdId = idProp.GetString();
+                        else if (doc.RootElement.TryGetProperty("Id", out var idPropCap))
+                            createdId = idPropCap.GetString();
+                    }
+                }
+                catch { }
+
+                if (string.IsNullOrEmpty(createdId) && response.Headers.Location != null)
+                {
+                    createdId = response.Headers.Location.OriginalString.Split('/').LastOrDefault();
+                }
+
+                if (!string.IsNullOrEmpty(createdId))
+                {
+                    turno.Id = createdId;
+                }
+
+                return (true, string.Empty, createdId);
+            }
 
             var content = await response.Content.ReadAsStringAsync();
             if (!string.IsNullOrWhiteSpace(content) && content.StartsWith("\"") && content.EndsWith("\""))
                 content = content.Trim('"');
 
-            return (false, string.IsNullOrWhiteSpace(content) ? "Error al guardar el turno" : content);
+            return (false, string.IsNullOrWhiteSpace(content) ? "Error al guardar el turno" : content, null);
         }
 
         public async Task<bool> CreateAsync(TurnoDto turno)
         {
-            var (success, _) = await CreateWithResultAsync(turno);
-            return success;
+            var res = await CreateWithResultAsync(turno);
+            return res.Success;
         }
 
         public async Task<(bool Success, string ErrorMessage)> UpdateWithResultAsync(string id, TurnoDto turno)

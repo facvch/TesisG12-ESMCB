@@ -356,10 +356,10 @@
                                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Paciente (*)</label>
                                     <div class="d-flex gap-2">
-                                        <InputSelect @bind-Value="turnoModel.PacienteId" class="form-select bg-dark text-light border-secondary">
-                                            <option value="">-- Seleccione un Paciente --</option>
-                                            @foreach (var p in modalPacientes) { <option value="@p.Id">@p.Nombre (@p.EspecieNombre)</option> }
-                                        </InputSelect>
+                                        <SearchableSelect TValue="string"
+                                                          @bind-Value="turnoModel.PacienteId"
+                                                          Options="@pacientesOptions"
+                                                          Placeholder="-- Seleccione un Paciente --" />
                                         <button type="button" @onclick="OpenPacienteModalFromTurno" class="btn btn-outline-info d-flex align-items-center" style="white-space:nowrap;border-color:var(--border-glass);color:var(--accent-primary);" title="Registrar nuevo paciente">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> Nuevo
                                         </button>
@@ -368,25 +368,26 @@
                                 </div>
                                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Veterinario Asignado (*)</label>
-                                    <InputSelect @bind-Value="turnoModel.VeterinarioId" class="form-select bg-dark text-light border-secondary">
-                                        <option value="">-- Médico Veterinario --</option>
-                                        @foreach (var v in modalVeterinarios) { <option value="@v.Id">@v.NombreCompleto - @v.Especialidad @(!string.IsNullOrEmpty(v.SucursalNombre) ? $"({v.SucursalNombre})" : "")</option> }
-                                    </InputSelect>
+                                    <SearchableSelect TValue="string"
+                                                      Value="@turnoModel.VeterinarioId"
+                                                      ValueChanged="@OnModalVeterinarioChanged"
+                                                      Options="@veterinariosOptions"
+                                                      Placeholder="-- Médico Veterinario --" />
                                     <ValidationMessage For="@(() => turnoModel.VeterinarioId)" class="text-danger" />
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
                                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Tipo de Servicio (*)</label>
-                                    <InputSelect @bind-Value="turnoModel.ServicioId" class="form-select bg-dark text-light border-secondary">
-                                        <option value="0">-- Servicio Clínico --</option>
-                                        @foreach (var s in modalServicios) { <option value="@s.Id">@s.Nombre</option> }
-                                    </InputSelect>
+                                    <SearchableSelect TValue="int"
+                                                      @bind-Value="turnoModel.ServicioId"
+                                                      Options="@serviciosOptions"
+                                                      Placeholder="-- Servicio Clínico --" />
                                     <ValidationMessage For="@(() => turnoModel.ServicioId)" class="text-danger" />
                                 </div>
                                 <div class="col-md-4" style="margin-bottom: var(--sp-sm);">
                                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Fecha y Hora Programada (*)</label>
-                                    <input type="datetime-local" @bind="turnoModel.FechaHora" class="form-control bg-dark text-light border-secondary" />
+                                    <input type="datetime-local" @bind="turnoModel.FechaHora" @bind:after="OnModalFechaHoraChanged" class="form-control bg-dark text-light border-secondary" />
                                     @if (!string.IsNullOrEmpty(turnoFechaError))
                                     { <div class="text-danger" style="font-size: 0.8rem; margin-top: 4px;">@turnoFechaError</div> }
                                 </div>
@@ -464,37 +465,125 @@
                     <!-- Columna Lateral (1/3): Horarios del Veterinario -->
                     <div class="col-lg-4">
                         <div class="p-3 rounded h-100 d-flex flex-column" style="background: #FAFAFA !important; color: #333333 !important; border: 1px solid #e2e8f0; border-radius: 8px;">
-                            <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
-                                <span style="font-size: 1.1rem;">🗓️</span>
-                                <h5 class="m-0 fw-bold" style="font-size: 0.92rem; color: #0284c7;">
-                                    Horarios de Atención
-                                </h5>
+                            <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="font-size: 1.1rem;">🗓️</span>
+                                    <h5 class="m-0 fw-bold" style="font-size: 0.92rem; color: #0284c7;">
+                                        Horarios de Atención
+                                    </h5>
+                                </div>
+                                @if (selectedVetForModal != null)
+                                {
+                                    <div class="d-flex align-items-center gap-1">
+                                        <button type="button" class="btn btn-sm p-0 px-1 border-0" style="color: #64748b; font-size: 0.75rem; background: transparent; cursor: pointer;" @onclick="PrevModalWeekHorarios" title="Semana anterior">◀</button>
+                                        <span style="font-size: 0.72rem; color: #475569; font-weight: 600;">@GetModalSemanaLabel()</span>
+                                        <button type="button" class="btn btn-sm p-0 px-1 border-0" style="color: #64748b; font-size: 0.75rem; background: transparent; cursor: pointer;" @onclick="NextModalWeekHorarios" title="Semana siguiente">▶</button>
+                                    </div>
+                                }
                             </div>
 
                             @if (selectedVetForModal != null)
                             {
-                                <div class="small fw-bold mb-2" style="color: #333333;">
-                                    👨‍⚕️ @selectedVetForModal.NombreCompleto
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="small fw-bold" style="color: #333333;">
+                                        👨‍⚕️ @selectedVetForModal.NombreCompleto
+                                    </div>
+                                    @if (isLoadingModalVetTurnos)
+                                    {
+                                        <span class="spinner-border spinner-border-sm text-primary" role="status" style="width: 14px; height: 14px;"></span>
+                                    }
                                 </div>
-                                <div class="d-flex flex-column gap-2 overflow-auto flex-grow-1 pe-1" style="max-height: 360px;">
+                                <div class="d-flex flex-column gap-2 overflow-auto flex-grow-1 pe-1" style="max-height: 420px;">
                                     @for (int dia = 1; dia <= 7; dia++)
                                     {
-                                        var diaNombre = GetDiaNombre(dia);
-                                        var horariosDia = selectedVetForModal.Horarios?.Where(h => h.Activo && h.DiaSemana == dia).ToList();
-                                        
-                                        <div class="p-2 rounded" style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid @(horariosDia != null && horariosDia.Any() ? "#0284c7" : "#cbd5e1"); font-size: 0.78rem; color: #333333;">
-                                            @if (horariosDia == null || !horariosDia.Any())
-                                            {
-                                                <div><strong style="color: #333333;">@diaNombre:</strong> <span style="color: #64748b; font-style: italic;">Sin atención</span></div>
-                                            }
-                                            else
-                                            {
-                                                @foreach (var h in horariosDia)
-                                                {
+                                        var diaLocal = dia;
+                                        var diaNombre = GetDiaNombre(diaLocal);
+                                        var diaFecha = ModalCurrentWeekMonday.AddDays(diaLocal - 1);
+                                        var horariosDia = selectedVetForModal.Horarios?.Where(h => h.Activo && h.DiaSemana == diaLocal).ToList();
+                                        var turnosDia = modalVetTurnosSemana?.Where(t => t.FechaHora.Date == diaFecha.Date && !string.Equals(t.Estado, "Cancelado", StringComparison.OrdinalIgnoreCase) && (string.IsNullOrEmpty(turnoModel.Id) || t.Id != turnoModel.Id)).OrderBy(t => t.FechaHora).ToList() ?? new List<TurnoDto>();
+                                        bool hasHorarios = horariosDia != null && horariosDia.Any();
+                                        bool isSelectedDate = turnoModel.FechaHora.Date == diaFecha.Date;
+                                        bool isExpanded = IsModalDiaExpanded(diaLocal);
+
+                                        <div class="d-flex flex-column">
+                                            <div class="p-2 rounded" 
+                                                 style="background: @(isSelectedDate ? "#f0f9ff" : "#ffffff"); border: 1px solid @(isSelectedDate ? "#0284c7" : "#e2e8f0"); border-left: 3px solid @(hasHorarios ? "#0284c7" : "#cbd5e1"); font-size: 0.78rem; color: #333333; @(hasHorarios ? "cursor: pointer; user-select: none;" : "")"
+                                                 @onclick="() => { if (hasHorarios) ToggleModalDiaExpanded(diaLocal); }"
+                                                 title="@(hasHorarios ? (isExpanded ? "Click para ocultar turnos agendados" : "Click para ver turnos agendados") : "")">
+                                                <div class="d-flex align-items-center justify-content-between">
                                                     <div>
-                                                        <strong style="color: #333333;">@diaNombre:</strong> <span style="color: #333333;">@FormatHorarioText(h)</span>
+                                                        <strong style="color: #333333;">@diaNombre (@diaFecha.ToString("dd/MM")):</strong>
+                                                        @if (!hasHorarios)
+                                                        {
+                                                            <span style="color: #64748b; font-style: italic;" class="ms-1">Sin atención</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @foreach (var h in horariosDia!)
+                                                            {
+                                                                <span style="color: #333333;" class="ms-1">@FormatHorarioText(h)</span>
+                                                            }
+                                                        }
                                                     </div>
-                                                }
+                                                    @if (hasHorarios)
+                                                    {
+                                                        <div class="d-flex align-items-center gap-1">
+                                                            @if (turnosDia.Any())
+                                                            {
+                                                                <span class="badge" style="background: #ef4444; color: #ffffff; font-size: 0.68rem; font-weight: 600; padding: 2px 6px;">
+                                                                    @turnosDia.Count @(turnosDia.Count == 1 ? "turno" : "turnos")
+                                                                </span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="badge" style="background: #10b981; color: #ffffff; font-size: 0.68rem; font-weight: 600; padding: 2px 6px;">
+                                                                    Libre
+                                                                </span>
+                                                            }
+                                                            <span style="color: #64748b; font-size: 0.65rem; line-height: 1;">@(isExpanded ? "▲" : "▼")</span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            @* Subpestaña corrida a la derecha: turnos agendados del día *@
+                                            @if (hasHorarios && isExpanded)
+                                            {
+                                                <div style="margin-left: 14px; margin-top: 4px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 4px;">
+                                                    @if (turnosDia.Any())
+                                                    {
+                                                        @foreach (var t in turnosDia)
+                                                        {
+                                                            var inicio = t.FechaHora.ToString("HH:mm");
+                                                            var finDt = t.FechaHoraFin != default && t.FechaHoraFin > t.FechaHora 
+                                                                ? t.FechaHoraFin 
+                                                                : t.FechaHora.AddMinutes(t.DuracionMinutos > 0 ? t.DuracionMinutos : 30);
+                                                            var fin = finDt.ToString("HH:mm");
+
+                                                            <div class="p-2 rounded" style="background: #fff5f5; border: 1px solid #fca5a5; border-left: 4px solid #ef4444; font-size: 0.75rem; color: #991b1b; box-shadow: 0 1px 2px rgba(239, 68, 68, 0.05);">
+                                                                <div class="d-flex align-items-center justify-content-between">
+                                                                    <span style="font-weight: 600;">
+                                                                        🚫 Tiene turno entre: @inicio y @fin
+                                                                    </span>
+                                                                    <span class="badge bg-danger text-light" style="font-size: 0.65rem;">@t.Estado</span>
+                                                                </div>
+                                                                @if (!string.IsNullOrEmpty(t.PacienteNombre) || !string.IsNullOrEmpty(t.ServicioNombre))
+                                                                {
+                                                                    <div class="mt-1" style="font-size: 0.72rem; color: #7f1d1d;">
+                                                                        🐾 <strong>@(string.IsNullOrEmpty(t.PacienteNombre) ? "Paciente" : t.PacienteNombre)</strong>
+                                                                        @(!string.IsNullOrEmpty(t.ServicioNombre) ? $" • {t.ServicioNombre}" : "")
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="p-2 rounded" style="background: #f0fdf4; border: 1px solid #86efac; border-left: 4px solid #10b981; font-size: 0.73rem; color: #166534;">
+                                                            ✓ Sin turnos agendados en este día (Completamente disponible)
+                                                        </div>
+                                                    }
+                                                </div>
                                             }
                                         </div>
                                     }
@@ -724,10 +813,10 @@
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Propietario / Dueño (*)</label>
                             <div class="d-flex gap-2">
-                                <InputSelect @bind-Value="pacienteModel.PropietarioId" class="form-select bg-dark text-light border-secondary">
-                                    <option value="">-- Seleccione un Dueño --</option>
-                                    @foreach (var p in modalPropietarios) { <option value="@p.Id">@p.NombreCompleto - @p.DNI</option> }
-                                </InputSelect>
+                                <SearchableSelect TValue="string"
+                                                  @bind-Value="pacienteModel.PropietarioId"
+                                                  Options="@propietariosOptions"
+                                                  Placeholder="-- Seleccione un Dueño --" />
                                 <button type="button" @onclick="OpenClienteModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space:nowrap;border-color:var(--border-glass);color:var(--accent-primary);" title="Registrar nuevo cliente">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> Nuevo
                                 </button>
@@ -739,10 +828,11 @@
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
                             <div class="d-flex gap-2">
-                                <InputSelect Value="pacienteModel.EspecieId" ValueExpression="()=>pacienteModel.EspecieId" ValueChanged="((int v) => OnModalEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
-                                    <option value="0">-- Seleccione Especie --</option>
-                                    @foreach (var e in modalEspecies) { <option value="@e.Id">@e.Nombre</option> }
-                                </InputSelect>
+                                <SearchableSelect TValue="int"
+                                                  Value="pacienteModel.EspecieId"
+                                                  ValueChanged="@((int v) => OnModalEspecieChanged(v))"
+                                                  Options="@especiesOptions"
+                                                  Placeholder="-- Seleccione Especie --" />
                                 <button type="button" @onclick="OpenEspecieModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva especie">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -755,10 +845,11 @@
                         <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                             <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
                             <div class="d-flex gap-2">
-                                <InputSelect @bind-Value="pacienteModel.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(pacienteModel.EspecieId == 0)">
-                                    <option value="">-- Seleccione Raza --</option>
-                                    @foreach (var r in modalRazas) { <option value="@r.Id">@r.Nombre</option> }
-                                </InputSelect>
+                                <SearchableSelect TValue="int?"
+                                                  @bind-Value="pacienteModel.RazaId"
+                                                  Options="@razasOptions"
+                                                  Placeholder="-- Seleccione Raza --"
+                                                  Disabled="@(pacienteModel.EspecieId == 0)" />
                                 <button type="button" @onclick="OpenRazaModalFromPaciente" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva raza" disabled="@(pacienteModel.EspecieId == 0)">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -1320,6 +1411,61 @@
     private List<ServicioDto> modalServicios = new();
     private List<Adjunto> turnoFilesList = new();
 
+    // ── Opciones para Selectores Escribibles ──
+    private IEnumerable<SearchableOption<string>> pacientesOptions =>
+        modalPacientes.Select(p => new SearchableOption<string>
+        {
+            Value = p.Id,
+            Text = p.Nombre,
+            Subtext = !string.IsNullOrEmpty(p.PropietarioNombre)
+                ? $"Dueño: {p.PropietarioNombre} • {p.EspecieNombre}"
+                : p.EspecieNombre,
+            ExtraKeywords = $"{p.Nombre} {p.PropietarioNombre} {p.EspecieNombre}"
+        });
+
+    private IEnumerable<SearchableOption<string>> veterinariosOptions =>
+        modalVeterinarios.Select(v => new SearchableOption<string>
+        {
+            Value = v.Id,
+            Text = v.NombreCompleto,
+            Subtext = $"{v.Especialidad} {(!string.IsNullOrEmpty(v.SucursalNombre) ? $"({v.SucursalNombre})" : "")}".Trim(),
+            ExtraKeywords = $"{v.NombreCompleto} {v.Especialidad} {v.SucursalNombre}"
+        });
+
+    private IEnumerable<SearchableOption<int>> serviciosOptions =>
+        modalServicios.Select(s => new SearchableOption<int>
+        {
+            Value = s.Id,
+            Text = s.Nombre,
+            Subtext = $"${s.Precio:N0} • {s.DuracionMinutos} min",
+            ExtraKeywords = $"{s.Nombre} {s.Descripcion}"
+        });
+
+    private IEnumerable<SearchableOption<string>> propietariosOptions =>
+        modalPropietarios.Select(p => new SearchableOption<string>
+        {
+            Value = p.Id,
+            Text = p.NombreCompleto,
+            Subtext = $"DNI: {p.DNI} • Tel: {p.Telefono}",
+            ExtraKeywords = $"{p.NombreCompleto} {p.DNI} {p.Telefono}"
+        });
+
+    private IEnumerable<SearchableOption<int>> especiesOptions =>
+        modalEspecies.Select(e => new SearchableOption<int>
+        {
+            Value = e.Id,
+            Text = e.Nombre,
+            ExtraKeywords = e.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int?>> razasOptions =>
+        modalRazas.Select(r => new SearchableOption<int?>
+        {
+            Value = (int?)r.Id,
+            Text = r.Nombre,
+            ExtraKeywords = r.Nombre
+        });
+
     // ── Modal Paciente (anidado) ──
     private bool showPacienteModal;
     private bool isLoadingPacienteModal;
@@ -1537,6 +1683,9 @@
     {
         turnoModel = new TurnoDto(); turnoErrorMessage = string.Empty; isSavingTurno = false;
         turnoFilesList = new List<Adjunto>();
+        modalCurrentSemanaBase = DateTime.Today;
+        modalVetTurnosSemana = null;
+        modalExpandedDias.Clear();
         isLoadingTurnoModal = true; showTurnoModal = true;
         try
         {
@@ -1558,6 +1707,95 @@
 
     private VeterinarioDto? selectedVetForModal =>
         modalVeterinarios?.FirstOrDefault(v => v.Id == turnoModel.VeterinarioId);
+
+    // Turnos ocupados del veterinario en modal
+    private List<TurnoDto>? modalVetTurnosSemana;
+    private bool isLoadingModalVetTurnos;
+    private DateTime modalCurrentSemanaBase = DateTime.Today;
+    private HashSet<int> modalExpandedDias = new();
+
+    private DateTime ModalCurrentWeekMonday
+    {
+        get
+        {
+            DateTime baseDate = modalCurrentSemanaBase != default ? modalCurrentSemanaBase.Date : DateTime.Today;
+            int diff = ((int)baseDate.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+            return baseDate.AddDays(-diff);
+        }
+    }
+
+    private string GetModalSemanaLabel()
+    {
+        var mon = ModalCurrentWeekMonday;
+        var sun = mon.AddDays(6);
+        return $"{mon:dd/MM} - {sun:dd/MM}";
+    }
+
+    private async Task PrevModalWeekHorarios()
+    {
+        modalCurrentSemanaBase = modalCurrentSemanaBase.AddDays(-7);
+        await CargarModalTurnosVeterinario();
+    }
+
+    private async Task NextModalWeekHorarios()
+    {
+        modalCurrentSemanaBase = modalCurrentSemanaBase.AddDays(7);
+        await CargarModalTurnosVeterinario();
+    }
+
+    private bool IsModalDiaExpanded(int dia) => modalExpandedDias.Contains(dia);
+
+    private void ToggleModalDiaExpanded(int dia)
+    {
+        if (modalExpandedDias.Contains(dia))
+            modalExpandedDias.Remove(dia);
+        else
+            modalExpandedDias.Add(dia);
+    }
+
+    private async Task OnModalVeterinarioChanged(string val)
+    {
+        turnoModel.VeterinarioId = val;
+        await CargarModalTurnosVeterinario();
+    }
+
+    private async Task OnModalFechaHoraChanged()
+    {
+        if (turnoModel.FechaHora != default)
+        {
+            modalCurrentSemanaBase = turnoModel.FechaHora.Date;
+            await CargarModalTurnosVeterinario();
+        }
+    }
+
+    private async Task CargarModalTurnosVeterinario()
+    {
+        if (string.IsNullOrWhiteSpace(turnoModel.VeterinarioId))
+        {
+            modalVetTurnosSemana = null;
+            return;
+        }
+
+        isLoadingModalVetTurnos = true;
+        StateHasChanged();
+        try
+        {
+            var mon = ModalCurrentWeekMonday;
+            var sun = mon.AddDays(7).AddSeconds(-1);
+            var turnos = await TurnoService.GetByVeterinarioAsync(turnoModel.VeterinarioId, mon, sun);
+            modalVetTurnosSemana = turnos ?? new List<TurnoDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar turnos del veterinario en modal: {ex.Message}");
+            modalVetTurnosSemana = new List<TurnoDto>();
+        }
+        finally
+        {
+            isLoadingModalVetTurnos = false;
+            StateHasChanged();
+        }
+    }
 
     private string GetDiaNombre(int dia) => dia switch
     {
@@ -1628,9 +1866,11 @@
                 serverMsg = createRes.ErrorMessage;
                 if (result)
                 {
+                    var finalId = createRes.CreatedId ?? turnoModel.Id;
+                    turnoModel.Id = finalId;
                     savedTurno = new TurnoDto
                     {
-                        Id = turnoModel.Id,
+                        Id = finalId,
                         PacienteId = turnoModel.PacienteId,
                         PacienteNombre = modalPacientes.FirstOrDefault(p => p.Id == turnoModel.PacienteId)?.Nombre ?? "Paciente",
                         VeterinarioId = turnoModel.VeterinarioId,
@@ -2049,7 +2289,12 @@
 
     private async Task ResendConfirmationEmail()
     {
-        if (notificationTurnoRef == null) return;
+        if (notificationTurnoRef == null || string.IsNullOrWhiteSpace(notificationTurnoRef.Id))
+        {
+            notificationEmailSuccess = false;
+            notificationEmailResultMsg = "❌ No se encontró el ID del turno para reenviar el correo.";
+            return;
+        }
         isResendingNotificationEmail = true;
         notificationEmailResultMsg = null;
         try

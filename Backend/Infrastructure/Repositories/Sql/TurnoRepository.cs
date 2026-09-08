@@ -11,7 +11,10 @@ namespace Infrastructure.Repositories.Sql
 
         public async Task<IEnumerable<Turno>> GetByVeterinarioIdAsync(string veterinarioId, DateTime? desde = null, DateTime? hasta = null)
         {
-            var query = Repository.Where(t => t.VeterinarioId == veterinarioId);
+            var query = Repository
+                .Include(t => t.Paciente)
+                .Include(t => t.Servicio)
+                .Where(t => t.VeterinarioId == veterinarioId);
 
             if (desde.HasValue)
                 query = query.Where(t => t.FechaHora >= desde.Value);
@@ -24,6 +27,10 @@ namespace Infrastructure.Repositories.Sql
         public async Task<IEnumerable<Turno>> GetByPacienteIdAsync(string pacienteId)
         {
             return await Repository
+                .Include(t => t.Paciente)
+                    .ThenInclude(p => p.Propietario)
+                .Include(t => t.Veterinario)
+                .Include(t => t.Servicio)
                 .Where(t => t.PacienteId == pacienteId)
                 .OrderByDescending(t => t.FechaHora)
                 .ToListAsync();

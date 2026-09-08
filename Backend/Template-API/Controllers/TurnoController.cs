@@ -1,4 +1,5 @@
 using Application.DataTransferObjects;
+using Application.Helpers;
 using Application.Repositories;
 using Core.Application;
 using Domain.Entities;
@@ -86,10 +87,12 @@ namespace Controllers
             }
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var searchUpper = searchTerm.ToUpper();
                 entities = entities.Where(t => 
-                    (t.Paciente != null && t.Paciente.Nombre.ToUpper().Contains(searchUpper)) ||
-                    (t.Motivo != null && t.Motivo.ToUpper().Contains(searchUpper))
+                    (t.Paciente != null && SearchHelper.ContainsFlexible(t.Paciente.Nombre, searchTerm)) ||
+                    (t.Paciente?.Propietario != null && SearchHelper.ContainsFlexible($"{t.Paciente.Propietario.Nombre} {t.Paciente.Propietario.Apellido}", searchTerm)) ||
+                    (t.Veterinario != null && SearchHelper.ContainsFlexible(t.Veterinario.NombreCompleto, searchTerm)) ||
+                    (t.Servicio != null && SearchHelper.ContainsFlexible(t.Servicio.Nombre, searchTerm)) ||
+                    (t.Motivo != null && SearchHelper.ContainsFlexible(t.Motivo, searchTerm))
                 ).ToList();
             }
             

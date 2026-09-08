@@ -1,3 +1,4 @@
+using Application.Helpers;
 using Application.Repositories;
 using Core.Application;
 using Microsoft.AspNetCore.Mvc;
@@ -31,16 +32,31 @@ namespace Controllers
         public async Task<IActionResult> PacientesPaginados(
             [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
             [FromQuery] string sortBy = "Nombre", [FromQuery] string sortDir = "asc",
-            [FromQuery] string searchTerm = "")
+            [FromQuery] string searchTerm = "",
+            [FromQuery] int? especieId = null,
+            [FromQuery] int? razaId = null)
         {
             var entities = (await pacienteRepo.GetPacientesExpandidosAsync()).AsEnumerable();
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var st = searchTerm.ToLower();
                 entities = entities.Where(p => 
-                    p.Nombre.ToLower().Contains(st) || 
-                    (p.Propietario != null && (p.Propietario.Nombre.ToLower().Contains(st) || p.Propietario.Apellido.ToLower().Contains(st)))
+                    SearchHelper.ContainsFlexible(p.Nombre, searchTerm) || 
+                    (p.Propietario != null && (
+                        SearchHelper.ContainsFlexible(p.Propietario.Nombre, searchTerm) || 
+                        SearchHelper.ContainsFlexible(p.Propietario.Apellido, searchTerm) ||
+                        SearchHelper.ContainsFlexible($"{p.Propietario.Nombre} {p.Propietario.Apellido}", searchTerm)
+                    ))
                 );
+            }
+
+            if (especieId.HasValue && especieId.Value > 0)
+            {
+                entities = entities.Where(p => p.EspecieId == especieId.Value);
+            }
+
+            if (razaId.HasValue && razaId.Value > 0)
+            {
+                entities = entities.Where(p => p.RazaId == razaId.Value);
             }
 
             var dtos = entities.Select(p => new
@@ -74,11 +90,11 @@ namespace Controllers
             var entities = (await propietarioRepo.GetPropietariosConMascotasAsync()).AsEnumerable();
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var st = searchTerm.ToLower();
                 entities = entities.Where(p => 
-                    p.Nombre.ToLower().Contains(st) || 
-                    p.Apellido.ToLower().Contains(st) || 
-                    p.DNI.Contains(st)
+                    SearchHelper.ContainsFlexible(p.Nombre, searchTerm) || 
+                    SearchHelper.ContainsFlexible(p.Apellido, searchTerm) || 
+                    SearchHelper.ContainsFlexible($"{p.Nombre} {p.Apellido}", searchTerm) ||
+                    (p.DNI != null && p.DNI.Contains(searchTerm.Trim()))
                 );
             }
 
@@ -107,10 +123,9 @@ namespace Controllers
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var st = searchTerm.ToLower();
                 entities = entities.Where(p =>
-                    p.Nombre.ToLower().Contains(st) ||
-                    (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(st))
+                    SearchHelper.ContainsFlexible(p.Nombre, searchTerm) ||
+                    (p.CodigoBarras != null && SearchHelper.ContainsFlexible(p.CodigoBarras, searchTerm))
                 );
             }
 
@@ -183,10 +198,12 @@ namespace Controllers
             }
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var searchUpper = searchTerm.ToUpper();
                 entities = entities.Where(t => 
-                    (t.Paciente != null && t.Paciente.Nombre.ToUpper().Contains(searchUpper)) ||
-                    (t.Motivo != null && t.Motivo.ToUpper().Contains(searchUpper))
+                    (t.Paciente != null && SearchHelper.ContainsFlexible(t.Paciente.Nombre, searchTerm)) ||
+                    (t.Paciente?.Propietario != null && SearchHelper.ContainsFlexible($"{t.Paciente.Propietario.Nombre} {t.Paciente.Propietario.Apellido}", searchTerm)) ||
+                    (t.Veterinario != null && SearchHelper.ContainsFlexible(t.Veterinario.NombreCompleto, searchTerm)) ||
+                    (t.Servicio != null && SearchHelper.ContainsFlexible(t.Servicio.Nombre, searchTerm)) ||
+                    (t.Motivo != null && SearchHelper.ContainsFlexible(t.Motivo, searchTerm))
                 );
             }
 

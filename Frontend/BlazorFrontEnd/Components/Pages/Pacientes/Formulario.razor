@@ -39,13 +39,10 @@
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Propietario / Dueño (*)</label>
                     <div class="d-flex gap-2">
-                        <InputSelect @bind-Value="model.PropietarioId" class="form-select bg-dark text-light border-secondary">
-                            <option value="">-- Seleccione un Dueño --</option>
-                            @foreach (var p in propietarios)
-                            {
-                                <option value="@p.Id">@p.NombreCompleto - @p.DNI</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="string"
+                                          @bind-Value="model.PropietarioId"
+                                          Options="@propietariosOptions"
+                                          Placeholder="-- Seleccione un Dueño --" />
                         <a href="/propietarios/nuevo" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nuevo cliente">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -61,13 +58,11 @@
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Especie (*)</label>
                     <div class="d-flex gap-2">
-                        <InputSelect Value="model.EspecieId" ValueExpression="()=>model.EspecieId" ValueChanged="((int v) => OnEspecieChanged(v))" class="form-select bg-dark text-light border-secondary">
-                            <option value="0">-- Seleccione Especie --</option>
-                            @foreach (var e in especies)
-                            {
-                                <option value="@e.Id">@e.Nombre</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="int"
+                                          Value="model.EspecieId"
+                                          ValueChanged="@((int v) => OnEspecieChanged(v))"
+                                          Options="@especiesOptions"
+                                          Placeholder="-- Seleccione Especie --" />
                         <button type="button" @onclick="OpenEspecieModal" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva especie">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -81,13 +76,11 @@
                 <div class="col-md-6" style="margin-bottom: var(--sp-sm);">
                     <label class="form-label" style="color: var(--text-secondary); font-size: 0.875rem;">Raza (*)</label>
                     <div class="d-flex gap-2">
-                        <InputSelect @bind-Value="model.RazaId" class="form-select bg-dark text-light border-secondary" disabled="@(model.EspecieId == 0)">
-                            <option value="">-- Seleccione Raza --</option>
-                            @foreach (var r in razas)
-                            {
-                                <option value="@r.Id">@r.Nombre</option>
-                            }
-                        </InputSelect>
+                        <SearchableSelect TValue="int?"
+                                          @bind-Value="model.RazaId"
+                                          Options="@razasOptions"
+                                          Placeholder="-- Seleccione Raza --"
+                                          Disabled="@(model.EspecieId == 0)" />
                         <button type="button" @onclick="OpenRazaModal" class="btn btn-outline-info d-flex align-items-center" style="white-space: nowrap; border-color: var(--border-glass); color: var(--accent-primary);" title="Registrar nueva raza" disabled="@(model.EspecieId == 0)">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -386,6 +379,31 @@
     private List<PropietarioDto> propietarios = new();
     private List<EspecieDto> especies = new();
     private List<RazaDto> razas = new();
+
+    private IEnumerable<SearchableOption<string>> propietariosOptions =>
+        propietarios.Select(p => new SearchableOption<string>
+        {
+            Value = p.Id,
+            Text = p.NombreCompleto,
+            Subtext = $"DNI: {p.DNI} • Tel: {p.Telefono}",
+            ExtraKeywords = $"{p.NombreCompleto} {p.DNI} {p.Telefono}"
+        });
+
+    private IEnumerable<SearchableOption<int>> especiesOptions =>
+        especies.Select(e => new SearchableOption<int>
+        {
+            Value = e.Id,
+            Text = e.Nombre,
+            ExtraKeywords = e.Nombre
+        });
+
+    private IEnumerable<SearchableOption<int?>> razasOptions =>
+        razas.Select(r => new SearchableOption<int?>
+        {
+            Value = (int?)r.Id,
+            Text = r.Nombre,
+            ExtraKeywords = r.Nombre
+        });
 
     // ── Modal Especie ──
     private bool showEspecieModal;
